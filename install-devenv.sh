@@ -8,7 +8,8 @@ fi
 # TODO: idempotent
 
 devenv_root="${HOME}/.config/sentry-dev"
-mkdir -p "${devenv_root}/python"
+devenv_python_root="${devenv_root}/python"
+mkdir -p "$devenv_python_root"
 
 platform=x86_64
 sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00
@@ -31,7 +32,10 @@ curl -fsSL \
 
 echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
 
-tar --strip-components=1 -C "${devenv_root}/python" -x -f "${tmpd}/${archive}"
+tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 
-# install devenv tool, which should be able to self-update
-# just unarchive the latest version from github into ${devenv_root}/devenv
+# install latest devenv tool, which should be able to self-update
+git clone -C "$devenv_root" --depth=1 git@github.com:getsentry/devenv
+
+# shellcheck disable=SC2139
+alias devenv="(cd ${devenv_root} && ${devenv_python_root}/bin/python3 -m devenv.main)"
