@@ -38,9 +38,9 @@ tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 git clone -C "$devenv_root" --depth=1 git@github.com:getsentry/devenv
 
 devenv () {
-    cd "$devenv_root" || {
-        echo "devenv root not found!"
-        return 1
-    }
-    "${devenv_python_root}/bin/python3" -m devenv.main "$@"
+    _pwd="$PWD"
+    (
+        cd "$devenv_root" || echo "failed to cd to ${devenv_root}"; exit 1
+        "${devenv_python_root}/bin/python3" -m devenv.main "$_pwd" "$@"
+    )
 }

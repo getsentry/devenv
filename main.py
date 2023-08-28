@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 from typing import Sequence
 
 from devenv import doctor
+from devenv.lib import gitroot
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
@@ -18,6 +20,7 @@ doctor - {doctor.help}
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = CustomArgumentParser()
+    parser.add_argument("pwd")
     parser.add_argument(
         "command",
         choices={
@@ -28,13 +31,25 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # self_update()
 
-    # TODO: autodetection of repository based on pwd
+    # TODO: read a well-known json for preferences
+    coderoot = "dev"
+
+    # Future home of bootstrap-sentry, and then bootstrap-*.
+
+    if not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
+        print(f"You aren't in your code root (~/{coderoot})!")
+        return 1
+
+    reporoot = gitroot(args.pwd)
+    repo = reporoot.split("/")[-1]
+
     context = {
-        "repo": "sentry",
+        "repo": repo,
+        "reporoot": reporoot,
     }
 
     if args.command == "doctor":
-        doctor.main(context, remainder)
+        return doctor.main(context, remainder)
 
     return 0
 
