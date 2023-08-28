@@ -8,8 +8,10 @@ fi
 # TODO: idempotent
 
 devenv_root="${HOME}/.config/sentry-dev"
+devenv_bin="${devenv_root}/bin"
 devenv_python_root="${devenv_root}/python"
-mkdir -p "$devenv_python_root"
+
+mkdir -p "$devenv_python_root" "$devenv_bin"
 
 platform=x86_64
 sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00
@@ -35,12 +37,12 @@ echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
 tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 
 # install latest devenv tool, which should be able to self-update
-git clone -C "$devenv_root" --depth=1 git@github.com:getsentry/devenv
+git -C "$devenv_root" clone --depth=1 git@github.com:getsentry/devenv
 
-devenv () {
-    _pwd="$PWD"
-    (
-        cd "$devenv_root" || echo "failed to cd to ${devenv_root}"; exit 1
-        "${devenv_python_root}/bin/python3" -m devenv.main "$_pwd" "$@"
-    )
-}
+if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
+    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
+    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+fi
+ln -sf "${devenv_root}/devenv/devenv" "${devenv_root}/bin/devenv"
+
+echo "All done! Open a new terminal and begin using devenv."

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+_pwd="$PWD"
+cd "${HOME}/.config/sentry-dev" && python/bin/python3 -m devenv.main "$_pwd" "$@"
