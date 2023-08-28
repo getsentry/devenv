@@ -1,2 +1,0 @@
-def postgres():
-    print("postgres")
