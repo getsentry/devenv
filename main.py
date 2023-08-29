@@ -4,7 +4,7 @@ import argparse
 import os
 from typing import Sequence
 
-from devenv import doctor, pin_gha
+from devenv import doctor, pin_gha, sync
 from devenv.lib import gitroot
 
 
@@ -35,6 +35,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "update",
             "doctor",
             "pin-gha",
+            "sync",
         },
     )
     args, remainder = parser.parse_known_args(argv)
@@ -67,16 +68,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "reporoot": reporoot,
     }
 
-    # TODO: sync - will bring the project's venv up to date and make
-    #       sure it's using the desired python version, otherwise
-    #       it should recreate using a prebuilt python
-    #       let's make sure it's in the sanctioned venv location so
-    #       people can stop using the existing .venvs
-
     if args.command == "doctor":
         return doctor.main(context, remainder)
+    if args.command == "sync":
+        return sync.main(context, remainder)
 
-    return 0
+    return 1
 
 
 if __name__ == "__main__":

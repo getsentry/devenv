@@ -7,7 +7,7 @@ fi
 
 # TODO: idempotent
 
-devenv_root="${HOME}/.config/sentry-dev"
+devenv_root="${HOME}/.sentry-dev"
 devenv_bin="${devenv_root}/bin"
 devenv_python_root="${devenv_root}/python"
 
