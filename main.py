@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import argparse
 import os
-from typing import Sequence
+from collections.abc import Sequence
 
-from devenv import doctor, pin_gha, sync
+from devenv import doctor
+from devenv import pin_gha
+from devenv import sync
 from devenv.lib import gitroot
 
 
@@ -20,6 +22,7 @@ class CustomArgumentParser(argparse.ArgumentParser):
             f"""commands:
 update  - force updates devenv (autoupdated on a daily basis)
 doctor  - {doctor.help}
+sync    - {sync.help}
 pin-gha - {pin_gha.help}
 """
         )
