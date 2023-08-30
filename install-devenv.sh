@@ -7,15 +7,17 @@ fi
 
 # TODO: idempotent
 
-devenv_root="${HOME}/.sentry-dev"
+devenv_root="${HOME}/.config/sentry-dev"
 devenv_bin="${devenv_root}/bin"
 devenv_python_root="${devenv_root}/python"
 
 mkdir -p "$devenv_python_root" "$devenv_bin"
 
+# Default to intel chips
 platform=x86_64
 sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00
 
+# Check if we are running on arm (i.e. M1+ chip)
 case "$(uname -m)" in
     arm64)
       platform=aarch64
@@ -36,13 +38,17 @@ curl -fsSL \
 
 echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
 
+# Question: What is the --strip-components doing here?
 tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 
+# Question: Is there a reason to use the SSH URL here?
 uri='git@github.com:getsentry/devenv'
 [[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
 git -C "$devenv_root" clone -q --depth=1 "$uri"
 
+# Question: What does this syntax mean / do?
 if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
+    # Question: Should this avoid making a .zshrc file if it doesnt exist?
     echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
     echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
 fi
