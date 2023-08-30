@@ -3,21 +3,34 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import time
 from collections.abc import Sequence
 
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
+from devenv.constants import root
 from devenv.constants import src_root
 from devenv.lib import gitroot
 
 
 def self_update(force: bool = False) -> int:
-    # should check a well-known last-update file and check for updates daily
+    fn = f"{root}/last-update"
+    if not os.path.exists(fn):
+        open(fn, mode="a").close()
+
+    if not force:
+        update_age = time.time() - os.path.getmtime(fn)
+        if update_age < 82800:  # 23 hours
+            return 0
+
     print("Updating devenv tool...")
     # We don't have any dependencies. If we do end up adding some,
     # we should vendor to avoid pip calls to keep it lean and simple.
-    return subprocess.call(("git", "-C", src_root, "pull", "--ff-only", "origin", "main"))
+    rc = subprocess.call(("git", "-C", src_root, "pull", "--ff-only", "origin", "main"))
+    if rc == 0:
+        os.utime(fn)
+    return rc
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
