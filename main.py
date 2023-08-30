@@ -30,7 +30,7 @@ pin-gha - {pin_gha.help}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = CustomArgumentParser()
+    parser = CustomArgumentParser(add_help=False)
     parser.add_argument("pwd")
     parser.add_argument(
         "command",

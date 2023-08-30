@@ -28,6 +28,8 @@ archive="cpython-3.11.4+20230726-${platform}-apple-darwin-install_only.tar.gz"
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
+echo "Installing devenv..."
+
 curl -fsSL \
     "https://github.com/indygreg/python-build-standalone/releases/download/20230726/${archive}" \
     -o "${tmpd}/${archive}"
@@ -36,15 +38,19 @@ echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
 
 tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 
-# install latest devenv tool, which should be able to self-update
 uri='git@github.com:getsentry/devenv'
 [[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
-git -C "$devenv_root" clone --depth=1 "$uri"
+git -C "$devenv_root" clone -q --depth=1 "$uri"
 
 if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
     echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
     echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
 fi
-ln -sf "${devenv_root}/devenv/devenv" "${devenv_root}/bin/devenv"
+ln -sf "${devenv_root}/devenv/devenv" "${devenv_bin}/devenv"
+
+echo "devenv installed at ${devenv_bin}/devenv"
+
+export PATH="${devenv_bin}:${PATH}"
+devenv update
 
 echo "All done! Open a new terminal and begin using devenv."
