@@ -9,6 +9,24 @@ from devenv import pythons
 
 help = "Resyncs the environment."
 
+scripts = {
+    "sentry": """
+source "{venv}/bin/activate"
+export PIP_DISABLE_PIP_VERSION_CHECK=on
+
+pip_install='pip install --constraint requirements-dev-frozen.txt'
+$pip_install --upgrade pip setuptools wheel
+
+# pip doesn't do well with swapping drop-ins
+pip uninstall -qqy uwsgi
+
+$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+
+SENTRY_LIGHT_BUILD=1 $pip_install -e . --no-deps
+SENTRY_LIGHT_BUILD=1 $pip_install -e ../getsentry --no-deps
+""",
+}
+
 
 def main(context: dict, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
@@ -19,13 +37,16 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
         print(f"repo {repo} not supported yet!")
         return 1
 
-    # What does it take to have one venv that sentry and getsentry can coexist in?
-    # Try this. I suppose it's pretty easy since we now have requirements-getsentry.txt
-    # in sentry repo.
+    # it's easier to maintain a single venv that sentry and getsentry shares
+    reporoot = context["reporoot"]
     if repo == "getsentry":
         repo = "sentry"
+        reporoot = f"{reporoot}/../sentry"
+        os.chdir(reporoot)
 
-    with open(f'{context["reporoot"]}/.python-version', "rt") as f:
+    reporoot = context["reporoot"]
+
+    with open(f"{reporoot}/.python-version", "rt") as f:
         python_version = f.read().strip()
 
     # If the venv doesn't exist, create it with the expected python version.
@@ -53,11 +74,7 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
         subprocess.run((pythons.get(python_version), "-m", "venv", venv))
 
     print("Resyncing your venv.")
-    script = f"""
-source "{venv}/bin/activate"
-pip install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
-"""
-    subprocess.run(["/bin/sh", "-c", script])
+    subprocess.run(["/bin/sh", "-c", scripts[repo].format(venv=venv)])
 
-    # TODO: frontend environment
+    # TODO: equivalent of make install-js-dev and make apply-migrations
     return 0
