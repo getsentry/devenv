@@ -30,6 +30,7 @@ esac
 
 archive="cpython-3.11.4+20230726-${platform}-apple-darwin-install_only.tar.gz"
 
+# Question: What make a temp directory and then rm -rf it?
 tmpd=$(mktemp -d)
 trap 'rm -rf "$tmpd"' EXIT
 
