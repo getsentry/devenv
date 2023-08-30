@@ -37,7 +37,9 @@ echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
 tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
 
 # install latest devenv tool, which should be able to self-update
-git -C "$devenv_root" clone --depth=1 git@github.com:getsentry/devenv
+uri='git@github.com:getsentry/devenv'
+[[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
+git -C "$devenv_root" clone --depth=1 "$uri"
 
 if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
     echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
