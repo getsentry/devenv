@@ -5,8 +5,11 @@ if [[ "$(uname -s)" != Darwin ]]; then
     exit 1
 fi
 
+set -e
+
 # TODO: idempotent
 
+# NOTE: This must be updated throughout the code base if changed.
 devenv_root="${HOME}/.config/sentry-dev"
 devenv_bin="${devenv_root}/bin"
 devenv_python_root="${devenv_root}/python"
