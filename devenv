@@ -1,4 +1,4 @@
 #!/bin/bash
 
 _pwd="$PWD"
-cd "${HOME}/.sentry-dev" && python/bin/python3 -m devenv.main "$_pwd" "$@"
+cd "${HOME}/.sentry-dev" && python/bin/python3 -S -m devenv.main "$_pwd" "$@"

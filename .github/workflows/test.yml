@@ -23,6 +23,4 @@ jobs:
       - name: test
         shell: zsh -i {0}
         run: |
-          cat ~/.zshrc
-          echo $PATH
           which devenv

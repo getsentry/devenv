@@ -2,18 +2,22 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 from collections.abc import Sequence
 
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
+from devenv.constants import src_root
 from devenv.lib import gitroot
 
 
 def self_update(force: bool = False) -> int:
     # should check a well-known last-update file and check for updates daily
-    print("updated!")
-    return 0
+    print("Updating devenv tool...")
+    # We don't have any dependencies. If we do end up adding some,
+    # we should vendor to avoid pip calls to keep it lean and simple.
+    return subprocess.call(("git", "-C", src_root, "pull", "--ff-only", "origin", "main"))
 
 
 class CustomArgumentParser(argparse.ArgumentParser):

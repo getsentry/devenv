@@ -6,6 +6,8 @@ import tarfile
 import urllib.request
 from urllib.error import HTTPError
 
+from devenv.constants import pythons_root
+
 _pythons = {
     "cpython-3.8.16+20221220-aarch64-apple-darwin-install_only.tar.gz": "a71280128ef05311affb8196a8d80571e48952a50093907ffcad33d886d04736",  # noqa: E501
     # "cpython-3.8.16+20221220-x86_64-apple-darwin-install_only.tar.gz": ""
@@ -13,7 +15,6 @@ _pythons = {
 
 
 def get(python_version: str) -> str:
-    pythons_root = os.path.expanduser("~/.sentry-dev/pythons")
     unpack_into = f"{pythons_root}/{python_version}"
 
     if os.path.exists(f"{unpack_into}/python/bin/python3"):

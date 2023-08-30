@@ -6,10 +6,12 @@ import subprocess
 from collections.abc import Sequence
 
 from devenv import pythons
+from devenv.constants import venv_root
 
 help = "Resyncs the environment."
 
 scripts = {
+    # TODO: equivalent of make install-js-dev and make apply-migrations
     "sentry": """
 source "{venv}/bin/activate"
 export PIP_DISABLE_PIP_VERSION_CHECK=on
@@ -50,9 +52,8 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
         python_version = f.read().strip()
 
     # If the venv doesn't exist, create it with the expected python version.
-    venvroot = os.path.expanduser("~/.sentry-dev/virtualenvs")
-    os.makedirs(venvroot, exist_ok=True)
-    venv = f"{venvroot}/{repo}"
+    os.makedirs(venv_root, exist_ok=True)
+    venv = f"{venv_root}/{repo}"
 
     if not os.path.exists(venv):
         print(f"virtualenv for {repo} doesn't exist, creating one...")
@@ -74,7 +75,4 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
         subprocess.run((pythons.get(python_version), "-m", "venv", venv))
 
     print("Resyncing your venv.")
-    subprocess.run(["/bin/sh", "-c", scripts[repo].format(venv=venv)])
-
-    # TODO: equivalent of make install-js-dev and make apply-migrations
-    return 0
+    return subprocess.call(["/bin/sh", "-c", scripts[repo].format(venv=venv)])
