@@ -19,10 +19,9 @@ jobs:
           cd /tmp
           # should be able to be run from anywhere
           ./install-devenv.sh
-          cat ~/.zshrc
 
       - name: test
-        shell: zsh -l {0}
+        shell: zsh -i {0}
         run: |
           cat ~/.zshrc
           echo $PATH
