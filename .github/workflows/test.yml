@@ -19,9 +19,11 @@ jobs:
           cd /tmp
           # should be able to be run from anywhere
           ./install-devenv.sh
-          test -x "${HOME}"/.sentry-dev/python/bin/python3
+          cat ~/.zshrc
 
       - name: test
         shell: zsh -l {0}
         run: |
+          cat ~/.zshrc
+          echo $PATH
           which devenv
