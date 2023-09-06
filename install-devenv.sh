@@ -5,13 +5,12 @@ if [[ "$(uname -s)" != Darwin ]]; then
     exit 1
 fi
 
-# TODO: idempotent
-
-devenv_root="${HOME}/.sentry-dev"
+devenv_cache="${HOME}/.cache/sentry-devenv"
+devenv_root="${HOME}/.local/share/sentry-devenv"
 devenv_bin="${devenv_root}/bin"
 devenv_python_root="${devenv_root}/python"
 
-mkdir -p "$devenv_python_root" "$devenv_bin"
+mkdir -p "$devenv_cache" "$devenv_python_root" "$devenv_bin"
 
 platform=x86_64
 sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00
@@ -25,29 +24,38 @@ esac
 
 archive="cpython-3.11.4+20230726-${platform}-apple-darwin-install_only.tar.gz"
 
-tmpd=$(mktemp -d)
-trap 'rm -rf "$tmpd"' EXIT
-
 echo "Installing devenv..."
 
-curl -fsSL \
+[[ -f "${devenv_cache}/${archive}" ]] || \
+    curl -fsSL \
     "https://github.com/indygreg/python-build-standalone/releases/download/20230726/${archive}" \
-    -o "${tmpd}/${archive}"
+    -o "${devenv_cache}/${archive}"
 
-echo "${sha256}  ${tmpd}/${archive}" | /usr/bin/shasum -a 256 --check --status
+echo "${sha256}  ${devenv_cache}/${archive}" | /usr/bin/shasum -a 256 --check --status
 
-tar --strip-components=1 -C "$devenv_python_root" -x -f "${tmpd}/${archive}"
+tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${archive}"
 
 uri='git@github.com:getsentry/devenv'
 [[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
-git -C "$devenv_root" clone -q --depth=1 "$uri"
+[[ -d "${devenv_root}/devenv" ]] || \
+    git -C "$devenv_root" clone -q --depth=1 "$uri"
 
-if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
-    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
-    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
-fi
+[[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc"; do
+    read -r -p "Modify PATH in your .zshrc? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
+    case $REPLY in
+        [yY])
+            echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+            ;;
+        [nN])
+            echo "Okay. Make sure ${devenv_bin} is in your PATH then."
+            break
+            ;;
+        *) ;;
+    esac
+done
+
 ln -sf "${devenv_root}/devenv/devenv" "${devenv_bin}/devenv"
-
 echo "devenv installed at ${devenv_bin}/devenv"
 
 export PATH="${devenv_bin}:${PATH}"
