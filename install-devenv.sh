@@ -40,13 +40,12 @@ uri='git@github.com:getsentry/devenv'
 [[ -d "${devenv_root}/devenv" ]] || \
     git -C "$devenv_root" clone -q --depth=1 "$uri"
 
-while true; do
+[[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc"; do
     read -r -p "Modify PATH in your .zshrc? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
     case $REPLY in
         [yY])
-            /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc" ||
-                echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
-            break
+            echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
             ;;
         [nN])
             echo "Okay. Make sure ${devenv_bin} is in your PATH then."
