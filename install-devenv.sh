@@ -37,14 +37,26 @@ tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${archi
 
 uri='git@github.com:getsentry/devenv'
 [[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
-git -C "$devenv_root" clone -q --depth=1 "$uri"
+[[ -d "${devenv_root}/devenv" ]] || \
+    git -C "$devenv_root" clone -q --depth=1 "$uri"
 
-if [[ ":$PATH:" != *":$devenv_bin:"* ]]; then
-    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
-    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
-fi
+while true; do
+    read -r -p "Modify PATH in your .zshrc? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
+    case $REPLY in
+        [yY])
+            /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc" ||
+                echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+            break
+            ;;
+        [nN])
+            echo "Okay. Make sure ${devenv_bin} is in your PATH then."
+            break
+            ;;
+        *) ;;
+    esac
+done
+
 ln -sf "${devenv_root}/devenv/devenv" "${devenv_bin}/devenv"
-
 echo "devenv installed at ${devenv_bin}/devenv"
 
 export PATH="${devenv_bin}:${PATH}"
