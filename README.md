@@ -9,3 +9,9 @@ Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-
 ```
 bash install-devenv.sh
 ```
+
+## develop
+
+Follow the install instructions, then just work on the git repo in `~/.local/share/sentry-devenv/devenv`.
+Changes are immediately reflected in `devenv`.
+It isn't pip editable-installed, we just run python directly against the repo as module `devenv.main`.
