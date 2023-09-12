@@ -1,14 +1,35 @@
 from __future__ import annotations
 
 import os
+from abc import ABC
+from abc import abstractmethod
 from functools import cache
 from subprocess import CalledProcessError
 from subprocess import run
 
 
+class MetaCheck(ABC):
+    tags: set
+
+    @abstractmethod
+    def __repr__(self) -> str:
+        pass
+
+    @abstractmethod
+    def check(self) -> tuple[bool, str]:
+        pass
+
+    @abstractmethod
+    def fix(self) -> tuple[bool, str]:
+        pass
+
+
 @cache
-def gitroot(cd: str) -> str:
+def gitroot(cd: str = "") -> str:
     from os.path import normpath, join
+
+    if not cd:
+        cd = os.getcwd()
 
     try:
         proc = run(
