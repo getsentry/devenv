@@ -11,7 +11,7 @@ from devenv import pin_gha
 from devenv import sync
 from devenv.constants import root
 from devenv.constants import src_root
-from devenv.lib import gitroot
+from devenv.lib.fs import gitroot
 
 
 def self_update(force: bool = False) -> int:

@@ -23,16 +23,17 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)
-        check = module.Check
+        assert isinstance(module.name, str)
+        assert isinstance(module.tags, set)
         if match_tags:
-            if match_tags > check.tags:
+            if match_tags > module.tags:
                 continue
-        checks.append(check())
+        checks.append(module)
 
     # We run every check on a separate thread, aggregate the results,
     # attempt any fixes, then recheck and provide a final report.
     executor = ThreadPoolExecutor(max_workers=len(checks))
-    print(f"Running checks: {', '.join(f'{c!r}' for c in checks)}")
+    print(f"Running checks: {', '.join(f'{c.name}' for c in checks)}")
 
     futures = {}
     results = {}
@@ -45,9 +46,9 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
     for check, result in results.items():
         ok, msg = result
         if ok:
-            print(f"✅ check: {check}")
+            print(f"✅ check: {check.name}")
             continue
-        print(f"❌ check: {check}{msg}")
+        print(f"❌ check: {check.name}{msg}")
         retry.append(check)
 
     if not retry:
@@ -66,9 +67,9 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
     for check, result in results.items():
         ok, msg = result
         if ok:
-            print(f"✅ fix: {check}")
+            print(f"✅ fix: {check.name}")
             continue
-        print(f"❌ fix: {check}{msg}")
+        print(f"❌ fix: {check.name}{msg}")
 
     print("\nChecking again...")
     futures = {}
@@ -84,9 +85,9 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
     for check, result in results.items():
         ok, msg = result
         if ok:
-            print(f"✅ check {check}")
+            print(f"✅ check {check.name}")
             continue
-        print(f"❌ check {check}{msg}")
+        print(f"❌ check {check.name}{msg}")
         all_ok = False
 
     if all_ok:
