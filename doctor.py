@@ -6,12 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
 from typing import Dict
 
-help = "Diagnose and attempt to fix common issues."
+help = "Diagnose common issues, and optionally try to fix them."
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
-    parser.add_argument("--tag", type=str, action="append")
+    parser.add_argument("--tag", type=str, action="append", help="")
+    parser.add_argument("--fix", action="store_true", help="Run fixers.")
     args = parser.parse_args(argv)
 
     match_tags = set(args.tag if args.tag else ())
@@ -56,8 +57,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         print("\nLooks good to me.")
         executor.shutdown()
         return 0
+    else:
+        if not args.fix:
+            return 1
 
-    print("\nAttempting to run autofixes (if any) for the checks that failed...")
+    print("\nAttempting to run fixes for the checks that failed...")
     futures = {}
     results = {}
     for check in retry:
