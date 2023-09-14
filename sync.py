@@ -4,6 +4,7 @@ import argparse
 import os
 import subprocess
 from collections.abc import Sequence
+from typing import Dict
 
 from devenv import pythons
 from devenv.constants import venv_root
@@ -30,7 +31,7 @@ SENTRY_LIGHT_BUILD=1 $pip_install -e ../getsentry --no-deps
 }
 
 
-def main(context: dict, argv: Sequence[str] | None = None) -> int:
+def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.parse_args(argv)
 

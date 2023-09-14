@@ -5,6 +5,7 @@ import os
 import subprocess
 import time
 from collections.abc import Sequence
+from typing import NoReturn
 
 from devenv import doctor
 from devenv import pin_gha
@@ -34,7 +35,7 @@ def self_update(force: bool = False) -> int:
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
+    def error(self, message: str) -> NoReturn:
         print(
             f"""commands:
 update  - force updates devenv (autoupdated on a daily basis)

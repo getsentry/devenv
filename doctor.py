@@ -4,11 +4,12 @@ import argparse
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
+from typing import Dict
 
 help = "Diagnose and attempt to fix common issues."
 
 
-def main(context: dict, argv: Sequence[str] | None = None) -> int:
+def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument("--tag", type=str, action="append")
     args = parser.parse_args(argv)
@@ -22,7 +23,7 @@ def main(context: dict, argv: Sequence[str] | None = None) -> int:
 
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
-        module = module_finder.find_spec(name).loader.load_module(name)
+        module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         assert isinstance(module.name, str)
         assert isinstance(module.tags, set)
         if match_tags:
