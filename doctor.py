@@ -11,14 +11,16 @@ help = "Diagnose common issues, and optionally try to fix them."
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
-    parser.add_argument("--tag", type=str, action="append", help="")
+    parser.add_argument(
+        "--tag", type=str, action="append", help="Used to match a subset of checks."
+    )
     parser.add_argument("--check-only", action="store_true", help="Do not run fixers.")
     args = parser.parse_args(argv)
 
     match_tags = set(args.tag if args.tag else ())
 
     repo = context["repo"]
-    if repo not in {"sentry", "getsentry"}:
+    if repo not in {"sentry", "getsentry", "devenv"}:
         print(f"repo {repo} not supported yet!")
         return 1
 
@@ -31,6 +33,10 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             if match_tags > module.tags:
                 continue
         checks.append(module)
+
+    if not checks:
+        print(f"No checks found for tags: {args.tag}")
+        return 1
 
     # We run every check on a separate thread, aggregate the results,
     # attempt any fixes, then recheck and provide a final report.

@@ -55,7 +55,7 @@ while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc
     esac
 done
 
-ln -sf "${devenv_root}/devenv/devenv" "${devenv_bin}/devenv"
+ln -sf "${devenv_root}/devenv/bin/devenv" "${devenv_bin}/devenv"
 echo "devenv installed at ${devenv_bin}/devenv"
 
 export PATH="${devenv_bin}:${PATH}"

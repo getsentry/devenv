@@ -59,6 +59,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "sync",
         },
     )
+    parser.add_argument(
+        "--nocoderoot", action="store_true", help="Do not require being in coderoot."
+    )
     args, remainder = parser.parse_known_args(argv)
 
     if args.command == "update":
@@ -77,8 +80,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # TODO: read a well-known json for preferences
     coderoot = "dev"
-    if not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
-        print(f"You aren't in your code root (~/{coderoot})!")
+    if not args.nocoderoot and not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
+        print(
+            f"You aren't in your code root (~/{coderoot})!"
+            "To ignore, use devenv --nocoderoot [COMMAND]"
+        )
         return 1
 
     reporoot = gitroot(args.pwd)

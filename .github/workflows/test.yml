@@ -28,3 +28,12 @@ jobs:
         shell: zsh -i {0}
         run: |
           which devenv
+          {
+              devenv --nocoderoot doctor --check-only
+              [[ $? = 1 ]]
+          }
+          touch foo
+          devenv --nocoderoot doctor --check-only
+          rm foo
+          devenv --nocoderoot doctor
+          devenv --nocoderoot doctor
