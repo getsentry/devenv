@@ -22,7 +22,7 @@ jobs:
           mv install-devenv.sh /tmp
           cd /tmp
           # should be able to be run from anywhere
-          ./install-devenv.sh --branch "$GITHUB_REF_NAME"
+          ./install-devenv.sh ${{ github.ref_name }}
 
       - name: test
         shell: zsh -i {0}
