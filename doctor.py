@@ -30,7 +30,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         assert isinstance(module.name, str)
         assert isinstance(module.tags, set)
         if match_tags:
-            if match_tags > module.tags:
+            if not module.tags.issubset(match_tags):
                 continue
         checks.append(module)
 
