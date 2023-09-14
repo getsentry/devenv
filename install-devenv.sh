@@ -5,6 +5,8 @@ if [[ "$(uname -s)" != Darwin ]]; then
     exit 1
 fi
 
+branch=${1:-main}
+
 devenv_cache="${HOME}/.cache/sentry-devenv"
 devenv_root="${HOME}/.local/share/sentry-devenv"
 devenv_bin="${devenv_root}/bin"
@@ -35,10 +37,14 @@ echo "${sha256}  ${devenv_cache}/${archive}" | /usr/bin/shasum -a 256 --check --
 
 tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${archive}"
 
-uri='git@github.com:getsentry/devenv'
-[[ $CI ]] && uri='https://github.com/getsentry/devenv.git'
-[[ -d "${devenv_root}/devenv" ]] || \
-    git -C "$devenv_root" clone -q --depth=1 "$uri"
+if ! [[ -d "${devenv_root}/devenv" ]]; then
+    if [[ $CI ]]; then
+        git -C "$devenv_root" clone -q -b="$branch" --depth=1 'https://github.com/getsentry/devenv.git'
+    else
+        # This makes sure we clone over ssh so that github keys are working.
+        git -C "$devenv_root" clone -q -b="$branch" --depth=1 'git@github.com:getsentry/devenv'
+    fi
+fi
 
 [[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
 while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc"; do
