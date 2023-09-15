@@ -39,10 +39,10 @@ tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${archi
 
 if ! [[ -d "${devenv_root}/devenv" ]]; then
     if [[ $CI ]]; then
-        git -C "$devenv_root" clone -q -b="$branch" --depth=1 'https://github.com/getsentry/devenv.git'
+        git -C "$devenv_root" clone -q -b "$branch" --depth=1 'https://github.com/getsentry/devenv.git'
     else
         # This makes sure we clone over ssh so that github keys are working.
-        git -C "$devenv_root" clone -q -b="$branch" --depth=1 'git@github.com:getsentry/devenv'
+        git -C "$devenv_root" clone -q -b "$branch" --depth=1 'git@github.com:getsentry/devenv'
     fi
 fi
 
