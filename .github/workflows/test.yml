@@ -26,10 +26,11 @@ jobs:
 
       - name: bootstrap
         run: |
-          cat <<EOF >  ~/.config/sentry-devenv/config.ini
-[devenv]
-coderoot = /Users/josh/dev
-EOF
+          mkdir -p ~/.config/sentry-devenv
+          cat <<EOF > ~/.config/sentry-devenv/config.ini
+          [devenv]
+          coderoot = /Users/josh/dev
+          EOF
           devenv bootstrap
           false
 
