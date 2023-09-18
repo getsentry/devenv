@@ -12,8 +12,6 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     parser.add_argument("repo", type=str, nargs="?", default="sentry")
     args = parser.parse_args(argv)
 
-    print(args.repo, coderoot)
-
     # TODO: install xcode
 
     # TODO: setup github access

@@ -33,7 +33,6 @@ jobs:
           coderoot = /Users/josh/dev
           EOF
           devenv bootstrap
-          false
 
       - name: test
         shell: zsh -i {0}
