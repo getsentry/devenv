@@ -100,7 +100,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     coderoot = config["devenv"]["coderoot"]
 
     if args.command == "bootstrap":
-        return bootstrap.main(remainder)
+        return bootstrap.main(coderoot, remainder)
 
     # the remaining tools are repo-specific
     if not args.nocoderoot and not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):

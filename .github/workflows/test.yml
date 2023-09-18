@@ -26,8 +26,12 @@ jobs:
 
       - name: bootstrap
         run: |
-          true
-          # TODO need to provide input for configuring coderoot
+          cat <<EOF >  ~/.config/sentry-devenv/config.ini
+[devenv]
+coderoot = /Users/josh/dev
+EOF
+          devenv bootstrap
+          false
 
       - name: test
         shell: zsh -i {0}

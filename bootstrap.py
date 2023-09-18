@@ -7,12 +7,13 @@ from collections.abc import Sequence
 help = "Bootstraps the development environment."
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument("repo", type=str, nargs="?", default="sentry")
     args = parser.parse_args(argv)
 
-    print(args.repo)
+    print(args.repo, coderoot)
+
     # TODO: install xcode
 
     # TODO: setup github access
