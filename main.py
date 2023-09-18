@@ -5,13 +5,14 @@ import os
 import subprocess
 import time
 from collections.abc import Sequence
+from typing import NoReturn
 
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import root
 from devenv.constants import src_root
-from devenv.lib import gitroot
+from devenv.lib.fs import gitroot
 
 
 def self_update(force: bool = False) -> int:
@@ -34,7 +35,7 @@ def self_update(force: bool = False) -> int:
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
+    def error(self, message: str) -> NoReturn:
         print(
             f"""commands:
 update  - force updates devenv (autoupdated on a daily basis)
@@ -58,6 +59,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "sync",
         },
     )
+    parser.add_argument(
+        "--nocoderoot", action="store_true", help="Do not require being in coderoot."
+    )
     args, remainder = parser.parse_known_args(argv)
 
     if args.command == "update":
@@ -76,8 +80,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # TODO: read a well-known json for preferences
     coderoot = "dev"
-    if not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
-        print(f"You aren't in your code root (~/{coderoot})!")
+    if not args.nocoderoot and not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
+        print(
+            f"You aren't in your code root (~/{coderoot})!"
+            "To ignore, use devenv --nocoderoot [COMMAND]"
+        )
         return 1
 
     reporoot = gitroot(args.pwd)

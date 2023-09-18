@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import os
 from functools import cache
+from subprocess import CalledProcessError
+from subprocess import run
 
 
 @cache
-def gitroot(cd: str) -> str:
+def gitroot(cd: str = "") -> str:
     from os.path import normpath, join
-    from subprocess import CalledProcessError, run
+
+    if not cd:
+        cd = os.getcwd()
 
     try:
         proc = run(
