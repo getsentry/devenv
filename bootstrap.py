@@ -2,22 +2,20 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
-from typing import Dict
 
 
 help = "Bootstraps the development environment."
 
 
-def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
-    parser.add_argument("repo", type=str, default="sentry")
+    parser.add_argument("repo", type=str, nargs="?", default="sentry")
     args = parser.parse_args(argv)
 
-    # TODO: install xcode for git
+    print(args.repo)
+    # TODO: install xcode
 
     # TODO: setup github access
-
-    # TODO: ask for coderoot
 
     # TODO: clone sentry and getsentry
 
