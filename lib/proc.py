@@ -21,7 +21,7 @@ def run(cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, dict[str,
         raise SystemExit(f"{e}")
     except CalledProcessError as e:
         detail = f"""
-`{','.join(e.cmd)}` returned code {e.returncode}
+`{' '.join(e.cmd)}` returned code {e.returncode}
 stdout:
 {e.stdout.decode()}
 stderr:

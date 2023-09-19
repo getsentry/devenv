@@ -4,6 +4,7 @@ import argparse
 import os
 from collections.abc import Sequence
 
+from devenv.lib import fs
 from devenv.lib import proc
 
 
@@ -18,43 +19,46 @@ def check_github_ssh_access() -> bool:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
         if "You've successfully authenticated" in f"{e}":
             return True
-        print(f"{e}")
     return False
 
 
 def add_github_to_known_hosts() -> None:
-    fp = os.path.expanduser("~/.ssh/known_hosts")
     # https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
     fingerprints = """
 github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
 github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
 github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
 """  # noqa
-    if not os.path.exists(fp):
-        with open(fp, "w") as f:
-            f.write(fingerprints)
-            return
-    with open(fp, "r+") as f:
-        contents = f.read()
-        if "AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" not in contents:
-            f.write(fingerprints)
+    fs.idempotent_add(os.path.expanduser("~/.ssh/known_hosts"), fingerprints)
 
 
 def generate_and_configure_ssh_keypair() -> str:
-    proc.run(
-        (
-            "ssh-keygen",
-            "-t",
-            "ed25519",
-            "-a",
-            "100",
-            "-N",
-            "''",
-            "-f",
-            os.path.expanduser("~/.ssh/sentry-github"),
-        ),
-        exit=True,
+    fs.idempotent_add(
+        os.path.expanduser("~/.ssh/config"),
+        """Host github.com
+  User git
+  Hostname github.com
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/sentry-github""",
     )
+    private_key_path = os.path.expanduser("~/.ssh/sentry-github")
+    if not os.path.exists(private_key_path):
+        proc.run(
+            (
+                "ssh-keygen",
+                "-t",
+                "ed25519",
+                "-a",
+                "100",
+                "-N",
+                "",
+                "-f",
+                private_key_path,
+            ),
+            exit=True,
+        )
+    with open(f"{private_key_path}.pub") as f:
+        return f.read().strip()
 
 
 def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
@@ -77,10 +81,23 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     add_github_to_known_hosts()
 
     if not check_github_ssh_access():
-        print("Failed to authenticate with an ssh key to GitHub.")
-        generate_and_configure_ssh_keypair()
+        pubkey = generate_and_configure_ssh_keypair()
+        input(
+            f"""
+Failed to authenticate with an ssh key to GitHub.
+We've generated and configured one for you at ~/.ssh/sentry-github.
+Visit https://github.com/settings/ssh/new and add the following Authentication key:
 
-    # TODO: setup github access
+{pubkey}
+
+Then, you need to go to https://github.com/settings/keys, find your key,
+and click Configure SSO, for the getsentry organization.
+
+When done, hit ENTER to continue.
+"""
+        )
+        while not check_github_ssh_access():
+            input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
     # TODO: make coderoot and clone sentry and getsentry
 

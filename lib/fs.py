@@ -15,3 +15,14 @@ def gitroot(cd: str = "") -> str:
 
     stdout = proc.run(("git", "-C", cd, "rev-parse", "--show-cdup"), exit=True)
     return normpath(join(cd, stdout))
+
+
+def idempotent_add(filepath: str, text: str) -> None:
+    if not os.path.exists(filepath):
+        with open(filepath, "w") as f:
+            f.write(f"\n{text}\n")
+            return
+    with open(filepath, "r+") as f:
+        contents = f.read()
+        if text not in contents:
+            f.write(f"\n{text}\n")
