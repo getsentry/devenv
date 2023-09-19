@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import tempfile
 from collections.abc import Sequence
 
 from devenv.lib import fs
@@ -11,14 +12,24 @@ from devenv.lib import proc
 help = "Bootstraps the development environment."
 
 
-def check_github_ssh_access() -> bool:
+def check_github_ssh_access(git: str) -> bool:
     try:
         # The remote returns code 1 when successfully authenticated.
         proc.run(("ssh", "-T", "git@github.com"))
     except RuntimeError as e:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
-        if "You've successfully authenticated" in f"{e}":
+        if "You've successfully authenticated" not in f"{e}":
+            return False
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            proc.run(
+                (git, "-C", tmpdir, "clone", "--depth=1", "git@github.com:getsentry/private.git")
+            )
             return True
+    except RuntimeError as e:
+        # Failing to clone private repos under getsentry
+        # means that SSO isn't configured for the ssh key.
+        print(f"{e}")
     return False
 
 
@@ -80,7 +91,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
 
     add_github_to_known_hosts()
 
-    if not check_github_ssh_access():
+    if not check_github_ssh_access(xcode_git):
         pubkey = generate_and_configure_ssh_keypair()
         input(
             f"""
@@ -96,12 +107,38 @@ and click Configure SSO, for the getsentry organization.
 When done, hit ENTER to continue.
 """
         )
-        while not check_github_ssh_access():
+        while not check_github_ssh_access(xcode_git):
             input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
-    # TODO: make coderoot and clone sentry and getsentry
+    os.makedirs(coderoot, exist_ok=True)
 
-    # TODO: install brew and Brewfile
+    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
+    if not os.path.exists(f"{coderoot}/sentry"):
+        proc.run_stream_output(
+            (
+                xcode_git,
+                "-C",
+                coderoot,
+                "clone",
+                "--filter=blob:none",
+                "git@github.com:getsentry/sentry",
+            ),
+            exit=True,
+        )
+    if not os.path.exists(f"{coderoot}/getsentry"):
+        proc.run_stream_output(
+            (
+                xcode_git,
+                "-C",
+                coderoot,
+                "clone",
+                "--filter=blob:none",
+                "git@github.com:getsentry/getsentry",
+            ),
+            exit=True,
+        )
+
+    # TODO: install brew and sentry's Brewfile
 
     # TODO: install volta and direnv
 
