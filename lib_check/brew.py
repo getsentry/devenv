@@ -21,6 +21,9 @@ def packages() -> list[str]:
             },
         )
         leaves = proc.stdout.decode().split()
+    except FileNotFoundError as e:
+        # This is reachable if the command isn't found.
+        raise SystemExit(f"{e}")
     except CalledProcessError as e:
         raise SystemExit(f"brew failed: {e.stderr}")
     return leaves

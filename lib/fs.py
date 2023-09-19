@@ -20,6 +20,9 @@ def gitroot(cd: str = "") -> str:
             capture_output=True,
         )
         root = normpath(join(cd, proc.stdout.decode().strip()))
+    except FileNotFoundError as e:
+        # This is reachable if the command isn't found.
+        raise SystemExit(f"{e}")
     except CalledProcessError as e:
         raise SystemExit(f"git failed: {e.stderr}")
     return root
