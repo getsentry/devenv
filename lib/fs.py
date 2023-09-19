@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 from functools import cache
-from subprocess import CalledProcessError
-from subprocess import run
+
+from devenv.lib import proc
 
 
 @cache
@@ -13,16 +13,7 @@ def gitroot(cd: str = "") -> str:
     if not cd:
         cd = os.getcwd()
 
-    try:
-        proc = run(
-            ("git", "-C", cd, "rev-parse", "--show-cdup"),
-            check=True,
-            capture_output=True,
-        )
-        root = normpath(join(cd, proc.stdout.decode().strip()))
-    except FileNotFoundError as e:
-        # This is reachable if the command isn't found.
-        raise SystemExit(f"{e}")
-    except CalledProcessError as e:
-        raise SystemExit(f"git failed: {e.stderr}")
-    return root
+    stdout = proc.run(
+        ("git", "-C", cd, "rev-parse", "--show-cdup"),
+    )
+    return normpath(join(cd, stdout))

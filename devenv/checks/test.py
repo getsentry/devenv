@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from typing import Set
 from typing import Tuple
 
 from devenv.lib import fs
+from devenv.lib import proc
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
@@ -23,7 +23,7 @@ def check() -> Tuple[bool, str]:
 @fixer
 def fix() -> Tuple[bool, str]:
     try:
-        subprocess.run(
+        proc.run(
             (
                 "/bin/bash",
                 "-c",
@@ -31,19 +31,9 @@ def fix() -> Tuple[bool, str]:
 echo blah > foo
 """,
             ),
+            exit=False,
             cwd=fs.gitroot(),
-            check=True,
-            capture_output=True,
         )
-    except subprocess.CalledProcessError as e:
-        return (
-            False,
-            f"""
-`{e.cmd}` returned code {e.returncode}
-stdout:
-{e.stdout.decode()}
-stderr:
-{e.stderr.decode()}
-""",
-        )
-    return True, ""
+        return True, ""
+    except RuntimeError as e:
+        return False, f"{e}"
