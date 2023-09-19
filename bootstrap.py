@@ -11,8 +11,12 @@ from devenv.lib import proc
 
 help = "Bootstraps the development environment."
 
+CI = os.environ.get("CI")
+
 
 def check_github_ssh_access(git: str) -> bool:
+    if CI:
+        return True
     try:
         # The remote returns code 1 when successfully authenticated.
         proc.run(("ssh", "-T", "git@github.com"))
@@ -114,6 +118,7 @@ When done, hit ENTER to continue.
 
     # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
     if not os.path.exists(f"{coderoot}/sentry"):
+        additional_flags = ("--depth", "1") if CI else ()
         proc.run_stream_output(
             (
                 xcode_git,
@@ -121,11 +126,12 @@ When done, hit ENTER to continue.
                 coderoot,
                 "clone",
                 "--filter=blob:none",
+                *additional_flags,
                 "git@github.com:getsentry/sentry",
             ),
             exit=True,
         )
-    if not os.path.exists(f"{coderoot}/getsentry"):
+    if not CI and not os.path.exists(f"{coderoot}/getsentry"):
         proc.run_stream_output(
             (
                 xcode_git,

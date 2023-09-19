@@ -33,11 +33,6 @@ jobs:
           coderoot = $HOME/dev
           EOF
           devenv bootstrap
-          which git
-          git --version
-          /usr/bin/xcrun -f git
-          xcode-select --install
-          false
 
       - name: test
         shell: zsh -i {0}
