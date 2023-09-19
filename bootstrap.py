@@ -116,18 +116,23 @@ When done, hit ENTER to continue.
 
     os.makedirs(coderoot, exist_ok=True)
 
-    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
     if not os.path.exists(f"{coderoot}/sentry"):
-        additional_flags = ("--depth", "1") if CI else ()
+        # git@ clones forces the use of cloning through SSH which is what we want,
+        # though CI must clone open source repos via https (no git authentication)
+        additional_flags = (
+            ("--depth", "1", "https://github.com/getsentry/sentry")
+            if CI
+            else ("git@github.com:getsentry/sentry",)
+        )
         proc.run_stream_output(
             (
                 xcode_git,
                 "-C",
                 coderoot,
                 "clone",
+                # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
                 "--filter=blob:none",
                 *additional_flags,
-                "git@github.com:getsentry/sentry",
             ),
             exit=True,
         )
