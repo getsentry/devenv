@@ -103,10 +103,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return bootstrap.main(coderoot, remainder)
 
     # the remaining tools are repo-specific
-    if not args.nocoderoot and not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
+    if not args.nocoderoot and not args.pwd.startswith(coderoot):
         print(
-            f"You aren't in your code root (~/{coderoot})! "
-            "To ignore, use devenv --nocoderoot [COMMAND]"
+            f"You aren't in your code root ({coderoot})!\n"
+            "To ignore, use devenv --nocoderoot [COMMAND]\n"
+            f"To change your code root, you can edit {config_path}.\n"
         )
         return 1
 
