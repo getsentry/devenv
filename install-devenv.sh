@@ -67,4 +67,4 @@ echo "devenv installed at ${devenv_bin}/devenv"
 export PATH="${devenv_bin}:${PATH}"
 devenv update
 
-echo "All done! Open a new terminal and begin using devenv."
+echo "All done! Open a new terminal and run 'devenv bootstrap' to create your development environment."

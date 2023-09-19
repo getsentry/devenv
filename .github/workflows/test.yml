@@ -24,10 +24,19 @@ jobs:
           # should be able to be run from anywhere
           ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
 
+      - name: bootstrap
+        shell: zsh -i {0}
+        run: |
+          mkdir -p ~/.config/sentry-devenv
+          cat <<EOF > ~/.config/sentry-devenv/config.ini
+          [devenv]
+          coderoot = $HOME/dev
+          EOF
+          devenv bootstrap
+
       - name: test
         shell: zsh -i {0}
         run: |
-          which devenv
           {
               devenv --nocoderoot doctor --check-only
               [[ $? = 1 ]]

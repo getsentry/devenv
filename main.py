@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import os
 import subprocess
 import time
 from collections.abc import Sequence
 from typing import NoReturn
 
+from devenv import bootstrap
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
+from devenv.constants import config_root
 from devenv.constants import root
 from devenv.constants import src_root
 from devenv.lib.fs import gitroot
@@ -38,10 +41,11 @@ class CustomArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         print(
             f"""commands:
-update  - force updates devenv (autoupdated on a daily basis)
-doctor  - {doctor.help}
-sync    - {sync.help}
-pin-gha - {pin_gha.help}
+update    - force updates devenv (autoupdated on a daily basis)
+bootstrap - {bootstrap.help}
+doctor    - {doctor.help}
+sync      - {sync.help}
+pin-gha   - {pin_gha.help}
 """
         )
         raise SystemExit(1)
@@ -53,6 +57,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "command",
         choices={
+            "bootstrap",
             "update",
             "doctor",
             "pin-gha",
@@ -71,19 +76,38 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     os.chdir(args.pwd)
 
-    # generic/standalone tools
+    # generic/standalone tools that do not care about devenv configuration
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
-    # Future home of bootstrap-sentry, and then bootstrap-*.
+
+    config = configparser.ConfigParser()
+    config_path = f"{config_root}/config.ini"
+
+    if not os.path.exists(config_path):
+        coderoot = os.path.expanduser(
+            input("please enter the root directory where you want to work in [~/dev]: ")
+        ) or os.path.expanduser("~/dev")
+        os.makedirs(coderoot, exist_ok=True)
+
+        config["devenv"] = {"coderoot": coderoot}
+
+        os.makedirs(config_root, exist_ok=True)
+        with open(config_path, "w") as f:
+            config.write(f)
+        print(f"If you made a mistake, you can edit {config_path}.")
+
+    config.read(config_path)
+    coderoot = config["devenv"]["coderoot"]
+
+    if args.command == "bootstrap":
+        return bootstrap.main(coderoot, remainder)
 
     # the remaining tools are repo-specific
-
-    # TODO: read a well-known json for preferences
-    coderoot = "dev"
-    if not args.nocoderoot and not args.pwd.startswith(os.path.expanduser(f"~/{coderoot}")):
+    if not args.nocoderoot and not args.pwd.startswith(coderoot):
         print(
-            f"You aren't in your code root (~/{coderoot})!"
-            "To ignore, use devenv --nocoderoot [COMMAND]"
+            f"You aren't in your code root ({coderoot})!\n"
+            "To ignore, use devenv --nocoderoot [COMMAND]\n"
+            f"To change your code root, you can edit {config_path}.\n"
         )
         return 1
 
