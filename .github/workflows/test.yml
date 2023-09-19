@@ -30,7 +30,7 @@ jobs:
           mkdir -p ~/.config/sentry-devenv
           cat <<EOF > ~/.config/sentry-devenv/config.ini
           [devenv]
-          coderoot = /Users/josh/dev
+          coderoot = $HOME/dev
           EOF
           devenv bootstrap
 
