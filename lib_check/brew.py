@@ -9,6 +9,7 @@ def packages() -> list[str]:
     # note: brew leaves will not print out top-level casks unfortunately
     stdout = proc.run(
         ("brew", "list"),
+        exit=True,
         env={
             **os.environ,
             "HOMEBREW_NO_AUTO_UPDATE": "1",

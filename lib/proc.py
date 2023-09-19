@@ -6,7 +6,7 @@ from typing import Tuple
 from typing import Union
 
 
-def run(cmd: Tuple[str, ...], exit: bool = True, **kwargs: Union[str, dict[str, str]]) -> str:
+def run(cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, dict[str, str]]) -> str:
     try:
         proc = subprocess_run(
             cmd,
@@ -16,9 +16,9 @@ def run(cmd: Tuple[str, ...], exit: bool = True, **kwargs: Union[str, dict[str, 
         return proc.stdout.decode().strip()
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
-        if exit:
-            raise SystemExit(f"{e}")
-        raise RuntimeError(f"{e}")
+        if not exit:
+            raise RuntimeError(f"{e}")
+        raise SystemExit(f"{e}")
     except CalledProcessError as e:
         detail = f"""
 `{','.join(e.cmd)}` returned code {e.returncode}
@@ -27,6 +27,6 @@ stdout:
 stderr:
 {e.stderr.decode()}
 """
-        if exit:
-            raise SystemExit(detail)
-        raise RuntimeError(detail)
+        if not exit:
+            raise RuntimeError(detail)
+        raise SystemExit(detail)

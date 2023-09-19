@@ -31,7 +31,6 @@ def fix() -> Tuple[bool, str]:
 echo blah > foo
 """,
             ),
-            exit=False,
             cwd=fs.gitroot(),
         )
         return True, ""
