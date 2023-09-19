@@ -12,6 +12,7 @@ def run(cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, dict[str,
             cmd,
             check=True,
             capture_output=True,
+            **kwargs,
         )
         return proc.stdout.decode().strip()
     except FileNotFoundError as e:
@@ -40,6 +41,7 @@ def run_stream_output(
             cmd,
             check=True,
             capture_output=False,
+            **kwargs,
         )
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
