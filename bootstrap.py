@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
+from devenv.lib import proc
+
 
 help = "Bootstraps the development environment."
 
@@ -12,17 +14,20 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     parser.add_argument("repo", type=str, nargs="?", default="sentry")
     args = parser.parse_args(argv)
 
-    # xcode-select --install will take a while, and involves a GUI,
+    # xcode-select --install will take a while,
+    # and involves elevated permissions with a GUI,
     # so best to just let the user go through that separately then retrying,
     # rather than waiting for it.
     # There is a way to perform a headless install but it's more complex
     # (refer to how homebrew does it).
 
-    # xcode_git =
-    # let's use the git found by /usr/bin/xcrun -f git
-    # i am going to assume in CI that xcode software has succeeded
+    try:
+        xcode_git = proc.run(("/usr/bin/xcrun", "-f", "git"), exit=False)
+    except RuntimeError:
+        print("Run xcode-select --install, then come back to bootstrap when done.")
+        return 1
 
-    # TODO: install xcode
+    proc.run((xcode_git,))
 
     # TODO: setup github access
 
