@@ -8,3 +8,5 @@ root = os.path.expanduser("~/.local/share/sentry-devenv")
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 venv_root = f"{root}/virtualenvs"
+
+CI = os.environ.get("CI")
