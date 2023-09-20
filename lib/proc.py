@@ -6,15 +6,17 @@ from typing import Tuple
 from typing import Union
 
 
-def run(cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, dict[str, str]]) -> str:
+def run(
+    cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, bool, dict[str, str]]
+) -> str:
+    kwargs["check"] = True
+    kwargs["capture_output"] = True
     try:
         proc = subprocess_run(
             cmd,
-            check=True,
-            capture_output=True,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
-        return proc.stdout.decode().strip()
+        return proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if not exit:
@@ -34,14 +36,14 @@ stderr:
 
 
 def run_stream_output(
-    cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, dict[str, str]]
+    cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, bool, dict[str, str]]
 ) -> None:
+    kwargs["check"] = True
+    kwargs["capture_output"] = False
     try:
         subprocess_run(
             cmd,
-            check=True,
-            capture_output=False,
-            **kwargs,
+            **kwargs,  # type: ignore
         )
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
