@@ -4,6 +4,8 @@ import os
 
 from devenv.lib import proc
 
+repo_path = "/opt/homebrew"
+
 
 def packages() -> list[str]:
     # note: brew leaves will not print out top-level casks unfortunately
