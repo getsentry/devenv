@@ -32,6 +32,7 @@ jobs:
           [devenv]
           coderoot = $HOME/dev
           EOF
+          sudo rm /usr/local/bin/chromedriver
           devenv bootstrap
 
       - name: test

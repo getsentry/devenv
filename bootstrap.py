@@ -104,11 +104,18 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
+
         print("Installing sentry's brew dependencies...")
         proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
         # TODO: run devenv sync for getsentry
         # TODO: run make bootstrap for sentry and getsentry
 
+        # make bootstrap should be ported over to devenv sync,
+        # as it applies new migrations as well and so would need to ensure
+        # the appropriate devservices are running
+
+    # need to tell people to cd into sentry and start devserver
     print("All done! Please close this terminal window and start a fresh one.")
     return 0
