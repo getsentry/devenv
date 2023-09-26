@@ -79,6 +79,7 @@ When done, hit ENTER to continue.
                     "-C",
                     coderoot,
                     "clone",
+                    # Download all reachable commits and trees while fetching blobs on-demand
                     # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
                     "--filter=blob:none",
                     *additional_flags,
