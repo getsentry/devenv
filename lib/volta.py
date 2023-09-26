@@ -29,11 +29,11 @@ def install() -> None:
     url = "https://github.com/volta-cli/volta/releases/download/" f"v{_version}/{name}"
 
     archive_file = archive.download(url, _sha256[name])
-    archive.unpack(archive_file, unpack_into, strip1=True)
+    archive.unpack(archive_file, unpack_into)
 
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
-    proc.run(("volta", "-v"))
+    proc.run((f"{root}/bin/volta", "-v"), env={"VOLTA_HOME": VOLTA_HOME})
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 

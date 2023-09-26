@@ -40,13 +40,7 @@ def download(url: str, sha256: str) -> str:
     return dest
 
 
-def unpack(path: str, into: str, strip1: bool = False) -> None:
-    # `tar --strip-components=1` would be faster
-    # but requires gnu tar (not reliably available on macos)
+def unpack(path: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        members = []
-        for member in tarf.getmembers():
-            _, _, member.path = member.path.partition("/")
-            members.append(member)
-        tarf.extractall(into, members=members)
+        tarf.extractall(into)
