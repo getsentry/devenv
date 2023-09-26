@@ -5,9 +5,9 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
+from devenv.lib import brew
 from devenv.lib import github
 from devenv.lib import proc
-
 
 help = "Bootstraps the development environment."
 
@@ -62,6 +62,10 @@ When done, hit ENTER to continue.
         while not github.check_ssh_access():
             input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
+    brew.install()
+    # TODO: install volta
+    # TODO: install direnv
+
     os.makedirs(coderoot, exist_ok=True)
 
     if args.repo == "sentry":
@@ -98,8 +102,9 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        # TODO: install brew
-        # TODO: install volta
-        # TODO: install direnv
+        if not CI:
+            # TODO: full end-to-end testing once bootstrap is complete
+            print("Installing sentry's brew dependencies...")
+            proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
     return 0

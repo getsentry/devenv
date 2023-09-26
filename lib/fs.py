@@ -3,7 +3,20 @@ from __future__ import annotations
 import os
 from functools import cache
 
+from devenv.constants import home
 from devenv.lib import proc
+
+
+@cache
+def shellrc() -> str:
+    shell = os.environ["SHELL"].rpartition("/")[2]
+    if shell == "zsh":
+        return f"{home}/.zshrc"
+    if shell == "bash":
+        return f"{home}/.bashrc"
+    if shell == "fish":
+        return f"{home}/.config/fish/config.fish"
+    raise NotImplementedError(f"unsupported shell: {shell}")
 
 
 @cache
