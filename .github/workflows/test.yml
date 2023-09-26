@@ -46,3 +46,10 @@ jobs:
           rm foo
           devenv --nocoderoot doctor
           devenv --nocoderoot doctor
+
+      - name: sentry
+        shell: zsh -i {0}
+        run: |
+          git -C $HOME/dev/sentry checkout devenv-compat
+          cd $HOME/dev/sentry
+          direnv allow

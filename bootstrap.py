@@ -104,9 +104,11 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        if not CI:
-            # TODO: full end-to-end testing once bootstrap is complete
-            print("Installing sentry's brew dependencies...")
-            proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+        print("Installing sentry's brew dependencies...")
+        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+        proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
+        # TODO: run devenv sync for getsentry
+        # TODO: run make bootstrap for sentry and getsentry
 
+    print("All done! Please close this terminal window and start a fresh one.")
     return 0
