@@ -9,7 +9,7 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 
-def check_ssh_access(git: str) -> bool:
+def check_ssh_access() -> bool:
     if CI:
         return True
     try:
@@ -22,7 +22,7 @@ def check_ssh_access(git: str) -> bool:
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             proc.run(
-                (git, "-C", tmpdir, "clone", "--depth=1", "git@github.com:getsentry/private.git")
+                ("git", "-C", tmpdir, "clone", "--depth=1", "git@github.com:getsentry/private.git")
             )
             return True
     except RuntimeError as e:

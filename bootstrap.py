@@ -36,14 +36,14 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     # There is a way to perform a headless install but it's more complex
     # (refer to how homebrew does it).
     try:
-        xcode_git = proc.run(("/usr/bin/xcrun", "-f", "git"))
+        proc.run(("/usr/bin/xcrun", "-f", "git"))
     except RuntimeError:
         print("Failed to find git. Run xcode-select --install, then re-run bootstrap when done.")
         return 1
 
     github.add_to_known_hosts()
 
-    if not github.check_ssh_access(xcode_git):
+    if not github.check_ssh_access():
         pubkey = github.generate_and_configure_ssh_keypair()
         input(
             f"""
@@ -59,7 +59,7 @@ and click Configure SSO, for the getsentry organization.
 When done, hit ENTER to continue.
 """
         )
-        while not github.check_ssh_access(xcode_git):
+        while not github.check_ssh_access():
             input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
     os.makedirs(coderoot, exist_ok=True)
@@ -75,7 +75,7 @@ When done, hit ENTER to continue.
             )
             proc.run_stream_output(
                 (
-                    xcode_git,
+                    "git",
                     "-C",
                     coderoot,
                     "clone",
@@ -89,7 +89,7 @@ When done, hit ENTER to continue.
         if not CI and not os.path.exists(f"{coderoot}/getsentry"):
             proc.run_stream_output(
                 (
-                    xcode_git,
+                    "git",
                     "-C",
                     coderoot,
                     "clone",
