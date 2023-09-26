@@ -21,7 +21,7 @@ _sha256 = {
 def install() -> None:
     unpack_into = f"{root}/bin"
 
-    if which("brew") == f"{unpack_into}/volta":
+    if which("volta") == f"{unpack_into}/volta":
         return
 
     suffix = "-aarch64" if platform.machine() == "arm64" else ""
