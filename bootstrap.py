@@ -98,14 +98,8 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-
-    # TODO: install brew
-
-    if args.repo == "sentry":
-        pass
-        # TODO: sentry's Brewfile
-
-    # TODO: install volta
-    # TODO: install direnv
+        # TODO: install brew
+        # TODO: install volta
+        # TODO: install direnv
 
     return 0
