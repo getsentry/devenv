@@ -5,29 +5,32 @@ import os
 import secrets
 import shutil
 import tarfile
-import tempfile
 import urllib.request
 from urllib.error import HTTPError
 
+from devenv.constants import cache_root
+
 
 def download(url: str, sha256: str) -> str:
-    try:
-        resp = urllib.request.urlopen(url)
-    except HTTPError as e:
-        raise RuntimeError(f"Error getting {url}: {e}")
-
-    fd, dest = tempfile.mkstemp()
-    with open(fd, "wb") as f:
-        shutil.copyfileobj(resp, f)
+    dest = f"{cache_root}/{sha256}"
+    if not os.path.exists(dest):
+        os.makedirs(cache_root, exist_ok=True)
+        try:
+            resp = urllib.request.urlopen(url)
+        except HTTPError as e:
+            raise RuntimeError(f"Error getting {url}: {e}")
+        with open(dest, "wb") as f:
+            shutil.copyfileobj(resp, f)
 
     checksum = hashlib.sha256()
-    with open(fd, mode="rb", closefd=True) as f:
+    with open(dest, mode="rb") as f:
         bts = f.read(4096)
         while bts:
             checksum.update(bts)
             bts = f.read(4096)
 
     if not secrets.compare_digest(checksum.hexdigest(), sha256):
+        os.remove(dest)
         raise RuntimeError(
             f"checksum mismatch for {url}:\n"
             f"- got: {checksum.hexdigest()}\n"
@@ -37,8 +40,13 @@ def download(url: str, sha256: str) -> str:
     return dest
 
 
-def unpack(path: str, into: str) -> None:
+def unpack(path: str, into: str, strip1: bool = False) -> None:
+    # `tar --strip-components=1` would be faster
+    # but requires gnu tar (not reliably available on macos)
     os.makedirs(into, exist_ok=True)
-    with tarfile.open(name=path, mode="r:*") as f:
-        f.extractall(path=into)
-    os.remove(path)
+    with tarfile.open(name=path, mode="r:*") as tarf:
+        members = []
+        for member in tarf.getmembers():
+            _, _, member.path = member.path.partition("/")
+            members.append(member)
+        tarf.extractall(into, members=members)
