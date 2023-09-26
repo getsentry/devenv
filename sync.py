@@ -8,6 +8,7 @@ from typing import Dict
 
 from devenv import pythons
 from devenv.constants import venv_root
+from devenv.lib import proc
 
 help = "Resyncs the environment."
 
@@ -58,7 +59,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     if not os.path.exists(venv):
         print(f"virtualenv for {repo} doesn't exist, creating one...")
-        subprocess.run((pythons.get(python_version), "-m", "venv", venv))
+        proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     # Check the python version. If mismatch, then recreate the venv.
     # This helps smooth out the python version upgrade experience.
@@ -73,7 +74,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         print(f"outdated virtualenv version (python {venv_version})!")
         print("creating a new one...")
         # stampeding over it seems to work (no need for rm -rf)
-        subprocess.run((pythons.get(python_version), "-m", "venv", venv))
+        proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your venv.")
     return subprocess.call(["/bin/sh", "-c", scripts[repo].format(venv=venv)])

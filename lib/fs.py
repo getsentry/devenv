@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 from functools import cache
-from subprocess import CalledProcessError
-from subprocess import run
+
+from devenv.lib import proc
 
 
 @cache
@@ -13,13 +13,16 @@ def gitroot(cd: str = "") -> str:
     if not cd:
         cd = os.getcwd()
 
-    try:
-        proc = run(
-            ("git", "-C", cd, "rev-parse", "--show-cdup"),
-            check=True,
-            capture_output=True,
-        )
-        root = normpath(join(cd, proc.stdout.decode().strip()))
-    except CalledProcessError as e:
-        raise SystemExit(f"git failed: {e.stderr}")
-    return root
+    stdout = proc.run(("git", "-C", cd, "rev-parse", "--show-cdup"), exit=True)
+    return normpath(join(cd, stdout))
+
+
+def idempotent_add(filepath: str, text: str) -> None:
+    if not os.path.exists(filepath):
+        with open(filepath, "w") as f:
+            f.write(f"\n{text}\n")
+            return
+    with open(filepath, "r+") as f:
+        contents = f.read()
+        if text not in contents:
+            f.write(f"\n{text}\n")

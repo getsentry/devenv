@@ -13,6 +13,7 @@ from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import config_root
+from devenv.constants import home
 from devenv.constants import root
 from devenv.constants import src_root
 from devenv.lib.fs import gitroot
@@ -84,9 +85,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     config_path = f"{config_root}/config.ini"
 
     if not os.path.exists(config_path):
-        coderoot = os.path.expanduser(
-            input("please enter the root directory where you want to work in [~/dev]: ")
-        ) or os.path.expanduser("~/dev")
+        coderoot = (
+            os.path.expanduser(
+                input("please enter the root directory where you want to work in [~/dev]: ")
+            )
+            or f"{home}/dev"
+        )
         os.makedirs(coderoot, exist_ok=True)
 
         config["devenv"] = {"coderoot": coderoot}
