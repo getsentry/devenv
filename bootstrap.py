@@ -102,6 +102,8 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        # TODO: install from sentry brewfile
+
+        print("Installing sentry's brew dependencies...")
+        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
     return 0
