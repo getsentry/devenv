@@ -102,8 +102,9 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-
-        print("Installing sentry's brew dependencies...")
-        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+        if not CI:
+            # TODO: full end-to-end testing once bootstrap is complete
+            print("Installing sentry's brew dependencies...")
+            proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
     return 0
