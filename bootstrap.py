@@ -5,10 +5,9 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
-from devenv.lib import fs
+from devenv.lib import brew
 from devenv.lib import github
 from devenv.lib import proc
-from devenv.lib_check import brew
 
 help = "Bootstraps the development environment."
 
@@ -19,8 +18,6 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
         "repo", type=str, nargs="?", default="sentry", choices=("sentry", "getsentry")
     )
     args = parser.parse_args(argv)
-
-    shellrc = fs.shellrc()
 
     if args.repo == "getsentry":
         # Setting up sentry means we're setting up both repos.
@@ -65,6 +62,10 @@ When done, hit ENTER to continue.
         while not github.check_ssh_access():
             input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
+    brew.install()
+    # TODO: install volta
+    # TODO: install direnv
+
     os.makedirs(coderoot, exist_ok=True)
 
     if args.repo == "sentry":
@@ -101,44 +102,6 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-
-    # TODO: break this out into module. also, make it idempotent
-    print("You may be prompted for your password to install homebrew.")
-    while True:
-        try:
-            proc.run(
-                (
-                    "sudo",
-                    "bash",
-                    "-c",
-                    f"""
-mkdir -p {brew.repo_path}
-chown {os.environ['USER']} {brew.repo_path}
-""",
-                ),
-                exit=False,
-            )
-        except RuntimeError:
-            continue
-        break
-
-    if not os.path.exists(brew.repo_path):
-        proc.run(
-            (
-                "git",
-                "-C",
-                brew.repo_path,
-                "clone",
-                # homebrew works without any previous history as updating is just pulling
-                "--depth=1",
-                ".",
-            ),
-        )
-
-    out = proc.run(("/opt/homebrew/bin/brew", "shellenv"))
-    fs.idempotent_add(shellrc, out)
-
-    # TODO: install volta
-    # TODO: install direnv
+        # TODO: install from sentry brewfile
 
     return 0
