@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
-from shutil import which
+import shutil
 
 from devenv.constants import root
 from devenv.constants import shell
@@ -13,29 +13,25 @@ from devenv.lib import proc
 _version = "2.32.3"
 
 _sha256 = {
-    "direnv.darwin-amd64": "",  # noqa: E501
-    "direnv.darwin-arm64": "",  # noqa: E501
+    "direnv.darwin-amd64": "6ff42606edb38ffce5e1a3f4a1c69401e42a7c49b8bdc4ddafd705bc770bd15c",  # noqa: E501
+    "direnv.darwin-arm64": "dd053025ecae958118b3db2292721464e68da4fb319b80905a4cebba5ba9f069",  # noqa: E501
 }
 
 
 def install() -> None:
-    unpack_into = f"{root}/bin"
+    direnv_path = f"{root}/bin/direnv"
 
-    if which("brew") == f"{unpack_into}/volta":
+    if shutil.which("direnv") == direnv_path:
         return
 
     suffix = "arm64" if platform.machine() == "arm64" else "amd64"
     name = f"direnv.darwin-{suffix}"
     url = "https://github.com/direnv/direnv/releases/download" f"/v{_version}/{name}"
 
-    archive_file = archive.download(url, _sha256[name])
-    archive.unpack(archive_file, unpack_into)
+    archive.download(url, _sha256[name], dest=direnv_path)
+    os.chmod(direnv_path, 0o775)
 
-    # executing volta -v will populate the VOLTA_HOME directory
-    # with node/npm/yarn shims
-    proc.run((f"{root}/bin/volta", "-v"), env={"VOLTA_HOME": VOLTA_HOME})
-    if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
-        raise SystemExit("Failed to install volta!")
+    proc.run((direnv_path, "version"))
 
     fs.idempotent_add(
         fs.shellrc(),

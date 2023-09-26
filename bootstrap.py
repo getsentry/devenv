@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from devenv.constants import CI
 from devenv.lib import brew
+from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
 from devenv.lib import volta
@@ -65,7 +66,7 @@ When done, hit ENTER to continue.
 
     brew.install()
     volta.install()
-    # TODO: install direnv
+    direnv.install()
 
     os.makedirs(coderoot, exist_ok=True)
 
