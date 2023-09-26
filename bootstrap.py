@@ -20,9 +20,6 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    volta.install()
-    return 0
-
     if args.repo == "getsentry":
         # Setting up sentry means we're setting up both repos.
         args.repo = "sentry"
