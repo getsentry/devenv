@@ -18,6 +18,7 @@ def check_ssh_access() -> bool:
     except RuntimeError as e:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
         if "You've successfully authenticated" not in f"{e}":
+            print(f"{e}")
             return False
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
