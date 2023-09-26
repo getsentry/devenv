@@ -6,11 +6,13 @@ from shutil import which
 from devenv.lib import fs
 from devenv.lib import proc
 
-repo_path = "/opt/homebrew"
+homebrew_repo = "/opt/homebrew"
 
 
 def install() -> None:
-    if which("brew") == f"{repo_path}/bin/brew":
+    # idempotent: skip if brew is on the executing shell's path,
+    #             and it resolves to the expected location
+    if which("brew") == f"{homebrew_repo}/bin/brew":
         return
 
     shellrc = fs.shellrc()
@@ -23,8 +25,8 @@ def install() -> None:
                     "bash",
                     "-c",
                     f"""
-mkdir -p {repo_path}
-chown {os.environ['USER']} {repo_path}
+mkdir -p {homebrew_repo}
+chown {os.environ['USER']} {homebrew_repo}
 """,
                 ),
                 exit=False,
@@ -33,20 +35,18 @@ chown {os.environ['USER']} {repo_path}
             continue
         break
 
-    if not os.path.exists(f"{repo_path}/bin/brew"):
-        os.makedirs(repo_path, exist_ok=True)
-        proc.run(
-            (
-                "git",
-                "-C",
-                repo_path,
-                "clone",
-                # homebrew works without any previous history as updating is just pulling
-                "--depth=1",
-                "https://github.com/Homebrew/brew",
-                ".",
-            ),
-        )
+    proc.run(
+        (
+            "git",
+            "-C",
+            homebrew_repo,
+            "clone",
+            # homebrew works without any previous history as updating is just pulling
+            "--depth=1",
+            "https://github.com/Homebrew/brew",
+            ".",
+        ),
+    )
 
     out = proc.run(("/opt/homebrew/bin/brew", "shellenv"))
     fs.idempotent_add(shellrc, out)
