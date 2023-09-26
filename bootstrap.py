@@ -38,7 +38,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     try:
         xcode_git = proc.run(("/usr/bin/xcrun", "-f", "git"))
     except RuntimeError:
-        print("Run xcode-select --install, then come back to bootstrap when done.")
+        print("Failed to find git. Run xcode-select --install, then re-run bootstrap when done.")
         return 1
 
     github.add_to_known_hosts()
