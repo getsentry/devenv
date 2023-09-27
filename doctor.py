@@ -67,11 +67,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         if args.check_only:
             return 1
 
-    print("\nThe following problems have been identified:")
     skip = []
     for check in retry:
-        print(f"❌ {check.name}")
-        if input(f"Do you want to attempt to fix {check.name}? (Y/n): ").lower() in {
+        if input(f"\nDo you want to attempt to fix {check.name}? (Y/n): ").lower() in {
             "y",
             "yes",
             "",
@@ -84,7 +82,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             else:
                 print(f"❌ fix: {check.name}{msg}")
         else:
-            print(f"⏭️ Skipping {check.name}.")
+            print(f"⏭️ Skipping {check.name}")
             skip.append(check)
 
     print("\nChecking again...")
@@ -92,7 +90,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     results = {}
     for check in retry:
         if check in skip:
-            print(f"⏭️ Skipped {check.name}.")
+            print(f"⏭️ Skipped {check.name}")
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
