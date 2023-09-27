@@ -25,9 +25,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         return 1
 
     checks = []
-    for module_finder, name, ispkg in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
-    ):
+    for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         assert isinstance(module.name, str)
         assert isinstance(module.tags, set)
