@@ -26,8 +26,8 @@ pip uninstall -qqy uwsgi
 
 $pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
 
-SENTRY_LIGHT_BUILD=1 $pip_install -e . --no-deps
-SENTRY_LIGHT_BUILD=1 $pip_install -e ../getsentry --no-deps
+pip_install_editable='pip install --no-deps'
+SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
 """,
 }
 
