@@ -15,7 +15,7 @@ help = "Resyncs the environment."
 scripts = {
     # TODO: equivalent of make install-js-dev and make apply-migrations
     "sentry": """
-set -x
+pwd
 source "{venv}/bin/activate"
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
@@ -26,8 +26,6 @@ $pip_install --upgrade pip setuptools wheel
 #pip uninstall -qqy uwsgi
 
 #$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
-
-pip --version
 
 pip_install_editable='pip install --no-deps'
 SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
@@ -49,10 +47,10 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if repo == "getsentry":
         repo = "sentry"
         reporoot = f"{reporoot}/../sentry"
-        os.chdir(reporoot)
 
-    reporoot = context["reporoot"]
+    os.chdir(reporoot)
 
+    # TODO: delete getsentry's .python-version as it will no longer be used
     with open(f"{reporoot}/.python-version", "rt") as f:
         python_version = f.read().strip()
 
@@ -80,4 +78,4 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your venv.")
-    return subprocess.call(["/bin/bash", "-c", scripts[repo].format(venv=venv)])
+    return subprocess.call(["/bin/bash", "-euo", "pipefail", "-c", scripts[repo].format(venv=venv)])
