@@ -25,7 +25,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         return 1
 
     checks = []
-    for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
+    for module_finder, name, ispkg in walk_packages(
+        (f'{context["reporoot"]}/devenv/checks',)
+    ):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         assert isinstance(module.name, str)
         assert isinstance(module.tags, set)
@@ -71,7 +73,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     skip = []
     for check in retry:
         print(f"\t❌ {check.name}".expandtabs(4))
-        if input(f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)).lower() in {
+        if input(
+            f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+        ).lower() in {
             "y",
             "yes",
             "",
