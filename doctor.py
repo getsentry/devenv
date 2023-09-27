@@ -67,7 +67,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         if args.check_only:
             return 1
 
-    print("\nThe following checks need to be fixed:")
+    print("\nThe following problems have been identified:")
     skip = []
     for check in retry:
         print(f"❌ {check.name}")
