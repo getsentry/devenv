@@ -15,6 +15,7 @@ help = "Resyncs the environment."
 scripts = {
     # TODO: equivalent of make install-js-dev and make apply-migrations
     "sentry": """
+set -x
 source "{venv}/bin/activate"
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
@@ -22,9 +23,11 @@ pip_install='pip install --constraint requirements-dev-frozen.txt'
 $pip_install --upgrade pip setuptools wheel
 
 # pip doesn't do well with swapping drop-ins
-pip uninstall -qqy uwsgi
+#pip uninstall -qqy uwsgi
 
-$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+#$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+
+pip --version
 
 pip_install_editable='pip install --no-deps'
 SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
@@ -77,4 +80,4 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your venv.")
-    return subprocess.call(["/bin/sh", "-c", scripts[repo].format(venv=venv)])
+    return subprocess.call(["/bin/bash", "-c", scripts[repo].format(venv=venv)])
