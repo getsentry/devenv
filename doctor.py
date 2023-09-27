@@ -71,7 +71,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     skip = []
     for check in retry:
         print(f"❌ {check.name}")
-        if input(f"Do you want to attempt to fix {check.name}? (y/n): ").lower() == "y":
+        if input(f"Do you want to attempt to fix {check.name}? (Y/n): ").lower() in {
+            "y",
+            "yes",
+            "",
+        }:
             future = executor.submit(check.fix)
             result = future.result()
             ok, msg = result

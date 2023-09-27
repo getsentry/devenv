@@ -46,7 +46,7 @@ jobs:
           rm foo
           expect <<EOF
             spawn devenv --nocoderoot doctor
-            expect "Do you want to attempt to fix foo? (y/n): "
+            expect "Do you want to attempt to fix foo? (Y/n): "
             send "y\r"
             expect eof
           EOF
