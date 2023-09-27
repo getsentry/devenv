@@ -50,3 +50,4 @@ jobs:
             send "y\r"
             expect eof
           EOF
+          devenv --nocoderoot doctor
