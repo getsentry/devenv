@@ -92,7 +92,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     results = {}
     for check in retry:
         if check in skip:
-            print(f"⏭️ Skipping {check.name}.")
+            print(f"⏭️ Skipped {check.name}.")
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
