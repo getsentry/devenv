@@ -84,7 +84,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             else:
                 print(f"❌ fix: {check.name}{msg}")
         else:
-            print(f"Skipping {check.name}.")
+            print(f"⏭️ Skipping {check.name}.")
             skip.append(check)
 
     print("\nChecking again...")
