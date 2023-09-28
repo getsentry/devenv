@@ -46,7 +46,8 @@ jobs:
           version = "0.0.0"
           EOF
 
-          devenv bootstrap
+          echo $SHELL
+          SHELL=zsh devenv bootstrap
 
       - name: test
         shell: zsh -i {0}
