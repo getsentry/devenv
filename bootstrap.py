@@ -115,7 +115,7 @@ When done, hit ENTER to continue.
         proc.run_stream_output(
             (
                 shell,
-                "--login",
+                "-i",
                 "-euo",
                 "pipefail",
                 "-c",
