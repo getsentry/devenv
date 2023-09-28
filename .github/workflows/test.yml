@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: macos-13
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v3
@@ -51,6 +51,8 @@ jobs:
           version = "0.0.0"
           EOF
 
+          # note: colima will be used and is necessary for a docker runtime on
+          #       macos GitHub runners
           devenv bootstrap
 
       - name: test
