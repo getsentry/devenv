@@ -5,6 +5,7 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
+from devenv.constants import venv_root
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -85,9 +86,6 @@ When done, hit ENTER to continue.
                     "-C",
                     coderoot,
                     "clone",
-                    # Download all reachable commits and trees while fetching blobs on-demand
-                    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
-                    "--filter=blob:none",
                     *additional_flags,
                 ),
                 exit=True,
@@ -99,7 +97,6 @@ When done, hit ENTER to continue.
                     "-C",
                     coderoot,
                     "clone",
-                    "--filter=blob:none",
                     "git@github.com:getsentry/getsentry",
                 ),
                 exit=True,
@@ -108,13 +105,27 @@ When done, hit ENTER to continue.
         print("Installing sentry's brew dependencies...")
         proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
+        # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
-        # TODO: run devenv sync for getsentry
-        # TODO: run make bootstrap for sentry and getsentry
 
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
+        proc.run_stream_output(
+            (
+                "/bin/bash",
+                "-euo",
+                "pipefail",
+                "-c",
+                f"""
+source {venv_root}/sentry/bin/activate
+make bootstrap
+cd ../getsentry
+make bootstrap
+""",
+            ),
+            cwd=f"{coderoot}/sentry",
+        )
 
     # need to tell people to cd into sentry and start devserver
     print("All done! Please close this terminal window and start a fresh one.")

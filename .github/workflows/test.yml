@@ -46,6 +46,9 @@ jobs:
           version = "0.0.0"
           EOF
 
+          # colima will be removed soon, this lets bootstrap use docker
+          brew remove colima
+
           devenv bootstrap
 
       - name: test

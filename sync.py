@@ -77,4 +77,4 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your venv.")
-    return subprocess.call(["/bin/bash", "-euo", "pipefail", "-c", scripts[repo].format(venv=venv)])
+    return subprocess.call(("/bin/bash", "-euo", "pipefail", "-c", scripts[repo].format(venv=venv)))
