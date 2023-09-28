@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: macos-13
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
@@ -26,6 +26,21 @@ jobs:
           cd /tmp
           # should be able to be run from anywhere
           ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
+
+      - name: test
+        shell: zsh -i -euo pipefail {0}
+        env:
+          SHELL: zsh
+        run: |
+          {
+              devenv --nocoderoot doctor --check-only
+              [[ $? = 1 ]]
+          }
+          touch foo
+          devenv --nocoderoot doctor --check-only
+          rm foo
+          devenv --nocoderoot doctor
+          devenv --nocoderoot doctor
 
       - name: bootstrap
         shell: zsh -i -euo pipefail {0}
@@ -55,26 +70,6 @@ jobs:
           #       macos GitHub runners
           devenv bootstrap
 
-      - name: test
-        shell: zsh -i -euo pipefail {0}
-        env:
-          SHELL: zsh
-        run: |
-          {
-              devenv --nocoderoot doctor --check-only
-              [[ $? = 1 ]]
-          }
-          touch foo
-          devenv --nocoderoot doctor --check-only
-          rm foo
-          devenv --nocoderoot doctor
-          devenv --nocoderoot doctor
-
-      - name: sentry
-        shell: zsh -i -euo pipefail {0}
-        env:
-          SHELL: zsh
-        run: |
           git -C $HOME/dev/sentry checkout devenv-compat
           cd $HOME/dev/sentry
           direnv allow

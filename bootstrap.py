@@ -122,6 +122,11 @@ When done, hit ENTER to continue.
                 f"""
 source {venv_root}/sentry/bin/activate
 make bootstrap
+
+# we don't have permissions to clone getsentry which is a good thing
+# eventually we should move this bootstrap testing over to getsentry repo
+[[ -n $CI ]] && exit
+
 cd ../getsentry
 make bootstrap
 """,
