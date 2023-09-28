@@ -120,8 +120,6 @@ When done, hit ENTER to continue.
                 "pipefail",
                 "-c",
                 f"""
-which colima
-
 source {venv_root}/sentry/bin/activate
 make bootstrap
 cd ../getsentry

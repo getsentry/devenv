@@ -39,6 +39,10 @@ jobs:
           # needed for homebrew to succeed
           sudo rm /usr/local/bin/chromedriver
 
+          # we don't want colima in CI, it'll be removed soon anyways
+          # note: -i '' is BSD sed
+          /usr/bin/sed -i '' '/colima/d' $HOME/dev/sentry/Brewfile
+
           # we don't have permissions to clone getsentry which is a good thing
           # eventually we should move this bootstrap testing over to getsentry repo
           # in the meantime, mock it so that pip install -e has something to chew on
