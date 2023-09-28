@@ -15,7 +15,6 @@ help = "Resyncs the environment."
 scripts = {
     # TODO: equivalent of make install-js-dev and make apply-migrations
     "sentry": """
-pwd
 source "{venv}/bin/activate"
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
@@ -23,9 +22,9 @@ pip_install='pip install --constraint requirements-dev-frozen.txt'
 $pip_install --upgrade pip setuptools wheel
 
 # pip doesn't do well with swapping drop-ins
-#pip uninstall -qqy uwsgi
+pip uninstall -qqy uwsgi
 
-#$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
 
 pip_install_editable='pip install --no-deps'
 SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
