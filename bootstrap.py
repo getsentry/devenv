@@ -113,11 +113,15 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run_stream_output(
             (
-                "/bin/bash",
+                "zsh",
+                "-i",
                 "-euo",
                 "pipefail",
                 "-c",
                 f"""
+echo $PATH
+which volta
+which node
 source {venv_root}/sentry/bin/activate
 make bootstrap
 cd ../getsentry
