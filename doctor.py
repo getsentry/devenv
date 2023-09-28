@@ -54,9 +54,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     for check, result in results.items():
         ok, msg = result
         if ok:
-            print(f"✅ check: {check.name}")
+            print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
-        print(f"❌ check: {check.name}{msg}")
+        print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
         retry.append(check)
 
     if not retry:
@@ -67,25 +67,35 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         if args.check_only:
             return 1
 
-    print("\nAttempting to run fixes for the checks that failed...")
+    print("\nThe following problems have been identified:")
+    skip = []
+    for check in retry:
+        print(f"\t❌ {check.name}".expandtabs(4))
+        if input(
+            f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+        ).lower() in {
+            "y",
+            "yes",
+            "",
+        }:
+            future = executor.submit(check.fix)
+            result = future.result()
+            ok, msg = result
+            if ok:
+                print(f"\t\t✅ fix: {check.name}".expandtabs(4))
+            else:
+                print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
+        else:
+            print(f"\t\t⏭️ Skipping {check.name}".expandtabs(4))
+            skip.append(check)
+
+    print("\nChecking that fixes worked as expected...")
     futures = {}
     results = {}
     for check in retry:
-        futures[check] = executor.submit(check.fix)
-    for check, future in futures.items():
-        results[check] = future.result()
-
-    for check, result in results.items():
-        ok, msg = result
-        if ok:
-            print(f"✅ fix: {check.name}")
+        if check in skip:
+            print(f"\t⏭️ Skipped {check.name}".expandtabs(4))
             continue
-        print(f"❌ fix: {check.name}{msg}")
-
-    print("\nChecking again...")
-    futures = {}
-    results = {}
-    for check in retry:
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
         results[check] = future.result()
@@ -96,9 +106,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     for check, result in results.items():
         ok, msg = result
         if ok:
-            print(f"✅ check {check.name}")
+            print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
-        print(f"❌ check {check.name}{msg}")
+        print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
         all_ok = False
 
     if all_ok:
