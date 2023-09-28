@@ -114,14 +114,15 @@ When done, hit ENTER to continue.
         proc.run_stream_output(
             (
                 "zsh",
-                "-i",
+                "--login",
                 "-euo",
                 "pipefail",
                 "-c",
                 f"""
-echo $PATH
+env
 which volta
 which node
+ls -l $VOLTA_HOME/bin
 source {venv_root}/sentry/bin/activate
 make bootstrap
 cd ../getsentry

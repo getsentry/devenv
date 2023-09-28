@@ -37,6 +37,8 @@ def install() -> None:
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 
+    print(fs.shellrc())
+
     fs.idempotent_add(
         fs.shellrc(),
         f"""
