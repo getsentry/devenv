@@ -26,6 +26,8 @@ jobs:
 
       - name: bootstrap
         shell: zsh -i {0}
+        env:
+          SHELL: zsh
         run: |
           mkdir -p ~/.config/sentry-devenv $HOME/dev/getsentry
 
@@ -46,11 +48,12 @@ jobs:
           version = "0.0.0"
           EOF
 
-          echo $SHELL
-          SHELL=zsh devenv bootstrap
+          devenv bootstrap
 
       - name: test
         shell: zsh -i {0}
+        env:
+          SHELL: zsh
         run: |
           {
               devenv --nocoderoot doctor --check-only
@@ -64,6 +67,8 @@ jobs:
 
       - name: sentry
         shell: zsh -i {0}
+        env:
+          SHELL: zsh
         run: |
           git -C $HOME/dev/sentry checkout devenv-compat
           cd $HOME/dev/sentry

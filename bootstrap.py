@@ -120,13 +120,7 @@ When done, hit ENTER to continue.
                 "pipefail",
                 "-c",
                 f"""
-echo $PATH
-echo $VOLTA_HOME
-which volta
-which node
-
-# colima will be removed soon, this lets make bootstrap use docker
-brew remove colima
+which colima
 
 source {venv_root}/sentry/bin/activate
 make bootstrap
