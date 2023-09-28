@@ -18,6 +18,9 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
       - name: install
+        shell: zsh -i -euo pipefail {0}
+        env:
+          SHELL: zsh
         run: |
           mv install-devenv.sh /tmp
           cd /tmp
@@ -25,7 +28,7 @@ jobs:
           ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
 
       - name: bootstrap
-        shell: zsh -i {0}
+        shell: zsh -i -euo pipefail {0}
         env:
           SHELL: zsh
         run: |
@@ -39,10 +42,6 @@ jobs:
           # needed for homebrew to succeed
           sudo rm /usr/local/bin/chromedriver
 
-          # we don't want colima in CI, it'll be removed soon anyways
-          # note: -i '' is BSD sed
-          /usr/bin/sed -i '' '/colima/d' $HOME/dev/sentry/Brewfile
-
           # we don't have permissions to clone getsentry which is a good thing
           # eventually we should move this bootstrap testing over to getsentry repo
           # in the meantime, mock it so that pip install -e has something to chew on
@@ -55,7 +54,7 @@ jobs:
           devenv bootstrap
 
       - name: test
-        shell: zsh -i {0}
+        shell: zsh -i -euo pipefail {0}
         env:
           SHELL: zsh
         run: |
@@ -70,7 +69,7 @@ jobs:
           devenv --nocoderoot doctor
 
       - name: sentry
-        shell: zsh -i {0}
+        shell: zsh -i -euo pipefail {0}
         env:
           SHELL: zsh
         run: |

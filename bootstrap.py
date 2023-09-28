@@ -103,6 +103,10 @@ When done, hit ENTER to continue.
                 exit=True,
             )
 
+        # we don't want colima in CI, it'll be removed soon anyways
+        # note: -i '' is BSD sed
+        proc.run(("/usr/bin/sed", "-i", "''", "'/colima/d'", f"{coderoot}/sentry/Brewfile"))
+
         print("Installing sentry's brew dependencies...")
         proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
