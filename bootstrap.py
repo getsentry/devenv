@@ -5,6 +5,7 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
+from devenv.constants import shell
 from devenv.constants import venv_root
 from devenv.lib import brew
 from devenv.lib import direnv
@@ -113,16 +114,20 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run_stream_output(
             (
-                "zsh",
+                shell,
                 "--login",
                 "-euo",
                 "pipefail",
                 "-c",
                 f"""
-env
+echo $PATH
+echo $VOLTA_HOME
 which volta
 which node
-ls -l $VOLTA_HOME/bin
+
+# colima will be removed soon, this lets make bootstrap use docker
+brew remove colima
+
 source {venv_root}/sentry/bin/activate
 make bootstrap
 cd ../getsentry
