@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
-from typing import Dict, List, Set, Tuple, Callable
-from devenv.lib_check.types import checker, fixer
+from typing import Dict
+from typing import List
+from typing import Set
+from typing import Tuple
+
+from devenv.lib_check.types import checker
+from devenv.lib_check.types import fixer
 
 help = "Diagnose common issues, and optionally try to fix them."
 
