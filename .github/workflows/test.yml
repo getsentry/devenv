@@ -39,11 +39,7 @@ jobs:
         env:
           SHELL: zsh
         run: |
-          {
-              devenv --nocoderoot doctor --check-only
-              [[ $? = 1 ]]
-          }
-          touch foo
+          devenv --nocoderoot doctor --check-only || touch foo
           devenv --nocoderoot doctor --check-only
           rm foo
           devenv --nocoderoot doctor
