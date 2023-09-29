@@ -41,9 +41,8 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
         assert hasattr(module, "fix")
         assert callable(module.fix)
         if match_tags:
-            if not module.tags.issubset(match_tags):
-                continue
-        checks.append(Check(module.name, module.tags, module.check, module.fix))
+            if module.tags.issubset(match_tags):
+                checks.append(Check(module.name, module.tags, module.check, module.fix))
     return checks
 
 
