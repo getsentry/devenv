@@ -72,6 +72,6 @@ jobs:
           #       macos GitHub runners
           devenv bootstrap
 
-          git -C $HOME/dev/sentry checkout devenv-compat
+          git -C $HOME/dev/sentry checkout origin/devenv-compat
           cd $HOME/dev/sentry
           direnv allow
