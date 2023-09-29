@@ -5,6 +5,7 @@ from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
+from types import ModuleType
 from typing import Dict
 from typing import List
 from typing import Set
@@ -19,31 +20,33 @@ help = "Diagnose common issues, and optionally try to fix them."
 class Check:
     def __init__(
         self,
-        name: str,
-        tags: Set[str],
-        check: Callable[[], Tuple[bool, str]],
-        fix: Callable[[], Tuple[bool, str]],
+        module: ModuleType,
     ):
-        self.name = name
-        self.tags = tags
-        self.check = checker(check)
-        self.fix = fixer(fix)
+        # Check that the module has the required attributes.
+        assert isinstance(module.name, str)
+        self.name = module.name
+
+        assert isinstance(module.tags, set)
+        self.tags = module.tags
+
+        # Check that the module has the check and fix functions.
+        assert hasattr(module, "check")
+        assert callable(module.check)
+        self.check = checker(module.check)
+
+        assert hasattr(module, "fix")
+        assert callable(module.fix)
+        self.fix = fixer(module.fix)
 
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
-        assert isinstance(module.name, str)
-        assert isinstance(module.tags, set)
-        assert hasattr(module, "check")
-        assert callable(module.check)
-        assert hasattr(module, "fix")
-        assert callable(module.fix)
-        if match_tags:
-            if not module.tags.issubset(match_tags):
-                continue
-        checks.append(Check(module.name, module.tags, module.check, module.fix))
+        check = Check(module)
+        if match_tags and not check.tags.issuperset(match_tags):
+            continue
+        checks.append(check)
     return checks
 
 
