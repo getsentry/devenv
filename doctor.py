@@ -26,9 +26,7 @@ class Check:
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     checks = []
-    for module_finder, name, ispkg in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
-    ):
+    for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         assert isinstance(module.name, str)
         assert isinstance(module.tags, set)
@@ -45,7 +43,7 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
 
 def run_checks(
     checks: List[Check], executor: ThreadPoolExecutor, skip: List[Check] = []
-):
+) -> Dict[Check, Tuple[bool, str]]:
     futures = {}
     results = {}
     for check in checks:
