@@ -41,8 +41,9 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
         assert hasattr(module, "fix")
         assert callable(module.fix)
         if match_tags:
-            if module.tags.issubset(match_tags):
-                checks.append(Check(module.name, module.tags, module.check, module.fix))
+            if not module.tags.issubset(match_tags):
+                continue
+        checks.append(Check(module.name, module.tags, module.check, module.fix))
     return checks
 
 
@@ -101,9 +102,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     results = run_checks(checks, executor)
 
-    retry = filter_failing_checks(results)
+    failing_checks = filter_failing_checks(results)
 
-    if not retry:
+    if not failing_checks:
         print("\nLooks good to me.")
         executor.shutdown()
         return 0
@@ -113,7 +114,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     print("\nThe following problems have been identified:")
     skip = []
-    for check in retry:
+    for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
         if input(
             f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
@@ -134,7 +135,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")
-    results = run_checks(retry, executor, skip=skip)
+    results = run_checks(failing_checks, executor, skip=skip)
 
     executor.shutdown()
 
