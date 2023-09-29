@@ -62,16 +62,16 @@ def run_checks(
     return results
 
 
-def examine_results(results: Dict[Check, Tuple[bool, str]]) -> List[Check]:
-    retry = []
+def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]:
+    failing_checks = []
     for check, result in results.items():
         ok, msg = result
         if ok:
             print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
         print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
-        retry.append(check)
-    return retry
+        failing_checks.append(check)
+    return failing_checks
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -102,7 +102,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     results = run_checks(checks, executor)
 
-    retry = examine_results(results)
+    retry = filter_failing_checks(results)
 
     if not retry:
         print("\nLooks good to me.")
@@ -139,7 +139,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     executor.shutdown()
 
-    all_ok = len(examine_results(results)) == 0
+    all_ok = len(filter_failing_checks(results)) == 0
 
     if all_ok:
         print("\nLooks good to me now!")
