@@ -5,7 +5,6 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
-from devenv.constants import shell
 from devenv.constants import venv_root
 from devenv.lib import brew
 from devenv.lib import direnv
@@ -118,26 +117,17 @@ When done, hit ENTER to continue.
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run_stream_output(
-            (
-                shell,
-                "-i",
-                "-euo",
-                "pipefail",
-                "-c",
-                f"""
-source {venv_root}/sentry/bin/activate
-make bootstrap
-
-# we don't have permissions to clone getsentry which is a good thing
-# eventually we should move this bootstrap testing over to getsentry repo
-[[ -n $CI ]] && exit
-
-cd ../getsentry
-make bootstrap
-""",
-            ),
-            cwd=f"{coderoot}/sentry",
+            ("make", "bootstrap"), pathprepend=f"{venv_root}/sentry/bin", cwd=f"{coderoot}/sentry"
         )
+
+        if not CI:
+            # we don't have permissions to clone getsentry which is a good thing
+            # eventually we should move this bootstrap testing over to getsentry repo
+            proc.run_stream_output(
+                ("make", "bootstrap"),
+                pathprepend=f"{venv_root}/getsentry/bin",
+                cwd=f"{coderoot}/getsentry",
+            )
 
     print(
         f"""

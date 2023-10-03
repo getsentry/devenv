@@ -18,9 +18,9 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
       - name: install
-        shell: zsh -i -euo pipefail {0}
+        shell: bash -i -euo pipefail {0}
         env:
-          SHELL: zsh
+          SHELL: bash
         run: |
           mv install-devenv.sh /tmp
           cd /tmp
@@ -35,9 +35,9 @@ jobs:
           EOF
 
       - name: test
-        shell: zsh -i -euo pipefail {0}
+        shell: bash -i -euo pipefail {0}
         env:
-          SHELL: zsh
+          SHELL: bash
         run: |
           devenv --nocoderoot doctor --check-only || touch foo
           devenv --nocoderoot doctor --check-only
@@ -51,9 +51,9 @@ jobs:
           devenv --nocoderoot doctor
 
       - name: bootstrap
-        shell: zsh -i -euo pipefail {0}
+        shell: bash -i -euo pipefail {0}
         env:
-          SHELL: zsh
+          SHELL: bash
         run: |
           # needed for homebrew to succeed
           sudo rm /usr/local/bin/chromedriver
