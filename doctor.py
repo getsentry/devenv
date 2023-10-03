@@ -22,9 +22,11 @@ class Check:
         module: ModuleType,
     ):
         # Check that the module has the required attributes.
+        assert hasattr(module, "name")
         assert isinstance(module.name, str)
         self.name = module.name
 
+        assert hasattr(module, "tags")
         assert isinstance(module.tags, set)
         self.tags = module.tags
 
@@ -44,7 +46,7 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         try:
             check = Check(module)
-        except (AttributeError, AssertionError):
+        except AssertionError:
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
