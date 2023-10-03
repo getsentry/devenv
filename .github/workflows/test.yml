@@ -72,6 +72,8 @@ jobs:
           #       macos GitHub runners
           devenv bootstrap
 
+          # TODO: remove this when it's merged
           git -C $HOME/dev/sentry checkout origin/devenv-compat
+
           cd $HOME/dev/sentry
           direnv allow

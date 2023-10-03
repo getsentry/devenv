@@ -76,8 +76,9 @@ When done, hit ENTER to continue.
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
+            # TODO: remove devenv-compat when it's merged
             additional_flags = (
-                ("--depth", "1", "https://github.com/getsentry/sentry")
+                ("--depth", "1", "--branch", "devenv-compat", "https://github.com/getsentry/sentry")
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
@@ -127,8 +128,6 @@ When done, hit ENTER to continue.
                 "pipefail",
                 "-c",
                 f"""
-git checkout devenv-compat
-
 source {venv_root}/sentry/bin/activate
 make bootstrap
 
