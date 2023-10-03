@@ -8,6 +8,7 @@ from devenv.constants import CI
 from devenv.lib import brew
 from devenv.lib import github
 from devenv.lib import proc
+from devenv.lib import volta
 
 help = "Bootstraps the development environment."
 
@@ -63,7 +64,7 @@ When done, hit ENTER to continue.
             input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
     brew.install()
-    # TODO: install volta
+    volta.install()
     # TODO: install direnv
 
     os.makedirs(coderoot, exist_ok=True)
