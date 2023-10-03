@@ -111,9 +111,6 @@ When done, hit ENTER to continue.
         print("Installing sentry's brew dependencies...")
         proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
-        # TODO: start colima silently in background here so that CI can be faster
-        # proc.fire_and_forget
-
         # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
 
@@ -142,6 +139,12 @@ make bootstrap
             cwd=f"{coderoot}/sentry",
         )
 
-    # need to tell people to cd into sentry and start devserver
-    print("All done! Please close this terminal window and start a fresh one.")
+    print(
+        f"""
+All done! Please close this terminal window and start a fresh one.
+
+Sentry has been set up in {coderoot}/sentry. cd into it and you should
+be able to run `sentry devserver`.
+"""
+    )
     return 0
