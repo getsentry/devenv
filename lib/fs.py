@@ -4,12 +4,12 @@ import os
 from functools import cache
 
 from devenv.constants import home
+from devenv.constants import shell
 from devenv.lib import proc
 
 
 @cache
 def shellrc() -> str:
-    shell = os.environ["SHELL"].rpartition("/")[2]
     if shell == "zsh":
         return f"{home}/.zshrc"
     if shell == "bash":

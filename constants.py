@@ -10,3 +10,5 @@ root = f"{home}/.local/share/sentry-devenv"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 venv_root = f"{root}/virtualenvs"
+
+shell = os.environ["SHELL"].rpartition("/")[2]

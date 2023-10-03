@@ -11,10 +11,12 @@ from urllib.error import HTTPError
 from devenv.constants import cache_root
 
 
-def download(url: str, sha256: str) -> str:
-    dest = f"{cache_root}/{sha256}"
-    if not os.path.exists(dest):
+def download(url: str, sha256: str, dest: str = "") -> str:
+    if not dest:
+        dest = f"{cache_root}/{sha256}"
         os.makedirs(cache_root, exist_ok=True)
+
+    if not os.path.exists(dest):
         try:
             resp = urllib.request.urlopen(url)
         except HTTPError as e:
