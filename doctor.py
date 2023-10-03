@@ -42,7 +42,10 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
-        check = Check(module)
+        try:
+            check = Check(module)
+        except (AttributeError, AssertionError) as e:
+            continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
         checks.append(check)
