@@ -117,7 +117,11 @@ When done, hit ENTER to continue.
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run_stream_output(
-            ("make", "bootstrap"), pathprepend=f"{venv_root}/sentry/bin", cwd=f"{coderoot}/sentry"
+            ("make", "bootstrap"),
+            # VIRTUAL_ENV is not needed, it's just to keep sentry's lib/ensure_venv.sh happy
+            env={**os.environ, "VIRTUAL_ENV": f"{venv_root}/sentry"},
+            pathprepend=f"{venv_root}/sentry/bin",
+            cwd=f"{coderoot}/sentry",
         )
 
         if not CI:
@@ -125,7 +129,9 @@ When done, hit ENTER to continue.
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run_stream_output(
                 ("make", "bootstrap"),
-                pathprepend=f"{venv_root}/getsentry/bin",
+                env={**os.environ, "VIRTUAL_ENV": f"{venv_root}/sentry"},
+                # reminder that getsentry and sentry share the same venv
+                pathprepend=f"{venv_root}/sentry/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 
