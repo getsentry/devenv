@@ -110,6 +110,9 @@ When done, hit ENTER to continue.
         print("Installing sentry's brew dependencies...")
         proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
+        # TODO: start colima silently in background here so that CI can be faster
+        # proc.fire_and_forget
+
         # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
 
@@ -124,6 +127,8 @@ When done, hit ENTER to continue.
                 "pipefail",
                 "-c",
                 f"""
+git checkout devenv-compat
+
 source {venv_root}/sentry/bin/activate
 make bootstrap
 
