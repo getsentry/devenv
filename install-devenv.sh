@@ -41,20 +41,23 @@ if ! [[ -d "${devenv_root}/devenv" ]]; then
     git -C "$devenv_root" clone -q -b "$branch" --depth=1 'https://github.com/getsentry/devenv.git'
 fi
 
-[[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
-while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc"; do
-    read -r -p "Modify PATH in your .zshrc? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
-    case $REPLY in
-        [yY])
-            echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
-            ;;
-        [nN])
-            echo "Okay. Make sure ${devenv_bin} is in your PATH then."
-            break
-            ;;
-        *) ;;
-    esac
-done
+if [[ $CI ]]; then
+    echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.bashrc
+else
+    while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "${HOME}/.zshrc"; do
+        read -r -p "Modify PATH in your .zshrc? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
+        case $REPLY in
+            [yY])
+                echo "export PATH=\"$devenv_bin:\$PATH\"" >> ~/.zshrc
+                ;;
+            [nN])
+                echo "Okay. Make sure ${devenv_bin} is in your PATH then."
+                break
+                ;;
+            *) ;;
+        esac
+    done
+fi
 
 ln -sf "${devenv_root}/devenv/bin/devenv" "${devenv_bin}/devenv"
 echo "devenv installed at ${devenv_bin}/devenv"
