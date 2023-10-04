@@ -23,8 +23,8 @@ def test_run_checks_one_failing_check() -> None:
 
 def test_run_checks_one_passing_and_one_failing_check() -> None:
     assert doctor.run_checks([passing_check, failing_check], doctor.ThreadPoolExecutor()) == {
-      passing_check: (True, ""),
-      failing_check: (False, ""),
+        passing_check: (True, ""),
+        failing_check: (False, ""),
     }
 
 
