@@ -10,29 +10,35 @@ def test_run_checks_no_checks() -> None:
 
 
 def test_run_checks_one_passing_check() -> None:
-    assert doctor.run_checks([passing_check], doctor.ThreadPoolExecutor()) == {
-        passing_check: (True, "")
+    check = doctor.Check(passing_check)
+    assert doctor.run_checks([check], doctor.ThreadPoolExecutor()) == {
+        check: (True, "")
     }
 
 
 def test_run_checks_one_failing_check() -> None:
-    assert doctor.run_checks([failing_check], doctor.ThreadPoolExecutor()) == {
-        failing_check: (False, "")
+    check = doctor.Check(failing_check)
+    assert doctor.run_checks([check], doctor.ThreadPoolExecutor()) == {
+        check: (False, "")
     }
 
 
 def test_run_checks_one_passing_and_one_failing_check() -> None:
-    assert doctor.run_checks([passing_check, failing_check], doctor.ThreadPoolExecutor()) == {
-        passing_check: (True, ""),
-        failing_check: (False, ""),
+    first_check = doctor.Check(passing_check)
+    second_check = doctor.Check(failing_check)
+    assert doctor.run_checks([first_check, second_check], doctor.ThreadPoolExecutor()) == {
+        first_check: (True, ""),
+        second_check: (False, ""),
     }
 
 
 def test_run_checks_skip(capsys) -> None:
+    first_check = doctor.Check(passing_check)
+    second_check = doctor.Check(failing_check)
     assert doctor.run_checks(
-        [passing_check, failing_check],
+        [first_check, second_check],
         doctor.ThreadPoolExecutor(),
-        skip=[failing_check],
-    ) == {passing_check: (True, "")}
+        skip=[second_check],
+    ) == {first_check: (True, "")}
     captured = capsys.readouterr()
     assert captured.out == "    ⏭️ Skipped failing check\n"

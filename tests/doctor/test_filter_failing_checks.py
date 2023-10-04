@@ -10,24 +10,30 @@ def test_filter_failing_checks_no_checks() -> None:
 
 
 def test_filter_failing_checks_one_passing_check() -> None:
-    assert doctor.filter_failing_checks({passing_check: (True, "")}) == []
+    check = doctor.Check(passing_check)
+    assert doctor.filter_failing_checks({check: (True, "")}) == []
 
 
 def test_filter_failing_checks_one_failing_check() -> None:
-    assert doctor.filter_failing_checks({failing_check: (False, "")}) == [failing_check]
+    check = doctor.Check(failing_check)
+    assert doctor.filter_failing_checks({check: (False, "")}) == [check]
 
 
 def test_filter_failing_checks_one_passing_and_one_failing_check() -> None:
+    first_check = doctor.Check(passing_check)
+    second_check = doctor.Check(failing_check)
     assert doctor.filter_failing_checks(
-        {passing_check: (True, ""), failing_check: (False, "")}
-    ) == [failing_check]
+        {first_check: (True, ""), second_check: (False, "")}
+    ) == [second_check]
 
 
 def test_filter_failing_checks_no_duplicate_checks() -> None:
+    first_check = doctor.Check(passing_check)
+    second_check = doctor.Check(failing_check)
     assert doctor.filter_failing_checks(
         {
-            passing_check: (True, ""),
-            failing_check: (False, ""),
-            failing_check: (False, ""),
+            first_check: (True, ""),
+            second_check: (False, ""),
+            second_check: (False, ""),
         }
-    ) == [failing_check]
+    ) == [second_check]
