@@ -1,7 +1,8 @@
-from devenv import doctor
-from devenv.tests.doctor.devenv.checks import failing_check
-from devenv.tests.doctor.devenv.checks import passing_check
+from __future__ import annotations
+
 import os
+
+from devenv import doctor
 
 
 def test_load_checks_no_checks() -> None:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from devenv import doctor
 from devenv.tests.doctor.devenv.checks import failing_check
 from devenv.tests.doctor.devenv.checks import passing_check
@@ -20,9 +22,10 @@ def test_run_checks_one_failing_check() -> None:
 
 
 def test_run_checks_one_passing_and_one_failing_check() -> None:
-    assert doctor.run_checks(
-        [passing_check, failing_check], doctor.ThreadPoolExecutor()
-    ) == {passing_check: (True, ""), failing_check: (False, "")}
+    assert doctor.run_checks([passing_check, failing_check], doctor.ThreadPoolExecutor()) == {
+      passing_check: (True, ""),
+      failing_check: (False, ""),
+    }
 
 
 def test_run_checks_skip(capsys) -> None:
