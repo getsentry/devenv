@@ -13,16 +13,12 @@ def test_run_checks_no_checks() -> None:
 
 def test_run_checks_one_passing_check() -> None:
     check = doctor.Check(passing_check)
-    assert doctor.run_checks([check], ThreadPoolExecutor()) == {
-        check: (True, "")
-    }
+    assert doctor.run_checks([check], ThreadPoolExecutor()) == {check: (True, "")}
 
 
 def test_run_checks_one_failing_check() -> None:
     check = doctor.Check(failing_check)
-    assert doctor.run_checks([check], ThreadPoolExecutor()) == {
-        check: (False, "")
-    }
+    assert doctor.run_checks([check], ThreadPoolExecutor()) == {check: (False, "")}
 
 
 def test_run_checks_one_passing_and_one_failing_check() -> None:
@@ -34,7 +30,7 @@ def test_run_checks_one_passing_and_one_failing_check() -> None:
     }
 
 
-def test_run_checks_skip(capsys) -> None: # type: ignore
+def test_run_checks_skip(capsys) -> None:  # type: ignore
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(failing_check)
     assert doctor.run_checks(
