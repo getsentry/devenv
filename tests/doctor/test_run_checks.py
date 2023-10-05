@@ -50,7 +50,7 @@ def test_run_checks_skip(capsys) -> None:  # type: ignore
     assert captured.out == "    ⏭️  Skipped failing check\n"
 
 
-def test_run_multiple_passing_checks() -> None:
+def test_run_checks_multiple_passing_checks() -> None:
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(passing_check_with_no_fix)
     assert doctor.run_checks([first_check, second_check], ThreadPoolExecutor()) == {
@@ -59,7 +59,7 @@ def test_run_multiple_passing_checks() -> None:
     }
 
 
-def test_run_multiple_failing_checks() -> None:
+def test_run_checks_multiple_failing_checks() -> None:
     first_check = doctor.Check(failing_check)
     second_check = doctor.Check(failing_check_with_msg)
     third_check = doctor.Check(failing_check_with_no_fix)
