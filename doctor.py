@@ -47,6 +47,7 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
         try:
             check = Check(module)
         except AssertionError:
+            print(f"⚠️ Skipping {name} because it doesn't have the required attributes.")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
