@@ -62,7 +62,7 @@ def run_checks(
     results = {}
     for check in checks:
         if check in skip:
-            print(f"\t⏭️ Skipped {check.name}".expandtabs(4))
+            print(f"\t⏭️  Skipped {check.name}".expandtabs(4))
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
@@ -95,8 +95,7 @@ def prompt_for_fix(check: Check) -> bool:
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
     future = executor.submit(check.fix)
     result = future.result()
-    ok, msg = result
-    return ok, msg
+    return result
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -149,7 +148,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             else:
                 print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
         else:
-            print(f"\t\t⏭️ Skipping {check.name}".expandtabs(4))
+            print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")

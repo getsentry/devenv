@@ -45,4 +45,4 @@ def test_run_checks_skip(capsys) -> None:  # type: ignore
         skip=[second_check],
     ) == {first_check: (True, "")}
     captured = capsys.readouterr()
-    assert captured.out == "    ⏭️ Skipped failing check\n"
+    assert captured.out == "    ⏭️  Skipped failing check\n"
