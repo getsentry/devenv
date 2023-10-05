@@ -62,7 +62,7 @@ def run_checks(
     results = {}
     for check in checks:
         if check in skip:
-            print(f"\t⏭️ Skipped {check.name}".expandtabs(4))
+            print(f"\t⏭️  Skipped {check.name}".expandtabs(4))
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
@@ -80,6 +80,22 @@ def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]
         print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
         failing_checks.append(check)
     return failing_checks
+
+
+def prompt_for_fix(check: Check) -> bool:
+    return input(
+        f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+    ).lower() in {
+        "y",
+        "yes",
+        "",
+    }
+
+
+def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
+    future = executor.submit(check.fix)
+    result = future.result()
+    return result
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -124,22 +140,15 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     skip = []
     for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
-        if input(
-            f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
-        ).lower() in {
-            "y",
-            "yes",
-            "",
-        }:
-            future = executor.submit(check.fix)
-            result = future.result()
-            ok, msg = result
+        # Prompt for fixes one by one, so the user can decide to skip a fix.
+        if prompt_for_fix(check):
+            ok, msg = attempt_fix(check, executor)
             if ok:
                 print(f"\t\t✅ fix: {check.name}".expandtabs(4))
             else:
                 print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
         else:
-            print(f"\t\t⏭️ Skipping {check.name}".expandtabs(4))
+            print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")

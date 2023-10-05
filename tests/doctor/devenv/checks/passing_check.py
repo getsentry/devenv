@@ -6,7 +6,7 @@ from typing import Tuple
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
-tags: Set[str] = set()
+tags: Set[str] = set(["test", "pass"])
 name = "passing check"
 
 
