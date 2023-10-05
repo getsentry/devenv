@@ -25,10 +25,12 @@ def test_load_checks_test_checks(capsys) -> None:  # type: ignore
         set(),
     )
     loaded_check_names = [check.name for check in loaded_checks]
-    assert len(loaded_check_names) == 3
+    assert len(loaded_check_names) == 5
     assert "passing check" in loaded_check_names
     assert "failing check" in loaded_check_names
     assert "failing check with msg" in loaded_check_names
+    assert "passing check with no fix" in loaded_check_names
+    assert "failing check with no fix" in loaded_check_names
     captured = capsys.readouterr()
     assert (
         captured.out
@@ -46,8 +48,9 @@ def test_load_checks_only_passing_tag() -> None:
         {"pass"},
     )
     loaded_check_names = [check.name for check in loaded_checks]
-    assert len(loaded_check_names) == 1
+    assert len(loaded_check_names) == 2
     assert "passing check" in loaded_check_names
+    assert "passing check with no fix" in loaded_check_names
 
 
 def test_load_checks_only_failing_tag() -> None:
@@ -58,9 +61,10 @@ def test_load_checks_only_failing_tag() -> None:
         {"fail"},
     )
     loaded_check_names = [check.name for check in loaded_checks]
-    assert len(loaded_check_names) == 2
+    assert len(loaded_check_names) == 3
     assert "failing check" in loaded_check_names
     assert "failing check with msg" in loaded_check_names
+    assert "failing check with no fix" in loaded_check_names
 
 
 def test_load_checks_passing_and_failing_tag() -> None:
@@ -82,7 +86,9 @@ def test_load_checks_test_tag() -> None:
         {"test"},
     )
     loaded_check_names = [check.name for check in loaded_checks]
-    assert len(loaded_check_names) == 3
+    assert len(loaded_check_names) == 5
     assert "passing check" in loaded_check_names
     assert "failing check" in loaded_check_names
     assert "failing check with msg" in loaded_check_names
+    assert "passing check with no fix" in loaded_check_names
+    assert "failing check with no fix" in loaded_check_names
