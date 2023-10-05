@@ -21,7 +21,7 @@ class Check:
     name: str
     tags: Set[str]
     check: Callable[[], Tuple[bool, str]]
-    fix: Callable[[], Tuple[bool, str]] | None
+    fix: Callable[[], Tuple[bool, str]]
 
     def __init__(
         self,
@@ -41,11 +41,9 @@ class Check:
         assert callable(module.check)
         self.check = checker(module.check)
 
-        # Fix is optional.
-        if hasattr(module, "fix") and callable(module.fix):
-            self.fix = fixer(module.fix)
-        else:
-            self.fix = None
+        assert hasattr(module, "fix")
+        assert callable(module.fix)
+        self.fix = fixer(module.fix)
 
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
@@ -101,11 +99,8 @@ def prompt_for_fix(check: Check) -> bool:
 
 
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
-    if check.fix:
-        future = executor.submit(check.fix)
-        result = future.result()
-        return result
-    return (False, "No fix to run")
+    future = executor.submit(check.fix)
+    return future.result()
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -149,10 +144,6 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     print("\nThe following problems have been identified:")
     skip = []
     for check in failing_checks:
-        if not check.fix:
-            print(f"\t⏭️  Skipping {check.name} because it doesn't have a fix.".expandtabs(4))
-            skip.append(check)
-            continue
         print(f"\t❌ {check.name}".expandtabs(4))
         # Prompt for fixes one by one, so the user can decide to skip a fix.
         if prompt_for_fix(check):
