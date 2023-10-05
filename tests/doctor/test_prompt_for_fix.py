@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import builtins
 from unittest import mock
+
+import pytest  # type: ignore
 
 from devenv import doctor
 from devenv.tests.doctor.devenv.checks import passing_check
-
-import builtins
-import pytest  # type: ignore
 
 
 prompts_for_fix_yes: list[str] = [
@@ -37,11 +37,11 @@ prompts_for_fix_no: list[str] = [
 def test_prompt_for_fix_yes(yes: str) -> None:
     check = doctor.Check(passing_check)
     with mock.patch.object(builtins, "input", lambda _: yes):
-        assert doctor.prompt_for_fix(check) == True
+        assert doctor.prompt_for_fix(check)
 
 
 @pytest.mark.parametrize("no", prompts_for_fix_no)  # type: ignore
 def test_prompt_for_fix_no(no: str) -> None:
     check = doctor.Check(passing_check)
     with mock.patch.object(builtins, "input", lambda _: no):
-        assert doctor.prompt_for_fix(check) == False
+        assert not doctor.prompt_for_fix(check)

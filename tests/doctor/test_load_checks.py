@@ -73,7 +73,7 @@ def test_load_checks_passing_and_failing_tag() -> None:
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 0
 
-    
+
 def test_load_checks_test_tag() -> None:
     loaded_checks = doctor.load_checks(
         {
