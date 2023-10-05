@@ -17,7 +17,7 @@ def test_load_checks_no_checks() -> None:
     )
 
 
-def test_load_checks_test_checks() -> None:
+def test_load_checks_test_checks(capsys) -> None:  # type: ignore
     loaded_checks = doctor.load_checks(
         {
             "reporoot": os.path.join(os.path.dirname(__file__)),
@@ -28,3 +28,10 @@ def test_load_checks_test_checks() -> None:
     assert len(loaded_check_names) == 2
     assert "passing check" in loaded_check_names
     assert "failing check" in loaded_check_names
+    captured = capsys.readouterr()
+    assert (
+        captured.out
+        == """⚠️ Skipping no_check because it doesn't have the required attributes.
+⚠️ Skipping no_name because it doesn't have the required attributes.
+⚠️ Skipping no_tags because it doesn't have the required attributes.\n"""
+    )
