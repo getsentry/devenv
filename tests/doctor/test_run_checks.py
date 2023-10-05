@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from devenv import doctor
 from devenv.tests.doctor.devenv.checks import failing_check
+from devenv.tests.doctor.devenv.checks import failing_check_with_msg
 from devenv.tests.doctor.devenv.checks import passing_check
 
 
@@ -19,6 +20,11 @@ def test_run_checks_one_passing_check() -> None:
 def test_run_checks_one_failing_check() -> None:
     check = doctor.Check(failing_check)
     assert doctor.run_checks([check], ThreadPoolExecutor()) == {check: (False, "")}
+
+
+def test_run_checks_one_failing_check_with_msg() -> None:
+    check = doctor.Check(failing_check_with_msg)
+    assert doctor.run_checks([check], ThreadPoolExecutor()) == {check: (False, "check failed")}
 
 
 def test_run_checks_one_passing_and_one_failing_check() -> None:

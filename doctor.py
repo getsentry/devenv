@@ -82,6 +82,23 @@ def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]
     return failing_checks
 
 
+def prompt_for_fix(check: Check) -> bool:
+    return input(
+        f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+    ).lower() in {
+        "y",
+        "yes",
+        "",
+    }
+
+
+def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
+    future = executor.submit(check.fix)
+    result = future.result()
+    ok, msg = result
+    return ok, msg
+
+
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
@@ -124,16 +141,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     skip = []
     for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
-        if input(
-            f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
-        ).lower() in {
-            "y",
-            "yes",
-            "",
-        }:
-            future = executor.submit(check.fix)
-            result = future.result()
-            ok, msg = result
+        # Prompt for fixes one by one, so the user can decide to skip a fix.
+        if prompt_for_fix(check):
+            ok, msg = attempt_fix(check, executor)
             if ok:
                 print(f"\t\t✅ fix: {check.name}".expandtabs(4))
             else:
