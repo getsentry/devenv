@@ -61,5 +61,5 @@ def test_run_checks_multiple_failing_checks() -> None:
 def test_run_checks_broken_check() -> None:
     check = doctor.Check(broken_check)
     assert doctor.run_checks([check], ThreadPoolExecutor()) == {
-        check: (False, "(exception: division by zero)")
+        check: (False, "Check threw a runtime exception: division by zero")
     }
