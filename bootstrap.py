@@ -118,7 +118,7 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run_stream_output(
             # a new interactive shell is started here so that we get things like updated PATH
-            (shell, "-i", "-c", "direnv exec . make bootstrap"),
+            (shell, "-i", "-e", "-c", "direnv allow ; make bootstrap"),
             cwd=f"{coderoot}/sentry",
         )
 
@@ -126,7 +126,7 @@ When done, hit ENTER to continue.
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run_stream_output(
-                (shell, "-i", "-c", "direnv exec . make bootstrap"),
+                (shell, "-i", "-e", "-c", "direnv allow ; make bootstrap"),
                 cwd=f"{coderoot}/getsentry",
             )
 
