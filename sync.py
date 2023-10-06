@@ -63,7 +63,7 @@ export VIRTUAL_ENV={venv_root}/{repo}
                 f"""
 ❌ {name}
 
-{" ".join(final_cmd)}
+{shlex.join(final_cmd)}
 
 Output (returncode {p.returncode}):
 
