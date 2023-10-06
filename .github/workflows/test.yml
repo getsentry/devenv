@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: macos-13
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
@@ -18,30 +18,28 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
       - name: install
+        shell: bash -i -euo pipefail {0}
+        env:
+          SHELL: bash
         run: |
           mv install-devenv.sh /tmp
           cd /tmp
           # should be able to be run from anywhere
           ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
 
-      - name: bootstrap
-        shell: zsh -i {0}
-        run: |
+          # skips initial interactive config setup
           mkdir -p ~/.config/sentry-devenv
           cat <<EOF > ~/.config/sentry-devenv/config.ini
           [devenv]
           coderoot = $HOME/dev
           EOF
-          devenv bootstrap
 
       - name: test
-        shell: zsh -i {0}
+        shell: bash -i -euo pipefail {0}
+        env:
+          SHELL: bash
         run: |
-          {
-              devenv --nocoderoot doctor --check-only
-              [[ $? = 1 ]]
-          }
-          touch foo
+          devenv --nocoderoot doctor --check-only || touch foo
           devenv --nocoderoot doctor --check-only
           rm foo
           expect <<EOF
@@ -51,3 +49,31 @@ jobs:
             expect eof
           EOF
           devenv --nocoderoot doctor
+
+      - name: bootstrap
+        shell: bash -i -euo pipefail {0}
+        env:
+          SHELL: bash
+        run: |
+          # needed for homebrew to succeed
+          sudo rm /usr/local/bin/chromedriver
+
+          # we don't have permissions to clone getsentry which is a good thing
+          # eventually we should move this bootstrap testing over to getsentry repo
+          # in the meantime, mock it so that pip install -e has something to chew on
+          mkdir -p $HOME/dev/getsentry
+          cat <<EOF > $HOME/dev/getsentry/pyproject.toml
+          [project]
+          name = "getsentry-mock"
+          version = "0.0.0"
+          EOF
+
+          # note: colima will be used and is necessary for a docker runtime on
+          #       macos GitHub runners
+          devenv bootstrap
+
+          # TODO: remove this when it's merged
+          git -C $HOME/dev/sentry checkout origin/devenv-compat
+
+          cd $HOME/dev/sentry
+          direnv allow

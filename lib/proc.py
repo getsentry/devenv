@@ -1,20 +1,34 @@
 from __future__ import annotations
 
+import os
 from subprocess import CalledProcessError
 from subprocess import run as subprocess_run
+from typing import Any
 from typing import Tuple
-from typing import Union
 
 
 def run(
-    cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, bool, dict[str, str]]
+    cmd: Tuple[str, ...],
+    pathprepend: str = "",
+    exit: bool = False,
+    **kwargs: Any,
 ) -> str:
     kwargs["check"] = True
     kwargs["capture_output"] = True
+
+    try:
+        env = kwargs.pop("env")
+    except KeyError:
+        env = os.environ
+
+    if pathprepend:
+        env["PATH"] = f"{pathprepend}:{env['PATH']}"
+
     try:
         proc = subprocess_run(
             cmd,
-            **kwargs,  # type: ignore
+            env=env,
+            **kwargs,
         )
         return proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:
@@ -36,14 +50,27 @@ stderr:
 
 
 def run_stream_output(
-    cmd: Tuple[str, ...], exit: bool = False, **kwargs: Union[str, bool, dict[str, str]]
+    cmd: Tuple[str, ...],
+    pathprepend: str = "",
+    exit: bool = False,
+    **kwargs: Any,
 ) -> None:
     kwargs["check"] = True
     kwargs["capture_output"] = False
+
+    try:
+        env = kwargs.pop("env")
+    except KeyError:
+        env = os.environ
+
+    if pathprepend:
+        env["PATH"] = f"{pathprepend}:{env['PATH']}"
+
     try:
         subprocess_run(
             cmd,
-            **kwargs,  # type: ignore
+            env=env,
+            **kwargs,
         )
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.

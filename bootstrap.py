@@ -5,6 +5,7 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
+from devenv.constants import shell
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -74,8 +75,9 @@ When done, hit ENTER to continue.
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
+            # TODO: remove devenv-compat when it's merged
             additional_flags = (
-                ("--depth", "1", "https://github.com/getsentry/sentry")
+                ("--depth", "1", "--branch", "devenv-compat", "https://github.com/getsentry/sentry")
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
@@ -104,9 +106,36 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        if not CI:
-            # TODO: full end-to-end testing once bootstrap is complete
-            print("Installing sentry's brew dependencies...")
-            proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
 
+        print("Installing sentry's brew dependencies...")
+        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+
+        # this'll create the virtualenv if it doesn't exist
+        proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
+
+        # make bootstrap should be ported over to devenv sync,
+        # as it applies new migrations as well and so would need to ensure
+        # the appropriate devservices are running
+        proc.run_stream_output(
+            # a new interactive shell is started here so that we get things like updated PATH
+            (shell, "-i", "-e", "-c", "direnv allow ; direnv exec . make bootstrap"),
+            cwd=f"{coderoot}/sentry",
+        )
+
+        if not CI:
+            # we don't have permissions to clone getsentry which is a good thing
+            # eventually we should move this bootstrap testing over to getsentry repo
+            proc.run_stream_output(
+                (shell, "-i", "-e", "-c", "direnv allow ; direnv exec . make bootstrap"),
+                cwd=f"{coderoot}/getsentry",
+            )
+
+    print(
+        f"""
+All done! Please close this terminal window and start a fresh one.
+
+Sentry has been set up in {coderoot}/sentry. cd into it and you should
+be able to run `sentry devserver`.
+"""
+    )
     return 0
