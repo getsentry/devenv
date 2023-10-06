@@ -72,7 +72,10 @@ def run_checks(
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
-        results[check] = future.result()
+        try:
+            results[check] = future.result()
+        except Exception as e:
+            results[check] = (False, f"Check threw a runtime exception: {e}")
     return results
 
 

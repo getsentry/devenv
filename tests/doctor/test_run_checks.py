@@ -3,6 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 
 from devenv import doctor
+from devenv.tests.doctor.devenv.checks import broken_check
 from devenv.tests.doctor.devenv.checks import failing_check
 from devenv.tests.doctor.devenv.checks import failing_check_with_msg
 from devenv.tests.doctor.devenv.checks import passing_check
@@ -54,4 +55,11 @@ def test_run_checks_multiple_failing_checks() -> None:
     assert doctor.run_checks([first_check, second_check], ThreadPoolExecutor()) == {
         first_check: (False, ""),
         second_check: (False, "check failed"),
+    }
+
+
+def test_run_checks_broken_check() -> None:
+    check = doctor.Check(broken_check)
+    assert doctor.run_checks([check], ThreadPoolExecutor()) == {
+        check: (False, "Check threw a runtime exception: division by zero")
     }
