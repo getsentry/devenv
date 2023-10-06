@@ -14,7 +14,7 @@ name = "broken check"
 def check() -> Tuple[bool, str]:
     # This is a broken check, it will raise an exception
     a = 1 / 0
-    return True, ""
+    return True, f"{a}"
 
 
 @fixer
