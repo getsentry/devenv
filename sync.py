@@ -2,30 +2,56 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
 from typing import Tuple
 
 from devenv import pythons
+from devenv.constants import shell
 from devenv.constants import venv_root
 from devenv.lib import proc
 
 help = "Resyncs the environment."
 
 
-def run_procs(_procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
+def run_procs(repo: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
     procs = []
 
-    for name, args in _procs:
+    for name, cmd in _procs:
         print(f"> {name}")
+        # note: a new interactive shell is used in order to read rc files as this should
+        #       work on a new system in the process of bootstrapping
+        # note: we could use direnv exec but it's a bit too slow.
+        #       Mainly we just need the virtualenv active.
+        #       VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy.
+        final_cmd = (
+            shell,
+            "-i",
+            "-e",
+            "-c",
+            f"""
+export PATH={venv_root}/{repo}/bin:$PATH
+export VIRTUAL_ENV={venv_root}/{repo}
+
+{shlex.join(cmd)}
+""",
+        )
         procs.append(
-            (name, args, subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+            (
+                name,
+                final_cmd,
+                subprocess.Popen(
+                    final_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                ),
+            )
         )
 
     all_good = True
-    for name, args, p in procs:
-        cmd = " ".join(args)
+    for name, final_cmd, p in procs:
         p.wait()
         if p.returncode != 0:
             all_good = False
@@ -37,7 +63,7 @@ def run_procs(_procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
                 f"""
 ❌ {name}
 
-{cmd}
+{" ".join(final_cmd)}
 
 Output (returncode {p.returncode}):
 
@@ -96,7 +122,14 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
-    all_good = run_procs(
+    if not run_procs(
+        repo,
+        (("direnv", ("direnv", "allow")),),
+    ):
+        return 1
+
+    if not run_procs(
+        repo,
         (
             ("git and precommit", ("make", "setup-git")),
             ("javascript dependencies", ("make", "install-js-dev")),
@@ -107,8 +140,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                     "-euo",
                     "pipefail",
                     "-c",
-                    f"""
-source "{venv}/bin/activate"
+                    """
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
 pip_install='pip install --constraint requirements-dev-frozen.txt'
@@ -124,14 +156,12 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
 """,
                 ),
             ),
-        )
-    )
-    if not all_good:
+        ),
+    ):
         return 1
 
     # TODO: need to make sure devservices are running
-    all_good = run_procs((("python migrations", ("sentry", "upgrade", "--noinput")),))
-    if not all_good:
+    if not run_procs(repo, (("python migrations", ("sentry", "upgrade", "--noinput")),)):
         return 1
 
     return 0
