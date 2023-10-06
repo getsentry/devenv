@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
@@ -17,14 +18,21 @@ help = "Diagnose common issues, and optionally try to fix them."
 
 
 class Check:
+    name: str
+    tags: Set[str]
+    check: Callable[[], Tuple[bool, str]]
+    fix: Callable[[], Tuple[bool, str]]
+
     def __init__(
         self,
         module: ModuleType,
     ):
         # Check that the module has the required attributes.
+        assert hasattr(module, "name")
         assert isinstance(module.name, str)
         self.name = module.name
 
+        assert hasattr(module, "tags")
         assert isinstance(module.tags, set)
         self.tags = module.tags
 
@@ -42,7 +50,11 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
-        check = Check(module)
+        try:
+            check = Check(module)
+        except AssertionError:
+            print(f"⚠️ Skipping {name} because it doesn't have the required attributes.")
+            continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
         checks.append(check)
@@ -56,11 +68,14 @@ def run_checks(
     results = {}
     for check in checks:
         if check in skip:
-            print(f"\t⏭️ Skipped {check.name}".expandtabs(4))
+            print(f"\t⏭️  Skipped {check.name}".expandtabs(4))
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
-        results[check] = future.result()
+        try:
+            results[check] = future.result()
+        except Exception as e:
+            results[check] = (False, f"Check threw a runtime exception: {e}")
     return results
 
 
@@ -74,6 +89,21 @@ def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]
         print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
         failing_checks.append(check)
     return failing_checks
+
+
+def prompt_for_fix(check: Check) -> bool:
+    return input(
+        f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+    ).lower() in {
+        "y",
+        "yes",
+        "",
+    }
+
+
+def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
+    future = executor.submit(check.fix)
+    return future.result()
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -118,22 +148,15 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     skip = []
     for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
-        if input(
-            f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
-        ).lower() in {
-            "y",
-            "yes",
-            "",
-        }:
-            future = executor.submit(check.fix)
-            result = future.result()
-            ok, msg = result
+        # Prompt for fixes one by one, so the user can decide to skip a fix.
+        if prompt_for_fix(check):
+            ok, msg = attempt_fix(check, executor)
             if ok:
                 print(f"\t\t✅ fix: {check.name}".expandtabs(4))
             else:
                 print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
         else:
-            print(f"\t\t⏭️ Skipping {check.name}".expandtabs(4))
+            print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")
