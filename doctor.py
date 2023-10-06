@@ -75,7 +75,7 @@ def run_checks(
         try:
             results[check] = future.result()
         except Exception as e:
-            results[check] = (False, f"(exception: {e})")
+            results[check] = (False, f"Check threw a runtime exception: {e}")
     return results
 
 
