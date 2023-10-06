@@ -5,6 +5,7 @@ import os
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
+from typing import Tuple
 
 from devenv import pythons
 from devenv.constants import venv_root
@@ -12,24 +13,42 @@ from devenv.lib import proc
 
 help = "Resyncs the environment."
 
-scripts = {
-    # TODO: equivalent of make install-js-dev and make apply-migrations
-    "sentry": """
-source "{venv}/bin/activate"
-export PIP_DISABLE_PIP_VERSION_CHECK=on
 
-pip_install='pip install --constraint requirements-dev-frozen.txt'
-$pip_install --upgrade pip setuptools wheel
+def run_procs(_procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
+    procs = []
 
-# pip doesn't do well with swapping drop-ins
-pip uninstall -qqy uwsgi
+    for name, args in _procs:
+        print(f"> {name}")
+        procs.append(
+            (name, args, subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+        )
 
-$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+    all_good = True
+    for name, args, p in procs:
+        cmd = " ".join(args)
+        p.wait()
+        if p.returncode != 0:
+            all_good = False
+            if p.stdout is None:
+                out = ""
+            else:
+                out = p.stdout.read().decode()
+            print(
+                f"""
+❌ {name}
 
-pip_install_editable='pip install --no-deps'
-SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
-""",
-}
+{cmd}
+
+Output (returncode {p.returncode}):
+
+{out}
+
+"""
+            )
+        else:
+            print(f"✅ {name}")
+
+    return all_good
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -76,5 +95,43 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         # stampeding over it seems to work (no need for rm -rf)
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
-    print("Resyncing your venv.")
-    return subprocess.call(("/bin/bash", "-euo", "pipefail", "-c", scripts[repo].format(venv=venv)))
+    print("Resyncing your dev environment.")
+    all_good = run_procs(
+        (
+            ("git and precommit", ("make", "setup-git")),
+            ("javascript dependencies", ("make", "install-js-dev")),
+            (
+                "python dependencies",
+                (
+                    "/bin/bash",
+                    "-euo",
+                    "pipefail",
+                    "-c",
+                    f"""
+source "{venv}/bin/activate"
+export PIP_DISABLE_PIP_VERSION_CHECK=on
+
+pip_install='pip install --constraint requirements-dev-frozen.txt'
+$pip_install --upgrade pip setuptools wheel
+
+# pip doesn't do well with swapping drop-ins
+pip uninstall -qqy uwsgi
+
+$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+
+pip_install_editable='pip install --no-deps'
+SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
+""",
+                ),
+            ),
+        )
+    )
+    if not all_good:
+        return 1
+
+    # TODO: need to make sure devservices are running
+    all_good = run_procs((("python migrations", ("sentry", "upgrade", "--noinput")),))
+    if not all_good:
+        return 1
+
+    return 0
