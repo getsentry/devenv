@@ -103,7 +103,10 @@ def prompt_for_fix(check: Check) -> bool:
 
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
     future = executor.submit(check.fix)
-    return future.result()
+    try:
+        return future.result()
+    except Exception as e:
+        return False, f"Fix threw a runtime exception: {e}"
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
