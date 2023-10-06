@@ -5,7 +5,7 @@ import os
 from collections.abc import Sequence
 
 from devenv.constants import CI
-from devenv.constants import venv_root
+from devenv.constants import shell
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -117,10 +117,8 @@ When done, hit ENTER to continue.
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run_stream_output(
-            ("make", "bootstrap"),
-            # VIRTUAL_ENV is not needed, it's just to keep sentry's lib/ensure_venv.sh happy
-            env={**os.environ, "VIRTUAL_ENV": f"{venv_root}/sentry"},
-            pathprepend=f"{venv_root}/sentry/bin",
+            # a new interactive shell is started here so that we get things like updated PATH
+            (shell, "-i", "-c", "direnv exec . make bootstrap"),
             cwd=f"{coderoot}/sentry",
         )
 
@@ -128,10 +126,7 @@ When done, hit ENTER to continue.
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run_stream_output(
-                ("make", "bootstrap"),
-                env={**os.environ, "VIRTUAL_ENV": f"{venv_root}/sentry"},
-                # reminder that getsentry and sentry share the same venv
-                pathprepend=f"{venv_root}/sentry/bin",
+                (shell, "-i", "-c", "direnv exec . make bootstrap"),
                 cwd=f"{coderoot}/getsentry",
             )
 
