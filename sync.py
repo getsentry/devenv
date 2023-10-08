@@ -160,6 +160,9 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     ):
         return 1
 
+    # if ~/.sentry/config.yml and  sentry.conf.py dont exist then
+    # sentry init --dev
+
     # TODO: need to make sure devservices are running
     if not run_procs(repo, (("python migrations", ("sentry", "upgrade", "--noinput")),)):
         return 1
