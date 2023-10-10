@@ -4,7 +4,6 @@ import argparse
 from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from inspect import signature
 from pkgutil import walk_packages
 from types import ModuleType
 from typing import Dict
