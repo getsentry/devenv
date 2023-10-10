@@ -56,7 +56,7 @@ class Check:
         check_hints = typing.get_type_hints(module.check)
         assert (
             check_hints["return"] == Tuple[bool, str]
-        ), "check should return a tuple of (bool, str)"
+        ), "`check(...)` should return a tuple of (bool, str)"
         self.check = checker(module.check)
 
         assert hasattr(module, "fix"), "must have a fix function"
