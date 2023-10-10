@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import typing
 from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -10,7 +11,6 @@ from typing import Dict
 from typing import List
 from typing import Set
 from typing import Tuple
-import typing
 
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
