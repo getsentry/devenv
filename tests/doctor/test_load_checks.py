@@ -34,9 +34,11 @@ def test_load_checks_test_checks(capsys) -> None:  # type: ignore
     captured = capsys.readouterr()
     assert (
         captured.out
-        == """⚠️ Skipping no_check because it doesn't have the required attributes.
-⚠️ Skipping no_name because it doesn't have the required attributes.
-⚠️ Skipping no_tags because it doesn't have the required attributes.\n"""
+        == """⚠️ Skipping bad_check: check should return a tuple of (bool, str)
+⚠️ Skipping bad_fix: fix should return a tuple of (bool, str)
+⚠️ Skipping no_check: must have a check function
+⚠️ Skipping no_name: must have name
+⚠️ Skipping no_tags: must have tags\n"""
     )
 
 

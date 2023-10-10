@@ -4,12 +4,14 @@ import argparse
 from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
+from inspect import signature
 from pkgutil import walk_packages
 from types import ModuleType
 from typing import Dict
 from typing import List
 from typing import Set
 from typing import Tuple
+import typing
 
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
@@ -41,21 +43,27 @@ class Check:
         module: ModuleType,
     ):
         # Check that the module has the required attributes.
-        assert hasattr(module, "name")
-        assert isinstance(module.name, str)
+        assert hasattr(module, "name"), "must have name"
+        assert isinstance(module.name, str), "name should be a str"
         self.name = module.name
 
-        assert hasattr(module, "tags")
-        assert isinstance(module.tags, set)
+        assert hasattr(module, "tags"), "must have tags"
+        assert isinstance(module.tags, set), "tags should be a set"
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
-        assert hasattr(module, "check")
-        assert callable(module.check)
+        assert hasattr(module, "check"), "must have a check function"
+        assert callable(module.check), "check should be a function"
+        check_hints = typing.get_type_hints(module.check)
+        assert (
+            check_hints["return"] == Tuple[bool, str]
+        ), "check should return a tuple of (bool, str)"
         self.check = checker(module.check)
 
-        assert hasattr(module, "fix")
-        assert callable(module.fix)
+        assert hasattr(module, "fix"), "must have a fix function"
+        assert callable(module.fix), "fix should be a function"
+        fix_hints = typing.get_type_hints(module.fix)
+        assert fix_hints["return"] == Tuple[bool, str], "fix should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
 
@@ -70,8 +78,8 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         try:
             check = Check(module)
-        except AssertionError:
-            print(f"⚠️ Skipping {name} because it doesn't have the required attributes.")
+        except AssertionError as e:
+            print(f"⚠️ Skipping {name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
