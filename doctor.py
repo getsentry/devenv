@@ -46,12 +46,12 @@ class Check:
         assert isinstance(module.name, str), "the `name` attribute should be a str"
         self.name = module.name
 
-        assert hasattr(module, "tags"), "must have tags"
-        assert isinstance(module.tags, set), "tags should be a set"
+        assert hasattr(module, "tags"), "missing the `tags` attribute"
+        assert isinstance(module.tags, set), "the `tags` attribute should be a set"
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
-        assert hasattr(module, "check"), "must have a check function"
+        assert hasattr(module, "check"), "must have a `check` function"
         assert callable(module.check), "the `check` attribute must be a function"
         check_hints = typing.get_type_hints(module.check)
         assert (
@@ -59,10 +59,12 @@ class Check:
         ), "`check(...)` should return a tuple of (bool, str)"
         self.check = checker(module.check)
 
-        assert hasattr(module, "fix"), "must have a fix function"
-        assert callable(module.fix), "fix should be a function"
+        assert hasattr(module, "fix"), "must have a `fix` function"
+        assert callable(module.fix), "the `fix` attribute should be a function"
         fix_hints = typing.get_type_hints(module.fix)
-        assert fix_hints["return"] == Tuple[bool, str], "fix should return a tuple of (bool, str)"
+        assert (
+            fix_hints["return"] == Tuple[bool, str]
+        ), "`fix(...)` should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
 
