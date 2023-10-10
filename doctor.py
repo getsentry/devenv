@@ -52,7 +52,7 @@ class Check:
 
         # Check that the module has the check and fix functions.
         assert hasattr(module, "check"), "must have a check function"
-        assert callable(module.check), "check should be a function"
+        assert callable(module.check), "the `check` attribute must be a function"
         check_hints = typing.get_type_hints(module.check)
         assert (
             check_hints["return"] == Tuple[bool, str]
