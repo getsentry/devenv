@@ -43,7 +43,7 @@ class Check:
     ):
         # Check that the module has the required attributes.
         assert hasattr(module, "name"), "must have name"
-        assert isinstance(module.name, str), "name should be a str"
+        assert isinstance(module.name, str), "the `name` attribute should be a str"
         self.name = module.name
 
         assert hasattr(module, "tags"), "must have tags"
