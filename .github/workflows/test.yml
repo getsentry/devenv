@@ -17,6 +17,11 @@ jobs:
           python-version: 3.11
       - uses: pre-commit/action@v3.0.0
 
+      - name: remove homebrew
+        run: |
+          brew list | xargs brew uninstall --force
+          sudo rm -rf /usr/local/Homebrew
+
       - name: install
         shell: bash -i -euo pipefail {0}
         env:
@@ -55,11 +60,6 @@ jobs:
         env:
           SHELL: bash
         run: |
-          # needed for homebrew to succeed in CI
-          # python3 is a dependency of watchman (which is in sentry Brewfile)
-          brew unlink python3
-          sudo rm /usr/local/bin/chromedriver
-
           # we don't have permissions to clone getsentry which is a good thing
           # eventually we should move this bootstrap testing over to getsentry repo
           # in the meantime, mock it so that pip install -e has something to chew on
