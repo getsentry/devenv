@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import typing
 from collections.abc import Callable
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +19,19 @@ help = "Diagnose common issues, and optionally try to fix them."
 
 
 class Check:
+    """
+    A check is a module with the following attributes:
+    - name: str
+    - tags: Set[str]
+    - check: Callable[[], Tuple[bool, str]]
+    - fix: Callable[[], Tuple[bool, str]]
+
+    The check function should return a tuple of (ok, msg).
+    The fix function should return a tuple of (ok, msg).
+
+    The check and fix functions are wrapped with the checker and fixer decorators.
+    """
+
     name: str
     tags: Set[str]
     check: Callable[[], Tuple[bool, str]]
@@ -28,32 +42,45 @@ class Check:
         module: ModuleType,
     ):
         # Check that the module has the required attributes.
-        assert hasattr(module, "name")
-        assert isinstance(module.name, str)
+        assert hasattr(module, "name"), "missing the `name` attribute"
+        assert isinstance(module.name, str), "the `name` attribute should be a str"
         self.name = module.name
 
-        assert hasattr(module, "tags")
-        assert isinstance(module.tags, set)
+        assert hasattr(module, "tags"), "missing the `tags` attribute"
+        assert isinstance(module.tags, set), "the `tags` attribute should be a set"
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
-        assert hasattr(module, "check")
-        assert callable(module.check)
+        assert hasattr(module, "check"), "must have a `check` function"
+        assert callable(module.check), "the `check` attribute must be a function"
+        check_hints = typing.get_type_hints(module.check)
+        assert (
+            check_hints["return"] == Tuple[bool, str]
+        ), "`check(...)` should return a tuple of (bool, str)"
         self.check = checker(module.check)
 
-        assert hasattr(module, "fix")
-        assert callable(module.fix)
+        assert hasattr(module, "fix"), "must have a `fix` function"
+        assert callable(module.fix), "the `fix` attribute should be a function"
+        fix_hints = typing.get_type_hints(module.fix)
+        assert (
+            fix_hints["return"] == Tuple[bool, str]
+        ), "`fix(...)` should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
+    """
+    Load all checks from the checks directory.
+    Optionally filter by tags.
+    If a check doesn't have the required attributes, skip it.
+    """
     checks = []
     for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         try:
             check = Check(module)
-        except AssertionError:
-            print(f"⚠️ Skipping {name} because it doesn't have the required attributes.")
+        except AssertionError as e:
+            print(f"⚠️ Skipping {name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
@@ -64,6 +91,10 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
 def run_checks(
     checks: List[Check], executor: ThreadPoolExecutor, skip: List[Check] = []
 ) -> Dict[Check, Tuple[bool, str]]:
+    """
+    Run checks in parallel, and return a dict of results.
+    Results are a tuple of (ok, msg).
+    """
     futures = {}
     results = {}
     for check in checks:
@@ -80,6 +111,7 @@ def run_checks(
 
 
 def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]:
+    """Print a report of the results, and return a list of failing checks."""
     failing_checks = []
     for check, result in results.items():
         ok, msg = result
@@ -92,6 +124,7 @@ def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]
 
 
 def prompt_for_fix(check: Check) -> bool:
+    """Prompt the user to attempt a fix."""
     return input(
         f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
     ).lower() in {
@@ -102,8 +135,12 @@ def prompt_for_fix(check: Check) -> bool:
 
 
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
+    """Attempt to fix a check, and return a tuple of (ok, msg)."""
     future = executor.submit(check.fix)
-    return future.result()
+    try:
+        return future.result()
+    except Exception as e:
+        return False, f"Fix threw a runtime exception: {e}"
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
