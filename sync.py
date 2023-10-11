@@ -9,6 +9,7 @@ from typing import Dict
 from typing import Tuple
 
 from devenv import pythons
+from devenv.constants import home
 from devenv.constants import shell
 from devenv.constants import venv_root
 from devenv.lib import proc
@@ -20,7 +21,7 @@ def run_procs(repo: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> boo
     procs = []
 
     for name, cmd in _procs:
-        print(f"> {name}")
+        print(f"⏳ {name}")
         # note: a new interactive shell is used in order to read rc files as this should
         #       work on a new system in the process of bootstrapping
         # note: we could use direnv exec but it's a bit too slow.
@@ -160,11 +161,19 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     ):
         return 1
 
-    # if ~/.sentry/config.yml and  sentry.conf.py dont exist then
-    # sentry init --dev
+    if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
+        f"{home}/.sentry/sentry.conf.py"
+    ):
+        proc.run_stream_output((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
 
-    # TODO: need to make sure devservices are running
-    if not run_procs(repo, (("python migrations", ("sentry", "upgrade", "--noinput")),)):
+    # TODO: run devservices healthchecks for redis and postgres to bypass this
+    proc.run_stream_output(
+        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"), exit=True
+    )
+
+    if not run_procs(
+        repo, (("python migrations", (f"{venv_root}/{repo}/bin/sentry", "upgrade", "--noinput")),)
+    ):
         return 1
 
     return 0
