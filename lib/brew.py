@@ -57,5 +57,8 @@ chown {os.environ['USER']} {dirs}
         ),
     )
 
+    if INTEL_MAC:
+        os.symlink(f"{homebrew_repo}/bin/brew", homebrew_bin)
+
     out = proc.run((homebrew_bin, "shellenv"))
     fs.idempotent_add(shellrc, out)

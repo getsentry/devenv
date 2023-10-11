@@ -22,11 +22,8 @@ jobs:
           # This takes too long (over a minute), so we just rm -rf the important stuff
           # brew list | xargs brew uninstall --force
           sudo rm -rf \
-            /usr/local/bin/brew /usr/local/Homebrew /usr/local/Caskroom \
-            /usr/local/bin/pydoc* \
-            /usr/local/bin/python* \
-            /usr/local/bin/2to3* \
-            /usr/local/bin/idle3
+            /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
+            /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3*
 
       - name: install
         shell: bash -i -euo pipefail {0}
