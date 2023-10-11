@@ -55,7 +55,9 @@ jobs:
         env:
           SHELL: bash
         run: |
-          # needed for homebrew to succeed
+          # needed for homebrew to succeed in CI
+          # python3 is a dependency of watchman (which is in sentry Brewfile)
+          brew unlink python3
           sudo rm /usr/local/bin/chromedriver
 
           # we don't have permissions to clone getsentry which is a good thing
