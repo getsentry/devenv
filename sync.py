@@ -22,16 +22,14 @@ def run_procs(repo: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> boo
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
-        # note: a new interactive shell is used in order to read rc files as this should
-        #       work on a new system in the process of bootstrapping
-        # note: we could use direnv exec but it's a bit too slow.
-        #       Mainly we just need the virtualenv active.
-        #       VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy.
         final_cmd = (
             shell,
+            # interactive shell is used so we can make sure our earlier shellrc
+            # modifications are good (in the case that we're bootstrapping a new system)
             "-i",
             "-e",
             "-c",
+            # VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy
             f"""
 export PATH={venv_root}/{repo}/bin:$PATH
 export VIRTUAL_ENV={venv_root}/{repo}
@@ -123,12 +121,6 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
-    if not run_procs(
-        repo,
-        (("direnv", ("direnv", "allow")),),
-    ):
-        return 1
-
     if not run_procs(
         repo,
         (
