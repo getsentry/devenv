@@ -75,9 +75,8 @@ When done, hit ENTER to continue.
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
-            # TODO: remove devenv-compat when it's merged
             additional_flags = (
-                ("--depth", "1", "--branch", "devenv-compat", "https://github.com/getsentry/sentry")
+                ("--depth", "1", "https://github.com/getsentry/sentry")
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
@@ -108,7 +107,7 @@ When done, hit ENTER to continue.
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+        proc.run_stream_output((brew.homebrew_bin, "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
