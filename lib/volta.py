@@ -21,7 +21,7 @@ _sha256 = {
 def install() -> None:
     unpack_into = f"{root}/bin"
 
-    if which("volta") == f"{unpack_into}/volta":
+    if which("volta") == f"{unpack_into}/volta" and which("node") == f"{VOLTA_HOME}/bin/node":
         return
 
     suffix = "-aarch64" if platform.machine() == "arm64" else ""
