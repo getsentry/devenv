@@ -17,6 +17,8 @@ jobs:
           python-version: 3.11
       - uses: pre-commit/action@v3.0.0
 
+      # macos github runners come with homebrew and a bunch of packages preinstalled
+      # we want to remove homebrew to better emulate a fresh macbook
       - name: remove homebrew
         run: |
           # This takes too long (over a minute), so we just rm -rf the important stuff
