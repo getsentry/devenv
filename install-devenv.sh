@@ -42,9 +42,11 @@ if ! [[ -d "${devenv_root}/devenv" ]]; then
 fi
 
 # note: even though this is #!/bin/bash, SHELL isn't modified and so remains the value set by the parent shell
-shellrc="${HOME}/.${SHELL}rc"
+shellrc="${HOME}/.${SHELL##*/}rc"
 
 [[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> "$shellrc"
+# just to prevent grep from complaining that shellrc doesn't exist
+touch "$shellrc"
 while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "$shellrc"; do
     read -r -p "Modify PATH in your ${shellrc}? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
     case $REPLY in
