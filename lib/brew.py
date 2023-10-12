@@ -3,21 +3,30 @@ from __future__ import annotations
 import os
 from shutil import which
 
+from devenv.constants import INTEL_MAC
 from devenv.lib import fs
 from devenv.lib import proc
 
 homebrew_repo = "/opt/homebrew"
+homebrew_bin = f"{homebrew_repo}/bin/brew"
+
+if INTEL_MAC:
+    homebrew_repo = "/usr/local/Homebrew"
+    homebrew_bin = "/usr/local/bin/brew"
 
 
 def install() -> None:
     # idempotent: skip if brew is on the executing shell's path,
     #             and it resolves to the expected location
-    if which("brew") == f"{homebrew_repo}/bin/brew":
+    if which("brew") == homebrew_bin:
         return
 
     shellrc = fs.shellrc()
     print("You may be prompted for your password to install homebrew.")
     while True:
+        dirs = homebrew_repo
+        if INTEL_MAC:
+            dirs = f"{dirs} /usr/local/Cellar /usr/local/Caskroom"
         try:
             proc.run(
                 (
@@ -25,8 +34,8 @@ def install() -> None:
                     "bash",
                     "-c",
                     f"""
-mkdir -p {homebrew_repo}
-chown {os.environ['USER']} {homebrew_repo}
+mkdir -p {dirs}
+chown {os.environ['USER']} {dirs}
 """,
                 ),
                 exit=False,
@@ -48,5 +57,8 @@ chown {os.environ['USER']} {homebrew_repo}
         ),
     )
 
-    out = proc.run(("/opt/homebrew/bin/brew", "shellenv"))
+    if INTEL_MAC:
+        os.symlink(f"{homebrew_repo}/bin/brew", homebrew_bin)
+
+    out = proc.run((homebrew_bin, "shellenv"))
     fs.idempotent_add(shellrc, out)

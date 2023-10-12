@@ -108,7 +108,7 @@ When done, hit ENTER to continue.
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run_stream_output(("brew", "bundle"), cwd=f"{coderoot}/sentry")
+        proc.run_stream_output((brew.homebrew_bin, "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")

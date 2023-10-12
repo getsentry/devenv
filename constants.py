@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import os
+import platform
+import sys
 
 CI = os.environ.get("CI")
+DARWIN = sys.platform == "darwin"
+MACHINE = platform.machine()
+INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 home = os.path.expanduser("~")
+
 cache_root = f"{home}/.cache/sentry-devenv"
 config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
