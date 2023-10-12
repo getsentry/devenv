@@ -117,7 +117,22 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run_stream_output(
             # a new interactive shell is started here so that we get things like updated PATH
-            (shell, "-i", "-e", "-c", "direnv allow ; direnv exec . make bootstrap"),
+            (
+                shell,
+                "-i",
+                "-e",
+                "-c",
+                """
+direnv allow
+
+# HACK: devenv sync created the config files earlier, but make bootstrap will
+#       fail because of an interactive prompt asking if user wants to clobber it...
+#       i'll follow-up with fixing that in sentry
+rm -rf ~/.sentry
+
+direnv exec . make bootstrap
+""",
+            ),
             cwd=f"{coderoot}/sentry",
         )
 
@@ -125,7 +140,20 @@ When done, hit ENTER to continue.
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run_stream_output(
-                (shell, "-i", "-e", "-c", "direnv allow ; direnv exec . make bootstrap"),
+                (
+                    shell,
+                    "-i",
+                    "-e",
+                    "-c",
+                    """
+direnv allow
+
+# HACK: see above
+rm -rf ~/.sentry
+
+direnv exec . make bootstrap
+""",
+                ),
                 cwd=f"{coderoot}/getsentry",
             )
 
