@@ -26,7 +26,7 @@ def install() -> None:
     while True:
         dirs = homebrew_repo
         if INTEL_MAC:
-            dirs = f"{dirs} /usr/local/Cellar /usr/local/Caskroom /usr/local/bin /usr/local/var"
+            dirs = f"{dirs} /usr/local/Cellar /usr/local/Caskroom /usr/local/Frameworks /usr/local/bin /usr/local/etc /usr/local/include /usr/local/lib /usr/local/opt /usr/local/sbin /usr/local/share /usr/local/var"  # noqa: E501
         try:
             proc.run(
                 (
