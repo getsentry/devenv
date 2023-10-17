@@ -2,34 +2,78 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
+from typing import Tuple
 
 from devenv import pythons
+from devenv.constants import home
+from devenv.constants import shell
 from devenv.constants import venv_root
 from devenv.lib import proc
 
 help = "Resyncs the environment."
 
-scripts = {
-    # TODO: equivalent of make install-js-dev and make apply-migrations
-    "sentry": """
-source "{venv}/bin/activate"
-export PIP_DISABLE_PIP_VERSION_CHECK=on
 
-pip_install='pip install --constraint requirements-dev-frozen.txt'
-$pip_install --upgrade pip setuptools wheel
+def run_procs(repo: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
+    procs = []
 
-# pip doesn't do well with swapping drop-ins
-pip uninstall -qqy uwsgi
+    for name, cmd in _procs:
+        print(f"⏳ {name}")
+        final_cmd = (
+            shell,
+            # interactive shell is used so we can make sure our earlier shellrc
+            # modifications are good (in the case that we're bootstrapping a new system)
+            "-i",
+            "-e",
+            "-c",
+            # VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy
+            f"""
+export PATH={venv_root}/{repo}/bin:$PATH
+export VIRTUAL_ENV={venv_root}/{repo}
 
-$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
-
-pip_install_editable='pip install --no-deps'
-SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
+{shlex.join(cmd)}
 """,
-}
+        )
+        procs.append(
+            (
+                name,
+                final_cmd,
+                subprocess.Popen(
+                    final_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                ),
+            )
+        )
+
+    all_good = True
+    for name, final_cmd, p in procs:
+        p.wait()
+        if p.returncode != 0:
+            all_good = False
+            if p.stdout is None:
+                out = ""
+            else:
+                out = p.stdout.read().decode()
+            print(
+                f"""
+❌ {name}
+
+{shlex.join(final_cmd)}
+
+Output (returncode {p.returncode}):
+
+{out}
+
+"""
+            )
+        else:
+            print(f"✅ {name}")
+
+    return all_good
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
@@ -76,5 +120,52 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         # stampeding over it seems to work (no need for rm -rf)
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
-    print("Resyncing your venv.")
-    return subprocess.call(("/bin/bash", "-euo", "pipefail", "-c", scripts[repo].format(venv=venv)))
+    print("Resyncing your dev environment.")
+    if not run_procs(
+        repo,
+        (
+            ("git and precommit", ("make", "setup-git")),
+            ("javascript dependencies", ("make", "install-js-dev")),
+            (
+                "python dependencies",
+                (
+                    "/bin/bash",
+                    "-euo",
+                    "pipefail",
+                    "-c",
+                    """
+export PIP_DISABLE_PIP_VERSION_CHECK=on
+
+pip_install='pip install --constraint requirements-dev-frozen.txt'
+$pip_install --upgrade pip setuptools wheel
+
+# pip doesn't do well with swapping drop-ins
+pip uninstall -qqy uwsgi
+
+$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
+
+pip_install_editable='pip install --no-deps'
+SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
+""",
+                ),
+            ),
+        ),
+    ):
+        return 1
+
+    if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
+        f"{home}/.sentry/sentry.conf.py"
+    ):
+        proc.run_stream_output((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
+
+    # TODO: run devservices healthchecks for redis and postgres to bypass this
+    proc.run_stream_output(
+        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"), exit=True
+    )
+
+    if not run_procs(
+        repo, (("python migrations", (f"{venv_root}/{repo}/bin/sentry", "upgrade", "--noinput")),)
+    ):
+        return 1
+
+    return 0
