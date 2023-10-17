@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 from collections.abc import Sequence
 
 from devenv.constants import CI
-from devenv.constants import shell
+from devenv.constants import home
+from devenv.constants import homebrew_bin
+from devenv.constants import root
 from devenv.constants import venv_root
+from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -108,57 +112,48 @@ When done, hit ENTER to continue.
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run_stream_output((brew.homebrew_bin, "bundle"), cwd=f"{coderoot}/sentry")
+        proc.run_stream_output((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
         proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
+
+        # HACK: devenv sync created the config files earlier, but make bootstrap will
+        #       fail because of an interactive prompt asking if user wants to clobber it...
+        #       i'll follow-up with fixing that in sentry
+        shutil.rmtree(f"{home}/.sentry")
 
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run_stream_output(
             (
-                shell,
-                # interactive shell is used so we can make sure our earlier shellrc
-                # modifications are good
-                "-i",
-                "-e",
-                "-c",
-                # VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy
-                f"""
-export PATH={venv_root}/{args.repo}/bin:$PATH
-export VIRTUAL_ENV={venv_root}/{args.repo}
-
-# HACK: devenv sync created the config files earlier, but make bootstrap will
-#       fail because of an interactive prompt asking if user wants to clobber it...
-#       i'll follow-up with fixing that in sentry
-rm -rf ~/.sentry
-
-make bootstrap
-""",
+                "make",
+                "bootstrap",
             ),
+            env={
+                "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
+                "VOLTA_HOME": VOLTA_HOME,
+            },
+            pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin:",
             cwd=f"{coderoot}/sentry",
         )
 
         if not CI:
+            # HACK: see above
+            shutil.rmtree(f"{home}/.sentry")
+
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run_stream_output(
                 (
-                    shell,
-                    "-i",
-                    "-e",
-                    "-c",
-                    f"""
-export PATH={venv_root}/{args.repo}/bin:$PATH
-export VIRTUAL_ENV={venv_root}/{args.repo}
-
-# HACK: see above
-rm -rf ~/.sentry
-
-make bootstrap
-""",
+                    "make",
+                    "bootstrap",
                 ),
+                env={
+                    "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
+                    "VOLTA_HOME": VOLTA_HOME,
+                },
+                pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin:",
                 cwd=f"{coderoot}/getsentry",
             )
 

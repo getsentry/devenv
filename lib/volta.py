@@ -5,11 +5,10 @@ import platform
 from shutil import which
 
 from devenv.constants import root
+from devenv.constants import VOLTA_HOME
 from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
-
-VOLTA_HOME = f"{root}/volta"
 
 _version = "1.1.1"
 _sha256 = {
