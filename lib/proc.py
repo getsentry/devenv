@@ -15,10 +15,12 @@ from devenv.constants import VOLTA_HOME
 base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 base_env = {
     "PATH": base_path,
-    "TERM": os.environ["TERM"],
     "HOME": home,
     "SHELL": os.environ["SHELL"],
 }
+# CI doesn't have TERM, but if it's set then we need to inherit it.
+if os.environ.get("TERM"):
+    base_env["TERM"] = os.environ["TERM"]
 
 
 def run(
