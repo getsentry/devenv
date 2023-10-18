@@ -16,11 +16,11 @@ base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/
 base_env = {
     "PATH": base_path,
     "HOME": home,
+    # CI doesn't have TERM, but tput (which is called by sentry make) wants it, and it can't
+    # be dumb, so xterm is used to make it happy.
+    "TERM": os.environ.get("TERM") or "xterm",
     "SHELL": os.environ["SHELL"],
 }
-# CI doesn't have TERM, but if it's set then we need to inherit it.
-if os.environ.get("TERM"):
-    base_env["TERM"] = os.environ["TERM"]
 
 
 def run(
