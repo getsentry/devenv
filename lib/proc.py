@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from subprocess import CalledProcessError
 from subprocess import run as subprocess_run
 from typing import Any
@@ -16,6 +17,7 @@ base_env = {
     "PATH": base_path,
     "TERM": "dumb",
     "HOME": home,
+    "SHELL": os.environ["SHELL"],
 }
 
 
