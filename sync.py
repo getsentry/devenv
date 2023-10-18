@@ -32,9 +32,7 @@ def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     env={
-                        # would like to use proc.base_env, but not yet sure why `make setup-git`
-                        # doesn't work (it just exits 2 with no output)
-                        **os.environ,
+                        **proc.base_env,
                         "VIRTUAL_ENV": f"{venv_root}/{repo}",
                         "VOLTA_HOME": VOLTA_HOME,
                         "PATH": f"{root}/bin:{venv_root}/{repo}/bin:{proc.base_path}",
