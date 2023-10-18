@@ -115,7 +115,7 @@ When done, hit ENTER to continue.
         proc.run_stream_output((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
-        proc.run_stream_output(("devenv", "sync"), cwd=f"{coderoot}/sentry")
+        proc.run_stream_output((f"{root}/bin/devenv", "sync"), cwd=f"{coderoot}/sentry")
 
         # HACK: devenv sync created the config files earlier, but make bootstrap will
         #       fail because of an interactive prompt asking if user wants to clobber it...
@@ -134,7 +134,7 @@ When done, hit ENTER to continue.
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
             },
-            pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin:",
+            pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )
 
@@ -153,7 +153,7 @@ When done, hit ENTER to continue.
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                     "VOLTA_HOME": VOLTA_HOME,
                 },
-                pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin:",
+                pathprepend=f"{root}/bin:{venv_root}/{args.repo}/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 
