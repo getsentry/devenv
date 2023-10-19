@@ -8,11 +8,14 @@ from typing import Tuple
 
 from devenv.constants import home
 from devenv.constants import homebrew_bin
+from devenv.constants import root
 from devenv.constants import VOLTA_HOME
 
 # We don't want to use os.environ (to stay isolated from user's own env which could be broken).
 # User provides paths as needed via pathprepend.
-base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+base_path = (
+    f"{root}/bin:{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+)
 base_env = {
     "PATH": base_path,
     "HOME": home,
