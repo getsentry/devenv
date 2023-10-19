@@ -84,7 +84,7 @@ When done, hit ENTER to continue.
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
-            proc.run_stream_output(
+            proc.run(
                 (
                     "git",
                     "-C",
@@ -95,10 +95,11 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     *additional_flags,
                 ),
+                stream_output=True,
                 exit=True,
             )
         if not CI and not os.path.exists(f"{coderoot}/getsentry"):
-            proc.run_stream_output(
+            proc.run(
                 (
                     "git",
                     "-C",
@@ -107,15 +108,17 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     "git@github.com:getsentry/getsentry",
                 ),
+                stream_output=True,
                 exit=True,
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run_stream_output((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
+        proc.run((f"{homebrew_bin}/brew", "bundle"), stream_output=True, cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
-        proc.run_stream_output(
+        proc.run(
             ("devenv", "sync"),
+            stream_output=True,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
@@ -132,11 +135,12 @@ When done, hit ENTER to continue.
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
-        proc.run_stream_output(
+        proc.run(
             (
                 "make",
                 "bootstrap",
             ),
+            stream_output=True,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
@@ -151,11 +155,12 @@ When done, hit ENTER to continue.
 
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
-            proc.run_stream_output(
+            proc.run(
                 (
                     "make",
                     "bootstrap",
                 ),
+                stream_output=True,
                 env={
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                     "VOLTA_HOME": VOLTA_HOME,

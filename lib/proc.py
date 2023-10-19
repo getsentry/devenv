@@ -28,12 +28,13 @@ base_env = {
 
 def run(
     cmd: Tuple[str, ...],
+    stream_output: bool = False,
     pathprepend: str = "",
     exit: bool = False,
     **kwargs: Any,
 ) -> str:
     kwargs["check"] = True
-    kwargs["capture_output"] = True
+    kwargs["capture_output"] = not stream_output
 
     if not kwargs.get("env"):
         kwargs["env"] = base_env
@@ -48,7 +49,7 @@ def run(
             cmd,
             **kwargs,
         )
-        return proc.stdout.decode().strip()  # type: ignore
+        return "" if proc.stdout is None else proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if not exit:
@@ -57,46 +58,13 @@ def run(
     except CalledProcessError as e:
         detail = f"""
 `{' '.join(e.cmd)}` returned code {e.returncode}
-stdout:
-{e.stdout.decode()}
-stderr:
-{e.stderr.decode()}
 """
-        if not exit:
-            raise RuntimeError(detail)
-        raise SystemExit(detail)
-
-
-def run_stream_output(
-    cmd: Tuple[str, ...],
-    pathprepend: str = "",
-    exit: bool = False,
-    **kwargs: Any,
-) -> None:
-    kwargs["check"] = True
-    kwargs["capture_output"] = False
-
-    if not kwargs.get("env"):
-        kwargs["env"] = base_env
-    else:
-        kwargs["env"] = {**base_env, **kwargs["env"]}
-
-    if pathprepend:
-        kwargs["env"]["PATH"] = f"{pathprepend}:{kwargs['env']['PATH']}"
-
-    try:
-        subprocess_run(
-            cmd,
-            **kwargs,
-        )
-    except FileNotFoundError as e:
-        # This is reachable if the command isn't found.
-        if not exit:
-            raise RuntimeError(f"{e}")
-        raise SystemExit(f"{e}")
-    except CalledProcessError as e:
-        detail = f"""
-`{' '.join(e.cmd)}` returned code {e.returncode}
+        if not stream_output:
+            detail += f"""
+stdout:
+{"" if e.stdout is None else e.stdout.decode()}
+stderr:
+{"" if e.stderr is None else e.stderr.decode()}
 """
         if not exit:
             raise RuntimeError(detail)

@@ -147,11 +147,13 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
         f"{home}/.sentry/sentry.conf.py"
     ):
-        proc.run_stream_output((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
+        proc.run((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
 
     # TODO: run devservices healthchecks for redis and postgres to bypass this
-    proc.run_stream_output(
-        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"), exit=True
+    proc.run(
+        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"),
+        stream_output=True,
+        exit=True,
     )
 
     if not run_procs(
