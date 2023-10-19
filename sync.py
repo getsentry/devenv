@@ -10,7 +10,6 @@ from typing import Tuple
 
 from devenv import pythons
 from devenv.constants import home
-from devenv.constants import root
 from devenv.constants import venv_root
 from devenv.constants import VOLTA_HOME
 from devenv.lib import proc
@@ -35,7 +34,7 @@ def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]
                         **proc.base_env,
                         "VIRTUAL_ENV": f"{venv_root}/{repo}",
                         "VOLTA_HOME": VOLTA_HOME,
-                        "PATH": f"{root}/bin:{venv_root}/{repo}/bin:{proc.base_path}",
+                        "PATH": f"{venv_root}/{repo}/bin:{proc.base_path}",
                     },
                     cwd=reporoot,
                 ),
