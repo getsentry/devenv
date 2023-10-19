@@ -52,9 +52,8 @@ pin-gha   - {pin_gha.help}
         raise SystemExit(1)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def devenv(argv: Sequence[str] | None = None) -> int:
     parser = CustomArgumentParser(add_help=False)
-    parser.add_argument("pwd")
     parser.add_argument(
         "command",
         choices={
@@ -74,8 +73,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return self_update(force=True)
 
     self_update()
-
-    os.chdir(args.pwd)
 
     # generic/standalone tools that do not care about devenv configuration
     if args.command == "pin-gha":
@@ -107,15 +104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return bootstrap.main(coderoot, remainder)
 
     # the remaining tools are repo-specific
-    if not args.nocoderoot and not args.pwd.startswith(coderoot):
-        print(
-            f"You aren't in your code root ({coderoot})!\n"
-            "To ignore, use devenv --nocoderoot [COMMAND]\n"
-            f"To change your code root, you can edit {config_path}.\n"
-        )
-        return 1
-
-    reporoot = gitroot(args.pwd)
+    reporoot = gitroot()
     repo = reporoot.split("/")[-1]
 
     context = {
@@ -129,6 +118,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return sync.main(context, remainder)
 
     return 1
+
+
+def main() -> int:
+    import sys
+
+    return devenv(sys.argv)
 
 
 if __name__ == "__main__":
