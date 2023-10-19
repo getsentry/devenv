@@ -35,7 +35,11 @@ def run(
     kwargs["check"] = True
     kwargs["capture_output"] = True
 
-    kwargs.setdefault("env", base_env)
+    if not kwargs.get("env"):
+        kwargs["env"] = base_env
+    else:
+        kwargs["env"] = {**base_env, **kwargs["env"]}
+
     if pathprepend:
         kwargs["env"]["PATH"] = f"{pathprepend}:{kwargs['env']['PATH']}"
 
