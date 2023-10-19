@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sentry_devenv"
+version = "0.0.1"
+authors = [
+  { name="Joshua Li", email="joshua.li@sentry.io" },
+  { name="Ian Woodard", email="ian.woodard@sentry.io" },
+  { name="Buck Evan", email="buck.evan@sentry.io" },
+]
+description = "Utilities for setting up a Sentry development environment"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "pytest>=7.2.1",
+]
+
+[tool.setuptools.packages]
+find = {}
+
+[project.scripts]
+devenv = "devenv.main:main"
+
+[tool.mypy]
+python_version = "3.9"

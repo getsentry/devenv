@@ -6,7 +6,7 @@ from unittest import mock
 import pytest  # type: ignore
 
 from devenv import doctor
-from devenv.tests.doctor.devenv.checks import passing_check
+from tests.doctor.devenv.checks import passing_check
 
 
 prompts_for_fix_yes: list[str] = [

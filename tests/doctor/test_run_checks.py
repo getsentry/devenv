@@ -3,10 +3,10 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 
 from devenv import doctor
-from devenv.tests.doctor.devenv.checks import broken_check
-from devenv.tests.doctor.devenv.checks import failing_check
-from devenv.tests.doctor.devenv.checks import failing_check_with_msg
-from devenv.tests.doctor.devenv.checks import passing_check
+from tests.doctor.devenv.checks import broken_check
+from tests.doctor.devenv.checks import failing_check
+from tests.doctor.devenv.checks import failing_check_with_msg
+from tests.doctor.devenv.checks import passing_check
 
 
 def test_run_checks_no_checks() -> None:

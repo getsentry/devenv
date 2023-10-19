@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from devenv import doctor
-from devenv.tests.doctor.devenv.checks import failing_check
-from devenv.tests.doctor.devenv.checks import passing_check
+from tests.doctor.devenv.checks import failing_check
+from tests.doctor.devenv.checks import passing_check
 
 
 def test_filter_failing_checks_no_checks() -> None:
