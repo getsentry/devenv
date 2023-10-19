@@ -44,8 +44,6 @@ def run(
     if pathprepend:
         kwargs["env"]["PATH"] = f"{pathprepend}:{kwargs['env']['PATH']}"
 
-    print(cmd, kwargs)
-
     try:
         proc = subprocess_run(
             cmd,

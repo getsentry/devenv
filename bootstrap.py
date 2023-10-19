@@ -80,7 +80,14 @@ When done, hit ENTER to continue.
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
             additional_flags = (
-                ("--depth", "1", "https://github.com/getsentry/sentry")
+                (
+                    "--depth",
+                    "1",
+                    "--branch",
+                    "josh-test",
+                    "--single-branch",
+                    "https://github.com/getsentry/sentry",
+                )
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
