@@ -1,70 +1,74 @@
 #!/bin/bash
+set -euo pipefail
+PS4='+\033]33;1m$\033m ' 
 
-if [[ "$(uname -s)" != Darwin ]]; then
-    echo "Only macs are supported for now."
-    exit 1
+# let users see important commands
+show() {(set -x; "$@"); }
+# check if a command exists
+has() { command -v "$@" >/dev/null; }
+yesno() { # ask a question
+  prompt="$1 [y/n]: "
+  while :; do
+    if [[ "$CI" ]]; then
+      REPLY="yes"
+      echo "$prompt$REPLY"
+    else
+      read -r -p "$prompt"
+    fi
+
+    case $REPLY in
+        [yY]*) return 0 ;;
+        [nN]*) return 1 ;;
+        *) echo "Unrecognized response.";;
+    esac
+  done
+}
+
+SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
+SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
+
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/sentry-devenv}"
+devenv_bin="$SNTY_DEVENV_HOME/bin"
+devenv_venv="$SNTY_DEVENV_HOME/venv"
+
+if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
+  set -x
 fi
 
-branch=${1:-main}
-
-devenv_cache="${HOME}/.cache/sentry-devenv"
-devenv_root="${HOME}/.local/share/sentry-devenv"
-devenv_bin="${devenv_root}/bin"
-devenv_python_root="${devenv_root}/python"
-
-mkdir -p "$devenv_cache" "$devenv_python_root" "$devenv_bin"
-
-platform=x86_64
-sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00
-
-case "$(uname -m)" in
-    arm64)
-      platform=aarch64
-      sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4
-      ;;
-esac
-
-archive="cpython-3.11.4+20230726-${platform}-apple-darwin-install_only.tar.gz"
+if ! has brew; then
+  if yesno "This tool requires Homebrew. Install now?"; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  else
+    return 1
+  fi
+fi
 
 echo "Installing devenv..."
 
-[[ -f "${devenv_cache}/${archive}" ]] || \
-    curl -fsSL \
-    "https://github.com/indygreg/python-build-standalone/releases/download/20230726/${archive}" \
-    -o "${devenv_cache}/${archive}"
+# NB: eval separately to avoid gobbling errors
+eval="$(brew shellenv)"
+eval "$eval"
+show brew install python@3.11 git
 
-echo "${sha256}  ${devenv_cache}/${archive}" | /usr/bin/shasum -a 256 --check --status
+python3.11 -m venv "$devenv_venv"
 
-tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${archive}"
+"$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
 
-if ! [[ -d "${devenv_root}/devenv" ]]; then
-    git -C "$devenv_root" clone -q -b "$branch" --depth=1 'https://github.com/getsentry/devenv.git'
+mkdir -p "$SNTY_DEVENV_HOME/bin"
+ln -sf "$devenv_venv/bin/devenv" "$devenv_bin/"
+echo "devenv installed at $devenv_bin/devenv"
+
+export="export PATH='\$PATH:$devenv_bin'"
+if [[ -e ~/.profile ]] && grep -qFx "$export" ~/.profile; then
+  : 'already done!'
+elif yesno "Modify PATH in your ~/.profile? If you use a different shell or prefer to modify PATH in your own way, say no"; then
+  echo "$export" >> ~/.profile
+else
+  echo "Okay. Make sure $devenv_bin is in your PATH then."
+  break
 fi
 
-# note: even though this is #!/bin/bash, SHELL isn't modified and so remains the value set by the parent shell
-shellrc="${HOME}/.${SHELL##*/}rc"
-
-[[ $CI ]] && echo "export PATH=\"$devenv_bin:\$PATH\"" >> "$shellrc"
-# just to prevent grep from complaining that shellrc doesn't exist
-touch "$shellrc"
-while ! /usr/bin/grep -qF "export PATH=\"${devenv_bin}:\$PATH\"" "$shellrc"; do
-    read -r -p "Modify PATH in your ${shellrc}? If you use a different shell or prefer to modify PATH in your own way, say no [y/n]: " REPLY
-    case $REPLY in
-        [yY])
-            echo "export PATH=\"$devenv_bin:\$PATH\"" >> "$shellrc"
-            ;;
-        [nN])
-            echo "Okay. Make sure ${devenv_bin} is in your PATH then."
-            break
-            ;;
-        *) ;;
-    esac
-done
-
-ln -sf "${devenv_root}/devenv/bin/devenv" "${devenv_bin}/devenv"
-echo "devenv installed at ${devenv_bin}/devenv"
-
-export PATH="${devenv_bin}:${PATH}"
-devenv update
-
-echo "All done! Open a new terminal and run 'devenv bootstrap' to create your development environment."
+echo "All done! Run 'devenv bootstrap' to create your development environment."
+"$SHELL" -l  # start a new login shell, to get fresh env
