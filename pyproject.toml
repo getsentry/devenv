@@ -18,9 +18,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-  "pytest>=7.2.1",
-]
+dependencies = []
 
 [tool.setuptools.packages]
 find = {}
@@ -30,3 +28,4 @@ devenv = "devenv.main:main"
 
 [tool.mypy]
 python_version = "3.9"
+strict = true
