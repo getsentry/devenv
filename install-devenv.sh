@@ -5,18 +5,23 @@
 #   export SNTY_DEVENV_BRANCH="$(git branch --show-current)"
 #   ./install-devenv.sh
 set -euo pipefail
-export PS4=$'+ \x1b[34;1m$\x1b[m '
 
+## functions
 # let users see important commands
 show() {(set -x; "$@")}
 # check if a command exists
 has() { command -v "$@" >/dev/null; }
+# tell the user something
+info() { colorize "$ansi_teal" "$@"; }
+# warn the user
+warn() { colorize "$ansi_yellow" "$@"; }
 yesno() { # ask a question
-  prompt="$1 [y/n]: "
+  prompt="$1 $ansi_green[y/n]$ansi_reset: "
   while :; do
     if [[ "${CI:-}" ]]; then
       REPLY="yes"
-      echo "$prompt$REPLY"
+      echo -n "$prompt"
+      info "$REPLY"
     else
       read -r -p "$prompt"
     fi
@@ -24,55 +29,79 @@ yesno() { # ask a question
     case $REPLY in
         [yY]*) return 0 ;;
         [nN]*) return 1 ;;
-        *) echo "Unrecognized response.";;
+        *) warn "Unrecognized response.";;
     esac
   done
 }
+# show a colorized message
+colorize() {
+  color="$1"
+  shift 1
+  message="$*"
+  echo >&2 "$color$message$ansi_reset"
+}
 
-SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
-SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
-
+## constants
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/sentry-devenv}"
-devenv_bin="$SNTY_DEVENV_HOME/bin"
-devenv_venv="$SNTY_DEVENV_HOME/venv"
+# a few color codes
+ansi_yellow=$'\x1b[33m'
+ansi_green=$'\x1b[1;34m'
+ansi_teal=$'\x1b[36m'
+ansi_reset=$'\x1b[m'
+# fancy "prompt" for xtrace log
+export PS4="+ $ansi_green\$$ansi_reset "
 
-if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
-  set -x
-fi
-
-echo "Installing dependencies..."
-
-if ! has brew; then
-  if yesno "This tool requires Homebrew. Install now?"; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  else
-    return 1
+parseopt() {  # argument (and environment-var) processing
+  # control install behavior
+  SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
+  SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
+  SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/sentry-devenv}"
+  if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
+    set -x
   fi
-fi
+}
 
-# NB: eval separately to avoid gobbling errors
-eval="$(brew shellenv)"
-eval "$eval"
-show brew install python@3.11 git
+main() {
+  parseopt
+  devenv_bin="$SNTY_DEVENV_HOME/bin"
+  devenv_venv="$SNTY_DEVENV_HOME/venv"
 
-show python3.11 -m venv --clear "$devenv_venv"
+  info "Installing dependencies..."
 
-show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+  if ! has brew; then
+    if yesno "This tool requires Homebrew. Install now?"; then
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    else
+      return 1
+    fi
+  fi
 
-mkdir -p "$SNTY_DEVENV_HOME/bin"
-ln -sf "$devenv_venv/bin/devenv" "$devenv_bin/"
-echo "devenv installed at $devenv_bin/devenv"
+  # NB: eval separately to avoid gobbling errors
+  eval="$(brew shellenv)"
+  eval "$eval"
+  show brew install python@3.11 git
 
-export='export PATH="$PATH:'"$devenv_bin"\"
-if [[ -e ~/.profile ]] && grep -qFx "$export" ~/.profile; then
-  : 'already done!'
-elif yesno "Modify PATH in your ~/.profile? If you use a different shell or prefer to modify PATH in your own way, say no"; then
-  echo "$export" >> ~/.profile
-else
-  echo "Okay. Make sure $devenv_bin is in your PATH then."
-  break
-fi
+  show python3.11 -m venv --clear "$devenv_venv"
 
-echo "All done! Run 'devenv bootstrap' to create your development environment."
-show "$SHELL" -l  # start a new login shell, to get fresh env
+  show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+
+  mkdir -p "$SNTY_DEVENV_HOME/bin"
+  ln -sf "$devenv_venv/bin/devenv" "$devenv_bin/"
+  info "devenv installed at $devenv_bin/devenv"
+
+  export='export PATH="$PATH:'"$devenv_bin"\"
+  if [[ -e ~/.profile ]] && grep -qFx "$export" ~/.profile; then
+    : 'already done!'
+  elif yesno "Modify PATH in your ~/.profile? If you use a different shell or prefer to modify PATH in your own way, say no"; then
+    echo "$export" >> ~/.profile
+  else
+    info "Okay. Make sure $devenv_bin is in your PATH then."
+    break
+  fi
+
+  ## fin
+  info "All done! Run 'devenv bootstrap' to create your development environment."
+  show "$SHELL" -l  # start a new login shell, to get fresh env
+}
+
+main 
