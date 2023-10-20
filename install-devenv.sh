@@ -16,7 +16,7 @@ info() { colorize "$ansi_teal" "$@"; }
 # warn the user
 warn() { colorize "$ansi_yellow" "$@"; }
 yesno() { # ask a question
-  prompt="$1 $ansi_green[y/n]$ansi_reset: "
+  prompt="$1$ansi_green [y/n]$ansi_reset: "
   while :; do
     if [[ "${CI:-}" ]]; then
       REPLY="yes"
@@ -62,7 +62,7 @@ parseopt() {  # argument (and environment-var) processing
 }
 
 main() {
-  parseopt
+  parseopt "$@"
   devenv_bin="$SNTY_DEVENV_HOME/bin"
   devenv_venv="$SNTY_DEVENV_HOME/venv"
 
@@ -89,14 +89,13 @@ main() {
   ln -sf "$devenv_venv/bin/devenv" "$devenv_bin/"
   info "devenv installed at $devenv_bin/devenv"
 
-  export='export PATH="$PATH:'"$devenv_bin"\"
+  export="export PATH=\"\$PATH:$devenv_bin\""
   if [[ -e ~/.profile ]] && grep -qFx "$export" ~/.profile; then
     : 'already done!'
   elif yesno "Modify PATH in your ~/.profile? If you use a different shell or prefer to modify PATH in your own way, say no"; then
     echo "$export" >> ~/.profile
   else
     info "Okay. Make sure $devenv_bin is in your PATH then."
-    break
   fi
 
   ## fin
@@ -104,4 +103,4 @@ main() {
   show "$SHELL" -l  # start a new login shell, to get fresh env
 }
 
-main 
+main "$@"
