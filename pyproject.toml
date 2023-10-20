@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -27,5 +27,5 @@ find = {}
 devenv = "devenv.main:main"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 strict = true
