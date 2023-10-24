@@ -7,6 +7,9 @@ trash/
 *.log
 *.tmp
 
+# sentinel file for GNU make
+.*.done
+
 # vim swapfiles
 .*.sw[a-z]
 

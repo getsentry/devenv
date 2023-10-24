@@ -1,0 +1,2 @@
+brew "docker"
+brew "docker-buildx"
