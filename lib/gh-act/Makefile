@@ -1,5 +1,5 @@
 all: .all.done
-.all.done: ./docker-build.sh ~/.docker/cli-plugins/docker-buildx
+.all.done: Dockerfile ./docker-build.sh ~/.docker/cli-plugins/docker-buildx
 	./docker-build.sh && touch $@
 
 ~/.docker/cli-plugins/docker-buildx:

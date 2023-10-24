@@ -1,7 +1,21 @@
--P ubuntu-latest=devenv-gh-act:python311
+# For detail, see ./doc/gh-act.md
+
+--container-architecture linux/arm64
+
+# the default image runs quite slowly due to lack of installed python
+#-P ubuntu-latest=catthehacker/ubuntu:act-latest
 #-P ubuntu-22.04=node:16-bullseye-slim
 #-P ubuntu-20.04=node:16-buster-slim
 #-P ubuntu-18.04=node:16-buster-slim
 
-# don't force-pull every time
+# This image was built by running the command: make -C ci/github/act
+-P ubuntu-latest=localhost/ubuntu-act-latest:python311
+# it's not possible to pull this "localhost" image
 --pull=false
+
+
+--env-file None  # ignore our .env, which isn't appropriate for gh-act
+
+# these can be handy for debugging:
+--verbose=false
+--env RUNNER_DEBUG=0
