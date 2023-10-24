@@ -1,0 +1,71 @@
+name: bootstrap
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+  run:
+    # enable xtrace by default
+    # use a login shell, to enable ~/.profile
+    # the default default is:
+    #      bash --noprofile --norc -eo pipefail {0}
+    shell: bash --login -eo pipefail -ux {0}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: remove homebrew
+        run: |
+          ls -laF --color /usr/local /usr/local/bin /usr/local/var \
+            || true  # just looking around
+          df \
+              /usr/local/var/homebrew \
+              /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
+              /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3* \
+              /usr/local/bin/chromedriver \
+            || true
+
+      - name: install
+        run: |
+          mv install-devenv.sh /tmp
+          cd /tmp
+          # should be able to be run from anywhere
+          ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
+
+      - name: check
+        run: |
+          devenv doctor --check-only || touch foo
+          devenv doctor --check-only
+          rm foo
+          expect <<EOF
+            spawn devenv doctor
+            expect "Do you want to attempt to fix foo? (Y/n): "
+            send "y\r"
+            expect eof
+          EOF
+          devenv doctor
+
+      - name: bootstrap sentry
+        run: |
+          # we don't have permissions to clone getsentry which is a good thing
+          # eventually we should move this bootstrap testing over to getsentry repo
+          # in the meantime, mock it so that pip install -e has something to chew on
+          mkdir -p $HOME/dev/getsentry
+          cat <<EOF > $HOME/dev/getsentry/pyproject.toml
+          [project]
+          name = "getsentry-mock"
+          version = "0.0.0"
+          EOF
+
+          # note: colima will be used and is necessary for a docker runtime on
+          #       macos GitHub runners
+          devenv bootstrap
+
+          cd $HOME/dev/sentry
+          direnv allow

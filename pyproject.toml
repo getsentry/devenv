@@ -27,4 +27,5 @@ find = {}
 devenv = "devenv.main:main"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.9"  # for functools.cache
+strict = true

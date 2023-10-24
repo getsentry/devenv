@@ -8,15 +8,25 @@ import time
 from collections.abc import Sequence
 from typing import NoReturn
 
+from typing_extensions import TypeAlias
+
 from devenv import bootstrap
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import config_root
-from devenv.constants import home
 from devenv.constants import root
 from devenv.constants import src_root
 from devenv.lib.fs import gitroot
+
+# comments are used as input prompts for initial config
+Config: TypeAlias = "dict[str, dict[str, str | None]]"
+DEFAULT_CONFIG = dict(
+    devenv={
+        "# Where do you usually run `git clone`?": None,
+        "coderoot": "~/repo",
+    }
+)
 
 
 def self_update(force: bool = False) -> int:
@@ -36,6 +46,26 @@ def self_update(force: bool = False) -> int:
     if rc == 0:
         os.utime(fn)
     return rc
+
+
+def initialize_config(config_path: str, defaults: Config) -> None:
+    if os.path.exists(config_path):
+        # todo: query for any config options not in  the existing config file
+        return
+
+    config = configparser.ConfigParser(allow_no_value=True)
+    config.read_dict(defaults)
+    for section, values in config.items():
+        for var, val in values.items():
+            if val is None:
+                print(var.strip("# "), end="")
+            else:
+                values[var] = input(f" [{val}]: ") or val
+    print("Thank you. Saving answsers...")
+    os.makedirs(config_root, exist_ok=True)
+    with open(config_path, "w") as f:
+        config.write(f)
+    print(f"If you made a mistake, you can edit {config_path}.")
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
@@ -78,27 +108,13 @@ def devenv(argv: Sequence[str] | None = None) -> int:
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
 
-    config = configparser.ConfigParser()
     config_path = f"{config_root}/config.ini"
+    initialize_config(config_path, DEFAULT_CONFIG)
 
-    if not os.path.exists(config_path):
-        coderoot = (
-            os.path.expanduser(
-                input("please enter the root directory where you want to work in [~/dev]: ")
-            )
-            or f"{home}/dev"
-        )
-        os.makedirs(coderoot, exist_ok=True)
-
-        config["devenv"] = {"coderoot": coderoot}
-
-        os.makedirs(config_root, exist_ok=True)
-        with open(config_path, "w") as f:
-            config.write(f)
-        print(f"If you made a mistake, you can edit {config_path}.")
-
+    config = configparser.ConfigParser(allow_no_value=True)
     config.read(config_path)
-    coderoot = config["devenv"]["coderoot"]
+    coderoot = os.path.expanduser(config["devenv"]["coderoot"])
+    os.makedirs(coderoot, exist_ok=True)
 
     if args.command == "bootstrap":
         return bootstrap.main(coderoot, remainder)

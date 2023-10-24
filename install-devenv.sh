@@ -4,7 +4,7 @@
 #   export SNTY_DEVENV_REPO=file://$PWD
 #   export SNTY_DEVENV_BRANCH="$(git branch --show-current)"
 #   ./install-devenv.sh
-set -euo pipefail
+set -eEuo pipefail
 
 ## functions
 # let users see important commands
@@ -15,6 +15,7 @@ has() { command -v "$@" >/dev/null; }
 info() { colorize "$ansi_teal" "$@"; }
 # warn the user
 warn() { colorize "$ansi_yellow" "$@"; }
+error() { colorize "$ansi_red" "$@"; exit 1; }
 yesno() { # ask a question
   prompt="$1$ansi_green [y/n]$ansi_reset: "
   while :; do
@@ -40,11 +41,23 @@ colorize() {
   message="$*"
   echo >&2 "$color$message$ansi_reset"
 }
+curl() {(
+  unset curl
+  if has curl; then
+    curl -fsSL "$@"
+  elif has wget; then
+    wget -q -O- "$@"
+  else
+    echo "$PATH" | tr : '\n' | xargs ls -lhF --color >&2
+    error "Please install curl or wget."
+  fi
+)}
 
 ## constants
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 # a few color codes
 ansi_yellow=$'\x1b[33m'
+ansi_red=$'\x1b[31m'
 ansi_green=$'\x1b[1;34m'
 ansi_teal=$'\x1b[36m'
 ansi_reset=$'\x1b[m'
@@ -70,7 +83,8 @@ main() {
 
   if ! has brew; then
     if yesno "This tool requires Homebrew. Install now?"; then
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      curl https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh |
+        bash
     else
       return 1
     fi
