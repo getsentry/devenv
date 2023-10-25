@@ -114,29 +114,14 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         repo,
         reporoot,
         (
-            ("git and precommit", ("make", "setup-git")),
-            ("javascript dependencies", ("make", "install-js-dev")),
             (
-                "python dependencies",
+                "git and precommit",
                 (
                     "/bin/bash",
                     "-euo",
                     "pipefail",
                     "-c",
-                    """
-export PIP_DISABLE_PIP_VERSION_CHECK=on
-
-pip_install='pip install --constraint requirements-dev-frozen.txt'
-$pip_install --upgrade pip setuptools wheel
-
-# pip doesn't do well with swapping drop-ins
-pip uninstall -qqy uwsgi
-
-$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
-
-pip_install_editable='pip install --no-deps'
-SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
-""",
+                    "make setup-git",
                 ),
             ),
         ),
