@@ -83,9 +83,6 @@ When done, hit ENTER to continue.
                 (
                     "--depth",
                     "1",
-                    "--branch",
-                    "josh-test",
-                    "--single-branch",
                     "https://github.com/getsentry/sentry",
                 )
                 if CI
