@@ -10,41 +10,33 @@ from typing import Tuple
 
 from devenv import pythons
 from devenv.constants import home
-from devenv.constants import shell
 from devenv.constants import venv_root
+from devenv.constants import VOLTA_HOME
 from devenv.lib import proc
 
 help = "Resyncs the environment."
 
 
-def run_procs(repo: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
+def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
     procs = []
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
-        final_cmd = (
-            shell,
-            # interactive shell is used so we can make sure our earlier shellrc
-            # modifications are good (in the case that we're bootstrapping a new system)
-            "-i",
-            "-e",
-            "-c",
-            # VIRTUAL_ENV is just to keep sentry's lib/ensure_venv.sh happy
-            f"""
-export PATH={venv_root}/{repo}/bin:$PATH
-export VIRTUAL_ENV={venv_root}/{repo}
-
-{shlex.join(cmd)}
-""",
-        )
         procs.append(
             (
                 name,
-                final_cmd,
+                cmd,
                 subprocess.Popen(
-                    final_cmd,
+                    cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
+                    env={
+                        **proc.base_env,
+                        "VIRTUAL_ENV": f"{venv_root}/{repo}",
+                        "VOLTA_HOME": VOLTA_HOME,
+                        "PATH": f"{venv_root}/{repo}/bin:{proc.base_path}",
+                    },
+                    cwd=reporoot,
                 ),
             )
         )
@@ -89,12 +81,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     reporoot = context["reporoot"]
     if repo == "getsentry":
         repo = "sentry"
-        reporoot = f"{reporoot}/../sentry"
-
-    os.chdir(reporoot)
 
     # TODO: delete getsentry's .python-version as it will no longer be used
-    with open(f"{reporoot}/.python-version", "rt") as f:
+    with open(f"{reporoot}/../sentry/.python-version", "rt") as f:
         python_version = f.read().strip()
 
     # If the venv doesn't exist, create it with the expected python version.
@@ -121,11 +110,35 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
+
     if not run_procs(
         repo,
+        reporoot,
         (
-            ("git and precommit", ("make", "setup-git")),
-            ("javascript dependencies", ("make", "install-js-dev")),
+            (
+                "git and precommit",
+                # this can't be done in paralell with python dependencies
+                # as multiple pips cannot act on the same venv
+                (
+                    "make",
+                    "setup-git",
+                ),
+            ),
+        ),
+    ):
+        return 1
+
+    if not run_procs(
+        repo,
+        reporoot,
+        (
+            (
+                "javascript dependencies",
+                (
+                    "make",
+                    "install-js-dev",
+                ),
+            ),
             (
                 "python dependencies",
                 (
@@ -156,15 +169,19 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
         f"{home}/.sentry/sentry.conf.py"
     ):
-        proc.run_stream_output((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
+        proc.run((f"{venv}/bin/sentry", "init", "--dev"))
 
     # TODO: run devservices healthchecks for redis and postgres to bypass this
-    proc.run_stream_output(
-        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"), exit=True
+    proc.run(
+        (f"{venv}/bin/sentry", "devservices", "up", "redis", "postgres"),
+        stream_output=True,
+        exit=True,
     )
 
     if not run_procs(
-        repo, (("python migrations", (f"{venv_root}/{repo}/bin/sentry", "upgrade", "--noinput")),)
+        repo,
+        reporoot,
+        (("python migrations", (f"{venv}/bin/sentry", "upgrade", "--noinput")),),
     ):
         return 1
 

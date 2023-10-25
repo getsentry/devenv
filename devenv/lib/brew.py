@@ -3,22 +3,17 @@ from __future__ import annotations
 import os
 from shutil import which
 
+from devenv.constants import homebrew_bin
+from devenv.constants import homebrew_repo
 from devenv.constants import INTEL_MAC
 from devenv.lib import fs
 from devenv.lib import proc
-
-homebrew_repo = "/opt/homebrew"
-homebrew_bin = f"{homebrew_repo}/bin/brew"
-
-if INTEL_MAC:
-    homebrew_repo = "/usr/local/Homebrew"
-    homebrew_bin = "/usr/local/bin/brew"
 
 
 def install() -> None:
     # idempotent: skip if brew is on the executing shell's path,
     #             and it resolves to the expected location
-    if which("brew") == homebrew_bin:
+    if which("brew") == f"{homebrew_bin}/brew":
         return
 
     shellrc = fs.shellrc()
@@ -58,7 +53,7 @@ chown {os.environ['USER']} {dirs}
     )
 
     if INTEL_MAC:
-        os.symlink(f"{homebrew_repo}/bin/brew", homebrew_bin)
+        os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
 
-    out = proc.run((homebrew_bin, "shellenv"))
+    out = proc.run((f"{homebrew_bin}/brew", "shellenv"))
     fs.idempotent_add(shellrc, out)
