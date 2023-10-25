@@ -110,6 +110,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
+
     if not run_procs(
         repo,
         reporoot,
@@ -125,6 +126,14 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                     "make setup-git",
                 ),
             ),
+        ),
+    ):
+        return 1
+
+    if not run_procs(
+        repo,
+        reporoot,
+        (
             (
                 "javascript dependencies",
                 (
