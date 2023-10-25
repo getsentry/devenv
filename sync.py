@@ -118,12 +118,8 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             (
                 "git and precommit",
                 (
-                    "/bin/bash",
-                    "-euo",
-                    "pipefail",
-                    "-c",
-                    # NOTE: not sure why this doesn't work without bash
-                    "make setup-git",
+                    "make",
+                    "setup-git",
                 ),
             ),
         ),
