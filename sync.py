@@ -114,8 +114,27 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         repo,
         reporoot,
         (
-            ("git and precommit", ("make", "setup-git")),
-            ("javascript dependencies", ("make", "install-js-dev")),
+            (
+                "git and precommit",
+                (
+                    "/bin/bash",
+                    "-euo",
+                    "pipefail",
+                    "-c",
+                    # NOTE: not sure why this doesn't work without bash
+                    "make setup-git",
+                ),
+            ),
+            (
+                "javascript dependencies",
+                (
+                    "/bin/bash",
+                    "-euo",
+                    "pipefail",
+                    "-c",
+                    "make install-js-dev",
+                ),
+            ),
             (
                 "python dependencies",
                 (
@@ -146,11 +165,11 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
         f"{home}/.sentry/sentry.conf.py"
     ):
-        proc.run((f"{venv_root}/{repo}/bin/sentry", "init", "--dev"))
+        proc.run((f"{venv}/bin/sentry", "init", "--dev"))
 
     # TODO: run devservices healthchecks for redis and postgres to bypass this
     proc.run(
-        (f"{venv_root}/{repo}/bin/sentry", "devservices", "up", "redis", "postgres"),
+        (f"{venv}/bin/sentry", "devservices", "up", "redis", "postgres"),
         stream_output=True,
         exit=True,
     )
@@ -158,7 +177,7 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     if not run_procs(
         repo,
         reporoot,
-        (("python migrations", (f"{venv_root}/{repo}/bin/sentry", "upgrade", "--noinput")),),
+        (("python migrations", (f"{venv}/bin/sentry", "upgrade", "--noinput")),),
     ):
         return 1
 
