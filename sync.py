@@ -117,6 +117,8 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         (
             (
                 "git and precommit",
+                # this can't be done in paralell with python dependencies
+                # as multiple pips cannot act on the same venv
                 (
                     "make",
                     "setup-git",
@@ -133,11 +135,8 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             (
                 "javascript dependencies",
                 (
-                    "/bin/bash",
-                    "-euo",
-                    "pipefail",
-                    "-c",
-                    "make install-js-dev",
+                    "make",
+                    "install-js-dev",
                 ),
             ),
             (
