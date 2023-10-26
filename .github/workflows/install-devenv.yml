@@ -36,9 +36,9 @@ jobs:
 
       - name: install
         run: |
+          : should be able to be run from anywhere:
           mv install-devenv.sh /tmp
           cd /tmp
-          # should be able to be run from anywhere
           ./install-devenv.sh "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
 
       - name: check

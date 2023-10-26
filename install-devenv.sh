@@ -65,6 +65,11 @@ constants() {
   # fancy "prompt" for xtrace log
   export PS4="+ $ansi_green\$$ansi_reset "
 
+  if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
+    set -x
+    colorize() { :; }  # show messages just once
+  fi
+
   # default values for system environment variables
   USER=$(id -un)
   HOME=$(eval 'echo ~')
@@ -75,18 +80,14 @@ constants() {
 }
 
 parseopt() {  # argument (and environment-var) processing
-  # control install behavior
   appname="sentry-devenv"
+  # control install behavior
   SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
   SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
   SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/$appname}"
   SNTY_DEVENV_CACHE="${SNTY_DEVENV_CACHE:-$XDG_CACHE_HOME/$appname}"
-  SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_VERSION:-20230726}"
+  SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_RELEASE:-20230726}"
   SNTY_DEVENV_PY_VERSION="${SNTY_DEVENV_PY_VERSION:-3.11.4}"
-  if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
-    colorize() { :; }  # noop
-    set -x
-  fi
 }
 
 # translate from uname output to indygreg release tags:
@@ -109,6 +110,14 @@ indygreg_cpu() {
   esac
 }
 
+_check_checksum() {
+  if has shasum; then
+    shasum -a 256 --check --status
+  elif has openssl; then
+    "$openssl" dgst -sha256
+  fi
+}
+
 check_checksum() {
   sha256="$1"
   path="$2"
@@ -117,9 +126,10 @@ check_checksum() {
 }
 
 install_python() {
-  python="$1"
+  release="$1"
+  version="$2"
   platform="$OSTYPE-$CPUTYPE"
-  indygreg_platform="$(indygreg_os)-$(indygreg_cpu)"
+  indygreg_platform="$(indygreg_cpu)-$(indygreg_os)"
 
   case "$platform" in
     darwin-arm64) sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
@@ -132,50 +142,40 @@ install_python() {
   esac
 
 
-  tarball="cpython-$SNTY_DEVENV_PY_VERSION+$SNTY_DEVENV_PY_RELEASE-$indygreg_platform-install_only.tar.gz"
-  src="https://github.com/indygreg/python-build-standalone/releases/download/$SNTY_DEVENV_PY_RELEASE/$tarball" \
+  tarball="cpython-$version+$release-$indygreg_platform-install_only.tar.gz"
+  src="https://github.com/indygreg/python-build-standalone/releases/download/$release/$tarball" \
   dst="$SNTY_DEVENV_CACHE/${tarball}"
-  if check_checksum "$sha256" "$src"; then
+  if check_checksum "$sha256" "$dst"; then
     echo "Using cached python download..."
   else
+    mkdir -p "$(dirname "$dst")"
     http-get "$src" > "$dst"
-    check_checksum "$sha256" "$src"
+    check_checksum "$sha256" "$dst"
   fi
 
-  tar --strip-components=1 -C "$devenv_python_root" -x -f "${devenv_cache}/${tarball}"
-
+  mkdir -p "$SNTY_DEVENV_HOME/python${version}"
+  tar --strip-components=1 -C "$SNTY_DEVENV_HOME/python" -x -f "${SNTY_DEVENV_CACHE}/${tarball}"
+  ln -sfn "$SNTY_DEVENV_HOME/python${version}" "$SNTY_DEVENV_HOME/python"
 }
 
 main() {
   constants
   parseopt "$@"
-  devenv_bin="$SNTY_DEVENV_HOME/bin"
+  devenv_bin="${SNTY_DEVENV_HOME:?}/bin"  # :? causes an error on empty-string
   devenv_venv="$SNTY_DEVENV_HOME/venv"
 
   info "Installing dependencies..."
-  install_python "$SNTY_DEVENV_PY_VERSION"
+  install_python "$SNTY_DEVENV_PY_RELEASE" "$SNTY_DEVENV_PY_VERSION"
 
-  if ! has brew; then
-    if yesno "This tool requires Homebrew. Install now?"; then
-      http https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh |
-        bash
-    else
-      return 1
-    fi
-  fi
-
-  # NB: eval separately to avoid gobbling errors
-  eval="$(brew shellenv)"
-  eval "$eval"
-  show brew install python@3.11 git
-
-  show python3.11 -m venv --clear "$devenv_venv"
+  export PATH="$SNTY_DEVENV_HOME/python/bin:$PATH"
+  show "$(which python)" -m venv --clear "$devenv_venv"
 
   show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
 
-  mkdir -p "$SNTY_DEVENV_HOME/bin"
-  ln -sf "$devenv_venv/bin/devenv" "$devenv_bin/"
-  info "devenv installed at $devenv_bin/devenv"
+  rm -rf "$devenv_bin"
+  mkdir -p "$devenv_bin"
+  ln -sfn "$devenv_venv/bin/devenv" "$devenv_bin/"
+  info "devenv installed, at: $devenv_bin/devenv"
 
   export="export PATH=\"\$PATH:$devenv_bin\""
   if [[ -e ~/.profile ]] && grep -qFx "$export" ~/.profile; then
@@ -191,7 +191,6 @@ main() {
   show "$SHELL" -l  # start a new login shell, to get fresh env
 }
 
-set -x
 if [[ "$ME" = "install-devenv.sh" ]]; then
   set -eEuo pipefail
   main "$@"
