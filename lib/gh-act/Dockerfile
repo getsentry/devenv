@@ -45,4 +45,6 @@ FROM debian:bullseye-slim
 COPY --from=builder /opt/hostedtoolcache/Python /opt/hostedtoolcache/Python
 COPY --from=builder /root/.pyenv/versions /root/.pyenv/versions
 ADD ./apt-install ./apt-install
-RUN ./apt-install wget ca-certificates
+
+# download a tarball and pip-install a git repo
+RUN ./apt-install wget ca-certificates git

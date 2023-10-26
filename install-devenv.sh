@@ -111,10 +111,10 @@ indygreg_cpu() {
 }
 
 _check_checksum() {
-  if has shasum; then
+  if has shasum; then  # macos
     shasum -a 256 --check --status
-  elif has openssl; then
-    "$openssl" dgst -sha256
+  elif has sha256sum; then  # linux
+    sha256sum --check --status
   fi
 }
 
@@ -122,7 +122,7 @@ check_checksum() {
   sha256="$1"
   path="$2"
   test -f "$path"
-  echo "${sha256}  $path" | shasum -a 256 --check --status
+  echo "${sha256}  $path" | _check_checksum
 }
 
 install_python() {
@@ -134,8 +134,8 @@ install_python() {
   case "$platform" in
     darwin-arm64) sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
     darwin-x86_64) sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
-    linux-gnu-x86_64) sha256=e26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
-    linux-gnu-aarch64) sha256=e26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
+    linux-gnu-x86_64) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
+    linux-gnu-aarch64) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
     *)
       error "Unexpected platform; please contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
       ;;
@@ -154,7 +154,7 @@ install_python() {
   fi
 
   mkdir -p "$SNTY_DEVENV_HOME/python${version}"
-  tar --strip-components=1 -C "$SNTY_DEVENV_HOME/python" -x -f "${SNTY_DEVENV_CACHE}/${tarball}"
+  tar --strip-components=1 -C "$SNTY_DEVENV_HOME/python${version}" -x -f "${SNTY_DEVENV_CACHE}/${tarball}"
   ln -sfn "$SNTY_DEVENV_HOME/python${version}" "$SNTY_DEVENV_HOME/python"
 }
 
@@ -163,12 +163,12 @@ main() {
   parseopt "$@"
   devenv_bin="${SNTY_DEVENV_HOME:?}/bin"  # :? causes an error on empty-string
   devenv_venv="$SNTY_DEVENV_HOME/venv"
+  devenv_python="$SNTY_DEVENV_HOME/python/bin/python3"
 
   info "Installing dependencies..."
   install_python "$SNTY_DEVENV_PY_RELEASE" "$SNTY_DEVENV_PY_VERSION"
 
-  export PATH="$SNTY_DEVENV_HOME/python/bin:$PATH"
-  show "$(which python)" -m venv --clear "$devenv_venv"
+  show "$devenv_python" -m venv --clear "$devenv_venv"
 
   show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
 
@@ -182,13 +182,12 @@ main() {
     : 'already done!'
   elif yesno "Modify PATH in your ~/.profile? If you use a different shell or prefer to modify PATH in your own way, say no"; then
     echo "$export" >> ~/.profile
-  else
-    info "Okay. Make sure $devenv_bin is in your PATH then."
   fi
 
   ## fin
   info "All done! Run 'devenv bootstrap' to create your development environment."
-  show "$SHELL" -l  # start a new login shell, to get fresh env
+  : start a new login shell, to get fresh env:
+  show "$SHELL" -l
 }
 
 if [[ "$ME" = "install-devenv.sh" ]]; then
