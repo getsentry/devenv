@@ -68,30 +68,34 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     print(f"If you made a mistake, you can edit {config_path}.")
 
 
-class CustomArgumentParser(argparse.ArgumentParser):
-    def format_usage(self) -> NoReturn:
-        return f"""usage: devenv COMMAND
-
-commands:
-    update    - force updates devenv (autoupdated on a daily basis)
-    bootstrap - {bootstrap.help}
-    doctor    - {doctor.help}
-    sync      - {sync.help}
-    pin-gha   - {pin_gha.help}
-
-"""
+class CustomHelpFormat(
+    argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
+):
+    pass
 
 
-def devenv(argv: Sequence[str]) -> int:
-    parser = CustomArgumentParser(add_help=False)
+def parser():
+    parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
     parser.add_argument(
         "command",
-        choices=("bootstrap", "update", "doctor", "pin-gha", "sync"),
+        choices=("update", "bootstrap", "doctor", "sync", "pin-gha"),
+        metavar="COMMAND",
+        help=f"""\
+update    - force updates devenv (autoupdated on a daily basis)
+bootstrap - {bootstrap.help}
+doctor    - {doctor.help}
+sync      - {sync.help}
+pin-gha   - {pin_gha.help}
+""",
     )
     parser.add_argument(
         "--nocoderoot", action="store_true", help="Do not require being in coderoot."
     )
-    args, remainder = parser.parse_known_args(argv[1:])
+    return parser
+
+
+def devenv(argv: Sequence[str]) -> int:
+    args, remainder = parser().parse_known_args(argv[1:])
 
     if args.command == "update":
         return self_update(force=True)
