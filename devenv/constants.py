@@ -20,7 +20,6 @@ venv_root = f"{root}/virtualenvs"
 shell_path = os.environ.get("SHELL", SHELL_UNSET)
 shell = shell_path.rsplit("/", 1)[-1]
 
-
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"
