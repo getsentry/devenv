@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import pwd
 import sys
 
 CI = os.environ.get("CI")
@@ -17,8 +18,11 @@ root = f"{home}/.local/share/sentry-devenv"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 venv_root = f"{root}/virtualenvs"
-shell_path = os.environ.get("SHELL", SHELL_UNSET)
+
+passwd = pwd.getpwuid(os.getuid())
+shell_path = os.environ.get("SHELL", passwd.pw_shell)
 shell = shell_path.rsplit("/", 1)[-1]
+user = pwd.getpwuid(os.getuid()).pw_name
 
 
 if INTEL_MAC:

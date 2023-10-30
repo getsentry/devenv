@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+import pwd
 from shutil import which
 
 from devenv.constants import homebrew_bin
 from devenv.constants import homebrew_repo
 from devenv.constants import INTEL_MAC
+from devenv.constants import user
 from devenv.lib import fs
 from devenv.lib import proc
 
@@ -15,6 +17,9 @@ def install() -> None:
     #             and it resolves to the expected location
     if which("brew") == f"{homebrew_bin}/brew":
         return
+
+    p = pwd.getpwuid(os.getuid())
+    p.pw_name
 
     shellrc = fs.shellrc()
     print("You may be prompted for your password to install homebrew.")
@@ -30,7 +35,7 @@ def install() -> None:
                     "-c",
                     f"""
 mkdir -p {dirs}
-chown {os.environ['USER']} {dirs}
+chown {user} {dirs}
 """,
                 ),
                 exit=False,
@@ -49,7 +54,7 @@ chown {os.environ['USER']} {dirs}
             "--depth=1",
             "https://github.com/Homebrew/brew",
             ".",
-        ),
+        )
     )
 
     if INTEL_MAC:

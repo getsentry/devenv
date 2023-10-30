@@ -6,9 +6,7 @@ import os
 import subprocess
 import time
 from collections.abc import Sequence
-from typing import NoReturn
-
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor
@@ -18,6 +16,8 @@ from devenv.constants import config_root
 from devenv.constants import root
 from devenv.constants import src_root
 from devenv.lib.fs import gitroot
+
+ExitCode: TypeAlias = "str | int | None"
 
 # comments are used as input prompts for initial config
 Config: TypeAlias = "dict[str, dict[str, str | None]]"
@@ -42,7 +42,9 @@ def self_update(force: bool = False) -> int:
     print("Updating devenv tool...")
     # We don't have any dependencies. If we do end up adding some,
     # we should vendor to avoid pip calls to keep it lean and simple.
-    rc = subprocess.call(("git", "-C", src_root, "pull", "--ff-only", "origin", "main"))
+    rc = subprocess.call(
+        ("git", "-C", src_root, "pull", "--ff-only", "origin", "main")
+    )
     if rc == 0:
         os.utime(fn)
     return rc
@@ -55,12 +57,13 @@ def initialize_config(config_path: str, defaults: Config) -> None:
 
     config = configparser.ConfigParser(allow_no_value=True)
     config.read_dict(defaults)
-    for values in config.values():
+    for section, values in config.items():
         for var, val in values.items():
             if val is None:
                 print(var.strip("# "), end="")
             else:
-                values[var] = input(f" [{val}]: ") or val
+                val = input(f" [{val}]: ") or val
+                config.set(section, var, val)
     print("Thank you. Saving answsers...")
     os.makedirs(config_root, exist_ok=True)
     with open(config_path, "w") as f:
@@ -89,12 +92,14 @@ pin-gha   - {pin_gha.help}
 """,
     )
     parser.add_argument(
-        "--nocoderoot", action="store_true", help="Do not require being in coderoot."
+        "--nocoderoot",
+        action="store_true",
+        help="Do not require being in coderoot.",
     )
     return parser
 
 
-def devenv(argv: Sequence[str]) -> int:
+def devenv(argv: Sequence[str]) -> ExitCode:
     args, remainder = parser().parse_known_args(argv[1:])
 
     if args.command == "update":
@@ -121,10 +126,7 @@ def devenv(argv: Sequence[str]) -> int:
     reporoot = gitroot()
     repo = reporoot.split("/")[-1]
 
-    context = {
-        "repo": repo,
-        "reporoot": reporoot,
-    }
+    context = {"repo": repo, "reporoot": reporoot}
 
     if args.command == "doctor":
         return doctor.main(context, remainder)
@@ -134,7 +136,7 @@ def devenv(argv: Sequence[str]) -> int:
     return 1
 
 
-def main() -> int:
+def main() -> ExitCode:
     import sys
 
     return devenv(sys.argv)

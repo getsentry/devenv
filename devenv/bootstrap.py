@@ -1,10 +1,10 @@
 from __future__ import annotations
-import typing_extensions as t
 
 import argparse
 import os
 import shutil
 from collections.abc import Sequence
+from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import home
@@ -18,13 +18,17 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
-ExitCode: t.TypeAlias = "str | int | None"
+ExitCode: TypeAlias = "str | int | None"
 
 
 def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "repo", type=str, nargs="?", default="sentry", choices=("sentry", "getsentry")
+        "repo",
+        type=str,
+        nargs="?",
+        default="sentry",
+        choices=("sentry", "getsentry"),
     )
     args = parser.parse_args(argv)
 
@@ -32,9 +36,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         # Setting up sentry means we're setting up both repos.
         args.repo = "sentry"
 
-    if args.repo not in {
-        "sentry",
-    }:
+    if args.repo not in {"sentry"}:
         return f"repo {args.repo} not supported yet!"
 
     if shutil.which("xcrun"):
@@ -83,11 +85,7 @@ When done, hit ENTER to continue.
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
             additional_flags = (
-                (
-                    "--depth",
-                    "1",
-                    "https://github.com/getsentry/sentry",
-                )
+                ("--depth", "1", "https://github.com/getsentry/sentry")
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
@@ -147,10 +145,7 @@ When done, hit ENTER to continue.
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run(
-            (
-                "make",
-                "bootstrap",
-            ),
+            ("make", "bootstrap"),
             stream_output=True,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
@@ -167,10 +162,7 @@ When done, hit ENTER to continue.
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
-                (
-                    "make",
-                    "bootstrap",
-                ),
+                ("make", "bootstrap"),
                 stream_output=True,
                 env={
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
