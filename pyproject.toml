@@ -25,9 +25,48 @@ dependencies = [
 [tool.setuptools.packages]
 find = {}
 
+[tool.black]
+line-length = 80
+target-version = ['py311']
+skip-magic-trailing-comma = true
+
+
 [project.scripts]
 devenv = "devenv.main:main"
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+# disallow Any typing:
+disallow_any_unimported = true
+# there's too many Any's in typeshed:
+disallow_any_expr = false
+disallow_any_decorated = true
+# disallow_any_explicit = true
+
+implicit_reexport = false
+
+warn_no_return = true
+warn_unreachable = true
+
+[tool.pyright]
+include = ["."]
+pythonVersion = "3.11"
+
+typeCheckingMode = "strict"
+
+# turn on all the checks not already enabled by "strict":
+reportCallInDefaultInitializer = "error"
+reportImplicitStringConcatenation = "error"
+reportMissingSuperCall = "error"
+reportPropertyTypeMismatch = "error"
+reportUninitializedInstanceVariable = "error"
+reportUnnecessaryTypeIgnoreComment = "error"
+reportUnusedCallResult = "none"  # too noisy
+
+# don't flag arguments as long as their type is known
+reportMissingParameterType = "none"
+reportUnknownParameterType = "error"
+#### don't flag missing typestubs, as long as everything is typed
+###reportMissingTypeStubs = false

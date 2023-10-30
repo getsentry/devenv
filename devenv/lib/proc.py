@@ -14,9 +14,7 @@ from devenv.constants import VOLTA_HOME
 
 # We don't want to use os.environ (to stay isolated from user's own env which could be broken).
 # User provides paths as needed via pathprepend.
-base_path = (
-    f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{root}/bin"
-)
+base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{root}/bin"
 base_env = {
     "PATH": base_path,
     "HOME": home,
@@ -46,10 +44,7 @@ def run(
         kwargs["env"]["PATH"] = f"{pathprepend}:{kwargs['env']['PATH']}"
 
     try:
-        proc = subprocess_run(
-            cmd,
-            **kwargs,
-        )
+        proc = subprocess_run(cmd, **kwargs)
         return "" if proc.stdout is None else proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.

@@ -40,7 +40,9 @@ def self_update(force: bool = False) -> int:
     print("Updating devenv tool...")
     # We don't have any dependencies. If we do end up adding some,
     # we should vendor to avoid pip calls to keep it lean and simple.
-    rc = subprocess.call(("git", "-C", src_root, "pull", "--ff-only", "origin", "main"))
+    rc = subprocess.call(
+        ("git", "-C", src_root, "pull", "--ff-only", "origin", "main")
+    )
     if rc == 0:
         os.utime(fn)
     return rc
@@ -53,12 +55,10 @@ def initialize_config(config_path: str, defaults: Config) -> None:
 
     config = configparser.ConfigParser(allow_no_value=True)
     config.read_dict(defaults)
-    for values in config.values():
+    for section, values in config.items():
         for var, val in values.items():
-            if val is None:
-                print(var.strip("# "), end="")
-            else:
-                values[var] = input(f" [{val}]: ") or val  # type: ignore
+            val = input(f" [{val}]: ") or val
+            config.set(section, var, val)
     print("Thank you. Saving answsers...")
     os.makedirs(config_root, exist_ok=True)
     with open(config_path, "w") as f:
@@ -66,7 +66,9 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     print(f"If you made a mistake, you can edit {config_path}.")
 
 
-class CustomHelpFormat(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
+class CustomHelpFormat(
+    argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
+):
     pass
 
 
@@ -85,7 +87,9 @@ pin-gha   - {pin_gha.help}
 """,
     )
     parser.add_argument(
-        "--nocoderoot", action="store_true", help="Do not require being in coderoot."
+        "--nocoderoot",
+        action="store_true",
+        help="Do not require being in coderoot.",
     )
     return parser
 
@@ -117,10 +121,7 @@ def devenv(argv: Sequence[str]) -> int:
     reporoot = gitroot()
     repo = reporoot.split("/")[-1]
 
-    context = {
-        "repo": repo,
-        "reporoot": reporoot,
-    }
+    context = {"repo": repo, "reporoot": reporoot}
 
     if args.command == "doctor":
         return doctor.main(context, remainder)
