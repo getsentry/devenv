@@ -10,7 +10,7 @@ ARG PYTHON_VERSION
 # make local scripts available
 ADD ./apt-install ./apt-install
 
-# bare prereqs to fetch source
+# minimum prerequisites to fetch source
 RUN ./apt-install git wget ca-certificates
 
 # pyenv
@@ -46,5 +46,5 @@ COPY --from=builder /opt/hostedtoolcache/Python /opt/hostedtoolcache/Python
 COPY --from=builder /root/.pyenv/versions /root/.pyenv/versions
 ADD ./apt-install ./apt-install
 
-# download a tarball and pip-install a git repo
-RUN ./apt-install wget ca-certificates git
+# minimum prerequisites to fetch source
+RUN ./apt-install git wget ca-certificates
