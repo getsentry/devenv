@@ -86,8 +86,7 @@ def devenv(argv: Sequence[str]) -> int:
     parser = CustomArgumentParser(add_help=False)
     parser.add_argument(
         "command",
-        choices={"bootstrap", "update", "doctor", "pin-gha", "sync", "help"},
-        default="help",
+        choices=("bootstrap", "update", "doctor", "pin-gha", "sync"),
     )
     parser.add_argument(
         "--nocoderoot", action="store_true", help="Do not require being in coderoot."
