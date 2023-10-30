@@ -18,7 +18,7 @@ src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 venv_root = f"{root}/virtualenvs"
 shell_path = os.environ.get("SHELL", SHELL_UNSET)
-shell = shell_path.split("/", 1)[-1]
+shell = shell_path.rsplit("/", 1)[-1]
 
 
 if INTEL_MAC:

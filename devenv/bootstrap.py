@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing_extensions as t
 
 import argparse
 import os
@@ -17,9 +18,10 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
+ExitCode: t.TypeAlias = "str | int | None"
 
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
         "repo", type=str, nargs="?", default="sentry", choices=("sentry", "getsentry")
@@ -33,20 +35,19 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     if args.repo not in {
         "sentry",
     }:
-        print(f"repo {args.repo} not supported yet!")
-        return 1
+        return f"repo {args.repo} not supported yet!"
 
-    # xcode-select --install will take a while,
-    # and involves elevated permissions with a GUI,
-    # so best to just let the user go through that separately then retrying,
-    # rather than waiting for it.
-    # There is a way to perform a headless install but it's more complex
-    # (refer to how homebrew does it).
-    try:
-        proc.run(("/usr/bin/xcrun", "-f", "git"))
-    except RuntimeError:
-        print("Failed to find git. Run xcode-select --install, then re-run bootstrap when done.")
-        return 1
+    if shutil.which("xcrun"):
+        # xcode-select --install will take a while,
+        # and involves elevated permissions with a GUI,
+        # so best to just let the user go through that separately then retrying,
+        # rather than waiting for it.
+        # There is a way to perform a headless install but it's more complex
+        # (refer to how homebrew does it).
+        try:
+            proc.run(("xcrun", "-f", "git"))
+        except RuntimeError:
+            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
 
     github.add_to_known_hosts()
 
@@ -67,7 +68,9 @@ When done, hit ENTER to continue.
 """
         )
         while not github.check_ssh_access():
-            input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
+            input(
+                "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
+            )
 
     brew.install()
     volta.install()
@@ -117,7 +120,11 @@ When done, hit ENTER to continue.
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run((f"{homebrew_bin}/brew", "bundle"), stream_output=True, cwd=f"{coderoot}/sentry")
+        proc.run(
+            (f"{homebrew_bin}/brew", "bundle"),
+            stream_output=True,
+            cwd=f"{coderoot}/sentry",
+        )
 
         # this'll create the virtualenv if it doesn't exist
         proc.run(

@@ -55,7 +55,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
 
     config = configparser.ConfigParser(allow_no_value=True)
     config.read_dict(defaults)
-    for section, values in config.items():
+    for values in config.values():
         for var, val in values.items():
             if val is None:
                 print(var.strip("# "), end="")
@@ -74,7 +74,7 @@ class CustomHelpFormat(
     pass
 
 
-def parser():
+def parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
     parser.add_argument(
         "command",
