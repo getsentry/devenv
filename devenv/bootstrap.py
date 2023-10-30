@@ -1,5 +1,4 @@
 from __future__ import annotations
-import typing_extensions as t
 
 import argparse
 import os
@@ -18,10 +17,9 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
-ExitCode: t.TypeAlias = "str | int | None"
 
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
         "repo", type=str, nargs="?", default="sentry", choices=("sentry", "getsentry")
@@ -35,7 +33,8 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     if args.repo not in {
         "sentry",
     }:
-        return f"repo {args.repo} not supported yet!"
+        print(f"repo {args.repo} not supported yet!")
+        return 1
 
     if shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -47,7 +46,10 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         try:
             proc.run(("xcrun", "-f", "git"))
         except RuntimeError:
-            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+            print(
+                "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+            )
+            return 1
 
     github.add_to_known_hosts()
 
@@ -68,9 +70,7 @@ When done, hit ENTER to continue.
 """
         )
         while not github.check_ssh_access():
-            input(
-                "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
-            )
+            input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
 
     brew.install()
     volta.install()

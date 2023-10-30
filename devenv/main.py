@@ -6,9 +6,7 @@ import os
 import subprocess
 import time
 from collections.abc import Sequence
-from typing import NoReturn
-
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor
@@ -60,7 +58,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
             if val is None:
                 print(var.strip("# "), end="")
             else:
-                values[var] = input(f" [{val}]: ") or val
+                values[var] = input(f" [{val}]: ") or val  # type: ignore
     print("Thank you. Saving answsers...")
     os.makedirs(config_root, exist_ok=True)
     with open(config_path, "w") as f:
@@ -68,9 +66,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     print(f"If you made a mistake, you can edit {config_path}.")
 
 
-class CustomHelpFormat(
-    argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
-):
+class CustomHelpFormat(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
     pass
 
 
