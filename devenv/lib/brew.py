@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import pwd
 from shutil import which
 
 from devenv.constants import homebrew_bin
@@ -17,9 +16,6 @@ def install() -> None:
     #             and it resolves to the expected location
     if which("brew") == f"{homebrew_bin}/brew":
         return
-
-    p = pwd.getpwuid(os.getuid())
-    p.pw_name
 
     shellrc = fs.shellrc()
     print("You may be prompted for your password to install homebrew.")
