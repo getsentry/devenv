@@ -134,8 +134,8 @@ install_python() {
   case "$platform" in
     darwin-arm64) sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
     darwin-x86_64) sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
-    linux-gnu-x86_64|linux-x86_64) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
-    linux-gnu-aarch64|linux-aarch64) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
+    linux-gnu-x86_64) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
+    linux-gnu-aarch64) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
     *)
       error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
       ;;
