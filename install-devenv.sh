@@ -137,7 +137,7 @@ install_python() {
     linux-gnu-x86_64) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
     linux-gnu-aarch64) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
     *)
-      error "Unexpected platform; please contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
+      error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
       ;;
   esac
 
