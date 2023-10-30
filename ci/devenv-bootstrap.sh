@@ -11,6 +11,7 @@ version = "0.0.0"
 EOF
 
 echo $PATH
+cat ~/.profile
 
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
