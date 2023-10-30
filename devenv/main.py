@@ -69,35 +69,30 @@ def initialize_config(config_path: str, defaults: Config) -> None:
 
 
 class CustomArgumentParser(argparse.ArgumentParser):
-    def error(self, message: str) -> NoReturn:
-        print(
-            f"""commands:
-update    - force updates devenv (autoupdated on a daily basis)
-bootstrap - {bootstrap.help}
-doctor    - {doctor.help}
-sync      - {sync.help}
-pin-gha   - {pin_gha.help}
+    def format_usage(self) -> NoReturn:
+        return f"""usage: devenv COMMAND
+
+commands:
+    update    - force updates devenv (autoupdated on a daily basis)
+    bootstrap - {bootstrap.help}
+    doctor    - {doctor.help}
+    sync      - {sync.help}
+    pin-gha   - {pin_gha.help}
+
 """
-        )
-        raise SystemExit(1)
 
 
-def devenv(argv: Sequence[str] | None = None) -> int:
+def devenv(argv: Sequence[str]) -> int:
     parser = CustomArgumentParser(add_help=False)
     parser.add_argument(
         "command",
-        choices={
-            "bootstrap",
-            "update",
-            "doctor",
-            "pin-gha",
-            "sync",
-        },
+        choices={"bootstrap", "update", "doctor", "pin-gha", "sync", "help"},
+        default="help",
     )
     parser.add_argument(
         "--nocoderoot", action="store_true", help="Do not require being in coderoot."
     )
-    args, remainder = parser.parse_known_args(argv)
+    args, remainder = parser.parse_known_args(argv[1:])
 
     if args.command == "update":
         return self_update(force=True)
