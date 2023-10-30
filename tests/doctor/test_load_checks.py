@@ -6,23 +6,12 @@ from devenv import doctor
 
 
 def test_load_checks_no_checks() -> None:
-    assert (
-        doctor.load_checks(
-            {
-                "reporoot": "not a real path",
-            },
-            set(),
-        )
-        == []
-    )
+    assert doctor.load_checks({"reporoot": "not a real path"}, set()) == []
 
 
 def test_load_checks_test_checks(capsys) -> None:  # type: ignore
     loaded_checks = doctor.load_checks(
-        {
-            "reporoot": os.path.join(os.path.dirname(__file__)),
-        },
-        set(),
+        {"reporoot": os.path.join(os.path.dirname(__file__))}, set()
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 5
@@ -44,10 +33,7 @@ def test_load_checks_test_checks(capsys) -> None:  # type: ignore
 
 def test_load_checks_only_passing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            "reporoot": os.path.join(os.path.dirname(__file__)),
-        },
-        {"pass"},
+        {"reporoot": os.path.join(os.path.dirname(__file__))}, {"pass"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 1
@@ -56,10 +42,7 @@ def test_load_checks_only_passing_tag() -> None:
 
 def test_load_checks_only_failing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            "reporoot": os.path.join(os.path.dirname(__file__)),
-        },
-        {"fail"},
+        {"reporoot": os.path.join(os.path.dirname(__file__))}, {"fail"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 2
@@ -69,10 +52,7 @@ def test_load_checks_only_failing_tag() -> None:
 
 def test_load_checks_passing_and_failing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            "reporoot": os.path.join(os.path.dirname(__file__)),
-        },
-        {"pass", "fail"},
+        {"reporoot": os.path.join(os.path.dirname(__file__))}, {"pass", "fail"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 0
@@ -80,10 +60,7 @@ def test_load_checks_passing_and_failing_tag() -> None:
 
 def test_load_checks_test_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            "reporoot": os.path.join(os.path.dirname(__file__)),
-        },
-        {"test"},
+        {"reporoot": os.path.join(os.path.dirname(__file__))}, {"test"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 5

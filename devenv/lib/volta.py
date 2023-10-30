@@ -20,12 +20,18 @@ _sha256 = {
 def install() -> None:
     unpack_into = f"{root}/bin"
 
-    if which("volta") == f"{unpack_into}/volta" and which("node") == f"{VOLTA_HOME}/bin/node":
+    if (
+        which("volta") == f"{unpack_into}/volta"
+        and which("node") == f"{VOLTA_HOME}/bin/node"
+    ):
         return
 
     suffix = "-aarch64" if platform.machine() == "arm64" else ""
     name = f"volta-{_version}-macos{suffix}.tar.gz"
-    url = "https://github.com/volta-cli/volta/releases/download/" f"v{_version}/{name}"
+    url = (
+        "https://github.com/volta-cli/volta/releases/download/"
+        f"v{_version}/{name}"
+    )
 
     archive_file = archive.download(url, _sha256[name])
     archive.unpack(archive_file, unpack_into)

@@ -37,22 +37,25 @@ class Check:
     check: Callable[[], Tuple[bool, str]]
     fix: Callable[[], Tuple[bool, str]]
 
-    def __init__(
-        self,
-        module: ModuleType,
-    ):
+    def __init__(self, module: ModuleType):
         # Check that the module has the required attributes.
         assert hasattr(module, "name"), "missing the `name` attribute"
-        assert isinstance(module.name, str), "the `name` attribute should be a str"
+        assert isinstance(
+            module.name, str
+        ), "the `name` attribute should be a str"
         self.name = module.name
 
         assert hasattr(module, "tags"), "missing the `tags` attribute"
-        assert isinstance(module.tags, set), "the `tags` attribute should be a set"
+        assert isinstance(
+            module.tags, set
+        ), "the `tags` attribute should be a set"
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
         assert hasattr(module, "check"), "must have a `check` function"
-        assert callable(module.check), "the `check` attribute must be a function"
+        assert callable(
+            module.check
+        ), "the `check` attribute must be a function"
         check_hints = typing.get_type_hints(module.check)
         assert (
             check_hints["return"] == Tuple[bool, str]
@@ -75,7 +78,9 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     If a check doesn't have the required attributes, skip it.
     """
     checks = []
-    for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
+    for module_finder, name, ispkg in walk_packages(
+        (f'{context["reporoot"]}/devenv/checks',)
+    ):
         module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
         try:
             check = Check(module)
@@ -110,7 +115,9 @@ def run_checks(
     return results
 
 
-def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]:
+def filter_failing_checks(
+    results: Dict[Check, Tuple[bool, str]]
+) -> List[Check]:
     """Print a report of the results, and return a list of failing checks."""
     failing_checks = []
     for check, result in results.items():
@@ -127,11 +134,7 @@ def prompt_for_fix(check: Check) -> bool:
     """Prompt the user to attempt a fix."""
     return input(
         f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
-    ).lower() in {
-        "y",
-        "yes",
-        "",
-    }
+    ).lower() in {"y", "yes", ""}
 
 
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
@@ -146,9 +149,14 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "--tag", type=str, action="append", help="Used to match a subset of checks."
+        "--tag",
+        type=str,
+        action="append",
+        help="Used to match a subset of checks.",
     )
-    parser.add_argument("--check-only", action="store_true", help="Do not run fixers.")
+    parser.add_argument(
+        "--check-only", action="store_true", help="Do not run fixers."
+    )
     args = parser.parse_args(argv)
 
     match_tags = set(args.tag if args.tag else ())

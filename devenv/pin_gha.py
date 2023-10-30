@@ -39,10 +39,14 @@ def extract_repo(action: str) -> str:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("files", nargs="+", type=str, help="path to github actions file")
+    parser.add_argument(
+        "files", nargs="+", type=str, help="path to github actions file"
+    )
     args = parser.parse_args(argv)
 
-    ACTION_VERSION_RE = re.compile(r"(?<=uses: )(?P<action>.*)@(?P<ref>[^#\s]+)")
+    ACTION_VERSION_RE = re.compile(
+        r"(?<=uses: )(?P<action>.*)@(?P<ref>[^#\s]+)"
+    )
 
     for fp in args.files:
         with open(fp, "r+") as f:

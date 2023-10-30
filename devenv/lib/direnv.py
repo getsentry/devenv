@@ -26,7 +26,10 @@ def install() -> None:
 
     suffix = "arm64" if platform.machine() == "arm64" else "amd64"
     name = f"direnv.darwin-{suffix}"
-    url = "https://github.com/direnv/direnv/releases/download" f"/v{_version}/{name}"
+    url = (
+        "https://github.com/direnv/direnv/releases/download"
+        f"/v{_version}/{name}"
+    )
 
     archive.download(url, _sha256[name], dest=direnv_path)
     os.chmod(direnv_path, 0o775)

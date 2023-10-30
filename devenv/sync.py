@@ -17,7 +17,9 @@ from devenv.lib import proc
 help = "Resyncs the environment."
 
 
-def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
+def run_procs(
+    repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]
+) -> bool:
     procs = []
 
     for name, cmd in _procs:
@@ -119,10 +121,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                 "git and precommit",
                 # this can't be done in paralell with python dependencies
                 # as multiple pips cannot act on the same venv
-                (
-                    "make",
-                    "setup-git",
-                ),
+                ("make", "setup-git"),
             ),
         ),
     ):
@@ -132,13 +131,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         repo,
         reporoot,
         (
-            (
-                "javascript dependencies",
-                (
-                    "make",
-                    "install-js-dev",
-                ),
-            ),
+            ("javascript dependencies", ("make", "install-js-dev")),
             (
                 "python dependencies",
                 (
@@ -181,7 +174,12 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     if not run_procs(
         repo,
         reporoot,
-        (("python migrations", (f"{venv}/bin/sentry", "upgrade", "--noinput")),),
+        (
+            (
+                "python migrations",
+                (f"{venv}/bin/sentry", "upgrade", "--noinput"),
+            ),
+        ),
     ):
         return 1
 
