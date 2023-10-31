@@ -141,7 +141,6 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run(
             ("make", "bootstrap"),
-            stdout=False,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
@@ -158,7 +157,6 @@ When done, hit ENTER to continue.
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
                 ("make", "bootstrap"),
-                stdout=False,
                 env={
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                     "VOLTA_HOME": VOLTA_HOME,

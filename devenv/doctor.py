@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import typing
 from collections.abc import Callable
+from collections.abc import Iterable
 from collections.abc import Sequence
+from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
 from types import ModuleType
@@ -70,6 +73,8 @@ class Check:
         ), "`fix(...)` should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
+        super().__init__()
+
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     """
@@ -77,15 +82,22 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     Optionally filter by tags.
     If a check doesn't have the required attributes, skip it.
     """
-    checks = []
-    for module_finder, name, ispkg in walk_packages(
+    checks: list[Check] = []
+    for module_finder, module_name, _ in walk_packages(
         (f'{context["reporoot"]}/devenv/checks',)
     ):
-        module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
+        module_spec = module_finder.find_spec(module_name, None)
+
+        # it "should be" impossible to fail these:
+        assert module_spec is not None, module_name
+        assert module_spec.loader is not None, module_name
+
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
         try:
             check = Check(module)
         except AssertionError as e:
-            print(f"⚠️ Skipping {name}: {e}")
+            print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
@@ -94,14 +106,16 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
 
 
 def run_checks(
-    checks: List[Check], executor: ThreadPoolExecutor, skip: List[Check] = []
+    checks: List[Check],
+    executor: ThreadPoolExecutor,
+    skip: Iterable[Check] = (),
 ) -> Dict[Check, Tuple[bool, str]]:
     """
     Run checks in parallel, and return a dict of results.
     Results are a tuple of (ok, msg).
     """
-    futures = {}
-    results = {}
+    futures: dict[Check, Future[tuple[bool, str]]] = {}
+    results: dict[Check, tuple[bool, str]] = {}
     for check in checks:
         if check in skip:
             print(f"\t⏭️  Skipped {check.name}".expandtabs(4))
@@ -119,7 +133,7 @@ def filter_failing_checks(
     results: Dict[Check, Tuple[bool, str]]
 ) -> List[Check]:
     """Print a report of the results, and return a list of failing checks."""
-    failing_checks = []
+    failing_checks: list[Check] = []
     for check, result in results.items():
         ok, msg = result
         if ok:
@@ -159,7 +173,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    match_tags = set(args.tag if args.tag else ())
+    match_tags: set[str] = set(args.tag if args.tag else ())
 
     repo = context["repo"]
     if repo not in {"sentry", "getsentry", "devenv"}:
@@ -190,7 +204,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             return 1
 
     print("\nThe following problems have been identified:")
-    skip = []
+    skip: list[Check] = []
     for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
         # Prompt for fixes one by one, so the user can decide to skip a fix.

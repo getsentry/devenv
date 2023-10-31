@@ -35,7 +35,6 @@ chown {user} {dirs}
 """,
                 ),
                 exit=False,
-                stdout=False,
             )
         except RuntimeError:
             continue
@@ -51,8 +50,7 @@ chown {user} {dirs}
             "--depth=1",
             "https://github.com/Homebrew/brew",
             ".",
-        ),
-        stdout=False,
+        )
     )
 
     if INTEL_MAC:

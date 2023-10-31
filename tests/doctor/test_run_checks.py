@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from devenv import doctor
 from tests.doctor.devenv.checks import broken_check
 from tests.doctor.devenv.checks import failing_check
@@ -42,7 +44,7 @@ def test_run_checks_one_passing_and_one_failing_check() -> None:
     ) == {first_check: (True, ""), second_check: (False, "")}
 
 
-def test_run_checks_skip(capsys) -> None:  # type: ignore
+def test_run_checks_skip(capsys: pytest.CaptureFixture[str]) -> None:
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(failing_check)
     assert doctor.run_checks(

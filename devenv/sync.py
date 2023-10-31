@@ -170,7 +170,7 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
         exit=True,
     )
 
-    if not run_procs(
+    if run_procs(
         repo,
         reporoot,
         (
@@ -180,6 +180,6 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
             ),
         ),
     ):
+        return 0
+    else:
         return 1
-
-    return 0

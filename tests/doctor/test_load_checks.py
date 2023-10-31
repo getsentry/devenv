@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from devenv import doctor
 
 
@@ -9,7 +11,7 @@ def test_load_checks_no_checks() -> None:
     assert doctor.load_checks({"reporoot": "not a real path"}, set()) == []
 
 
-def test_load_checks_test_checks(capsys) -> None:  # type: ignore
+def test_load_checks_test_checks(capsys: pytest.CaptureFixture[str]) -> None:
     loaded_checks = doctor.load_checks(
         {"reporoot": os.path.join(os.path.dirname(__file__))}, set()
     )
