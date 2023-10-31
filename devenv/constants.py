@@ -24,7 +24,6 @@ shell_path = os.environ.get("SHELL", passwd.pw_shell)
 shell = shell_path.rsplit("/", 1)[-1]
 user = pwd.getpwuid(os.getuid()).pw_name
 
-
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"

@@ -9,6 +9,5 @@ venv: requirements-dev.in
 		rm -rf venv  # failure
 	touch venv  # success
 
-
 docker-image:
 	cd lib/gh-act && make

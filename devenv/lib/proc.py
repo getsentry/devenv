@@ -29,9 +29,7 @@ def run(
     stream_output: bool = False,
     pathprepend: str = "",
     exit: bool = False,
-    *,
     env: dict[str, str] | None = None,
-    **subprocess_run_kwargs: bool,
 ) -> str:
     if not env:
         env = base_env
@@ -42,12 +40,7 @@ def run(
         env["PATH"] = f"{pathprepend}:{env['PATH']}"
 
     try:
-        proc = subprocess_run(
-            cmd,
-            **subprocess_run_kwargs,
-            check=True,
-            capture_output=not stream_output,
-        )
+        proc = subprocess_run(cmd, check=True, capture_output=not stream_output)
         return "" if proc.stdout is None else proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
