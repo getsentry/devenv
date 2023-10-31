@@ -11,7 +11,7 @@ defaults:
     # use a login shell, to enable ~/.profile
     # the default default is:
     #      bash --noprofile --norc -eo pipefail {0}
-    shell: bash --login -eo pipefail -ux {0}
+    shell: bash --login -eo pipefail -x {0}
 env:
   SHELL: /bin/bash
   # many scripts use this to check whether a shell is interactive:
@@ -36,6 +36,7 @@ jobs:
               /usr/local/bin/chromedriver
       - name: install
         run: |
+          set -u
           : should be able to be run from anywhere:
           repo=$PWD
           mv install-devenv.sh /tmp
