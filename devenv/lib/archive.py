@@ -36,7 +36,7 @@ def download(url: str, sha256: str, dest: str = "") -> str:
         raise RuntimeError(
             f"checksum mismatch for {url}:\n"
             f"- got: {checksum.hexdigest()}\n"
-            f"- expected: {sha256}\n",
+            f"- expected: {sha256}\n"
         )
 
     return dest

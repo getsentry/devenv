@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from subprocess import CalledProcessError
 from subprocess import run as subprocess_run
-from typing import Any
 from typing import Tuple
 
 from devenv.constants import home
@@ -30,23 +29,24 @@ def run(
     stream_output: bool = False,
     pathprepend: str = "",
     exit: bool = False,
-    **kwargs: Any,
+    *,
+    env: dict[str, str] | None = None,
+    **subprocess_run_kwargs: bool,
 ) -> str:
-    kwargs["check"] = True
-    kwargs["capture_output"] = not stream_output
-
-    if not kwargs.get("env"):
-        kwargs["env"] = base_env
+    if not env:
+        env = base_env
     else:
-        kwargs["env"] = {**base_env, **kwargs["env"]}
+        env = {**base_env, **env}
 
     if pathprepend:
-        kwargs["env"]["PATH"] = f"{pathprepend}:{kwargs['env']['PATH']}"
+        env["PATH"] = f"{pathprepend}:{env['PATH']}"
 
     try:
         proc = subprocess_run(
             cmd,
-            **kwargs,
+            **subprocess_run_kwargs,
+            check=True,
+            capture_output=not stream_output,
         )
         return "" if proc.stdout is None else proc.stdout.decode().strip()  # type: ignore
     except FileNotFoundError as e:

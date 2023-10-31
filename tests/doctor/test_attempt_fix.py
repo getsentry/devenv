@@ -21,7 +21,10 @@ def test_attempt_fix_failure() -> None:
 
 def test_attempt_fix_failure_with_msg() -> None:
     check = doctor.Check(failing_check_with_msg)
-    assert doctor.attempt_fix(check, ThreadPoolExecutor()) == (False, "fix failed")
+    assert doctor.attempt_fix(check, ThreadPoolExecutor()) == (
+        False,
+        "fix failed",
+    )
 
 
 def test_attempt_fix_broken_fix() -> None:
