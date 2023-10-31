@@ -39,7 +39,8 @@ def install() -> None:
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
     proc.run((f"{root}/bin/volta-migrate",))
-    proc.run((f"{root}/bin/volta", "-v"))
+    version = proc.run((f"{root}/bin/volta", "-v"), stdout=True)
+    assert version == _version, (version, _version)
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 
