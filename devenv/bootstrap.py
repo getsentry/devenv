@@ -4,7 +4,6 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import home
@@ -18,10 +17,9 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
-ExitCode: TypeAlias = "str | int | None"
 
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
         "repo",
@@ -37,7 +35,8 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         args.repo = "sentry"
 
     if args.repo not in {"sentry"}:
-        return f"repo {args.repo} not supported yet!"
+        print(f"repo {args.repo} not supported yet!")
+        return 1
 
     if shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -49,7 +48,10 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         try:
             proc.run(("xcrun", "-f", "git"))
         except RuntimeError:
-            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+            print(
+                "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+            )
+            return 1
 
     github.add_to_known_hosts()
 

@@ -51,7 +51,7 @@ http-get() {(
   elif has wget; then
     wget -nv -O- "$url"
   else
-    error 'Please install `curl` or `wget` and try again'
+    error 'Please install curl or wget and try again'
   fi
 )}
 
@@ -75,7 +75,7 @@ constants() {
   HOME=$(eval 'echo ~')
   XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
   XDG_CACHE_HOME="${XDG_DATA_HOME:-$HOME/.cache}"
-  OSTYPE="${OSTYPE:-$(uname -s | tr -d '0-9.' | tr '[:upper:]' '[:lower:]')}"
+  OSTYPE="$(uname -s | tr -d '0-9.' | tr '[:upper:]' '[:lower:]')"
   CPUTYPE="${CPUTYPE:-$(uname -m)}"
 }
 

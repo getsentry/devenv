@@ -17,7 +17,7 @@ env:
 
 jobs:
   install-devenv:
-    runs-on: ubuntu-latest
+    runs-on: macos-13
     timeout-minutes: 30
     env:
       DEBUG: 1
@@ -27,17 +27,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: remove homebrew
         run: |
-          df \
+          sudo rm -rf \
               /usr/local/var/homebrew \
               /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
               /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3* \
-              /usr/local/bin/chromedriver \
-            || : "just looking around"
-          ls -laF --color /usr/local /usr/local/bin /usr/local/var \
-            || : "just looking around"
-          uname -s
-          uname -m
-
+              /usr/local/bin/chromedriver
       - name: install
         run: |
           : should be able to be run from anywhere:
