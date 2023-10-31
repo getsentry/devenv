@@ -102,7 +102,6 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     *additional_flags,
                 ),
-                stream_output=True,
                 exit=True,
             )
         if not CI and not os.path.exists(f"{coderoot}/getsentry"):
@@ -115,21 +114,15 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     "git@github.com:getsentry/getsentry",
                 ),
-                stream_output=True,
                 exit=True,
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run(
-            (f"{homebrew_bin}/brew", "bundle"),
-            stream_output=True,
-            cwd=f"{coderoot}/sentry",
-        )
+        proc.run((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
         proc.run(
             ("devenv", "sync"),
-            stream_output=True,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
@@ -148,7 +141,7 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run(
             ("make", "bootstrap"),
-            stream_output=True,
+            stdout=False,
             env={
                 "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                 "VOLTA_HOME": VOLTA_HOME,
@@ -165,7 +158,7 @@ When done, hit ENTER to continue.
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
                 ("make", "bootstrap"),
-                stream_output=True,
+                stdout=False,
                 env={
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                     "VOLTA_HOME": VOLTA_HOME,

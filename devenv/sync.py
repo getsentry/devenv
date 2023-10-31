@@ -18,9 +18,9 @@ help = "Resyncs the environment."
 
 
 def run_procs(
-    repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]
+    repo: str, reporoot: str, _procs: Tuple[Tuple[str, proc.Command], ...]
 ) -> bool:
-    procs = []
+    procs: list[tuple[str, proc.Command, subprocess.Popen[bytes]]] = []
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
@@ -167,7 +167,6 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     # TODO: run devservices healthchecks for redis and postgres to bypass this
     proc.run(
         (f"{venv}/bin/sentry", "devservices", "up", "redis", "postgres"),
-        stream_output=True,
         exit=True,
     )
 

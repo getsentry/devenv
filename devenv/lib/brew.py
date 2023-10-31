@@ -35,6 +35,7 @@ chown {user} {dirs}
 """,
                 ),
                 exit=False,
+                stdout=False,
             )
         except RuntimeError:
             continue
@@ -50,11 +51,12 @@ chown {user} {dirs}
             "--depth=1",
             "https://github.com/Homebrew/brew",
             ".",
-        )
+        ),
+        stdout=False,
     )
 
     if INTEL_MAC:
         os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
 
-    out = proc.run((f"{homebrew_bin}/brew", "shellenv"))
+    out = proc.run((f"{homebrew_bin}/brew", "shellenv"), stdout=True)
     fs.idempotent_add(shellrc, out)

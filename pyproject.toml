@@ -50,6 +50,8 @@ implicit_reexport = false
 warn_no_return = true
 warn_unreachable = true
 
+allow_redefinition = true
+
 [tool.pyright]
 include = ["."]
 pythonVersion = "3.11"

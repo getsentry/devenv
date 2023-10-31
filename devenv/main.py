@@ -6,8 +6,8 @@ import os
 import subprocess
 import time
 from collections.abc import Sequence
-from typing import TypeAlias
 from typing import cast
+from typing import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor

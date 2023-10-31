@@ -32,6 +32,7 @@ echo blah > foo
 """,
             ),
             cwd=fs.gitroot(),
+            stdout=False,
         )
         return True, ""
     except RuntimeError as e:
