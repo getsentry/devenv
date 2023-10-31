@@ -14,6 +14,8 @@ defaults:
     shell: bash --login -eo pipefail -ux {0}
 env:
   SHELL: /bin/bash
+  # many scripts use this to check whether a shell is interactive:
+  PS1: '$ '
 
 jobs:
   install-devenv:
