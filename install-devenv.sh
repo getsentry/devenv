@@ -4,8 +4,9 @@
 #   export SNTY_DEVENV_REPO=file://$PWD
 #   export SNTY_DEVENV_BRANCH="$(git branch --show-current)"
 #   ./install-devenv.sh
-PATH=/usr/bin:/bin:/usr/sbin:/sbin
-#HERE="$(cd "$(dirname "$0")"; pwd)"
+
+# shellcheck disable=SC2016  # I know that single-quotes are hardquotes
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 ME="$(basename "$0")"
 
 ## functions
