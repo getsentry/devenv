@@ -8,8 +8,8 @@ from collections.abc import Sequence
 from typing import Dict
 from typing import Tuple
 
-from devenv import pythons
 from devenv import constants
+from devenv import pythons
 from devenv.constants import home
 from devenv.constants import venv_root
 from devenv.constants import VOLTA_HOME
