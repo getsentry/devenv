@@ -75,7 +75,7 @@ constants() {
   HOME=$(eval 'echo ~')
   XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
   XDG_CACHE_HOME="${XDG_DATA_HOME:-$HOME/.cache}"
-  XDG_CONFIG_HOME="${XDG_DATA_HOME:-$HOME/.config}"
+  XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
   OSTYPE="$(uname -s | tr -d '0-9.' | tr '[:upper:]' '[:lower:]')"
   CPUTYPE="${CPUTYPE:-$(uname -m)}"
 }
