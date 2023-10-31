@@ -13,12 +13,12 @@ def check_ssh_access() -> bool:
     if CI:
         return True
     try:
-        # The remote returns code 1 when successfully authenticated.
-        proc.run(("ssh", "-T", "git@github.com"))
+        # The remote prints to stderr and exits with code 1 in all cases.
+        proc.run(("sh", "-c", "ssh -T git@github.com 2>&1"), stdout=True)
     except RuntimeError as e:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
-        if "You've successfully authenticated" not in f"{e}":
-            print(f"{e}")
+        if "You've successfully authenticated" not in str(e):
+            print(e)
             return False
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -36,7 +36,7 @@ def check_ssh_access() -> bool:
     except RuntimeError as e:
         # Failing to clone private repos under getsentry
         # means that SSO isn't configured for the ssh key.
-        print(f"{e}")
+        print(e)
     return False
 
 

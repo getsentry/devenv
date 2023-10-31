@@ -9,6 +9,7 @@ from typing import Dict
 from typing import Tuple
 
 from devenv import pythons
+from devenv import constants
 from devenv.constants import home
 from devenv.constants import venv_root
 from devenv.constants import VOLTA_HOME
@@ -31,8 +32,8 @@ def run_procs(
                 subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
                     env={
+                        **constants.user_environ,
                         **proc.base_env,
                         "VIRTUAL_ENV": f"{venv_root}/{repo}",
                         "VOLTA_HOME": VOLTA_HOME,

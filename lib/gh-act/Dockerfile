@@ -48,3 +48,5 @@ ADD ./apt-install ./apt-install
 
 # minimum prerequisites to fetch source
 RUN ./apt-install git wget ca-certificates
+# used in CI
+RUN ./apt-install sudo

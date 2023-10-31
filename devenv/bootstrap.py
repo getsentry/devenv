@@ -4,6 +4,8 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
+from pathlib import Path
+from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import home
@@ -17,9 +19,10 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
+ExitCode: TypeAlias = "str | int | None"
 
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
         "repo",
@@ -35,8 +38,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
         args.repo = "sentry"
 
     if args.repo not in {"sentry"}:
-        print(f"repo {args.repo} not supported yet!")
-        return 1
+        return f"repo {args.repo} not supported yet!"
 
     if shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -46,12 +48,10 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
         # There is a way to perform a headless install but it's more complex
         # (refer to how homebrew does it).
         try:
-            proc.run(("xcrun", "-f", "git"))
+            git = proc.run(("xcrun", "-f", "git"), stdout=True)
         except RuntimeError:
-            print(
-                "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
-            )
-            return 1
+            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+        assert Path(git).name == "git"
 
     github.add_to_known_hosts()
 
@@ -123,10 +123,7 @@ When done, hit ENTER to continue.
         # this'll create the virtualenv if it doesn't exist
         proc.run(
             ("devenv", "sync"),
-            env={
-                "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
-                "VOLTA_HOME": VOLTA_HOME,
-            },
+            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
             pathprepend=f"{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )
@@ -141,10 +138,6 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run(
             ("make", "bootstrap"),
-            env={
-                "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
-                "VOLTA_HOME": VOLTA_HOME,
-            },
             pathprepend=f"{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )

@@ -101,9 +101,9 @@ indygreg_os() {
 }
 indygreg_cpu() {
   case "$CPUTYPE" in
-    arm64)
+    aarch64|arm64)
       echo aarch64 ;;
-    aarch64|x86_64)
+    x86_64)
       echo "$CPUTYPE" ;;
     *)
       echo '??' ;;
@@ -131,11 +131,11 @@ install_python() {
   platform="$OSTYPE-$CPUTYPE"
   indygreg_platform="$(indygreg_cpu)-$(indygreg_os)"
 
-  case "$platform" in
-    darwin-arm64) sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
-    darwin-x86_64) sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
-    linux-gnu-x86_64) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
-    linux-gnu-aarch64) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
+  case "$indygreg_platform" in
+    aarch64-darwin) sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
+    x86_64-darwin) sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
+    x86_64-unknown-linux-gnu) sha256=26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
+    aarch64-unknown-linux-gnu) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
     *)
       error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
       ;;

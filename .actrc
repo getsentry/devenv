@@ -1,7 +1,7 @@
 # For detail, see ./doc/gh-act.md
 
 # This image was built by running the command: make -C lib/gh-act
--P ubuntu-latest=localhost/devenv-gh-act:python311
+-P macos-13=localhost/devenv-gh-act:python311
 --container-architecture linux/arm64
 
 # it's not possible to pull this "localhost" image

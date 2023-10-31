@@ -12,9 +12,8 @@ from devenv.lib import proc
 
 
 def install() -> None:
-    # idempotent: skip if brew is on the executing shell's path,
-    #             and it resolves to the expected location
-    if which("brew") == f"{homebrew_bin}/brew":
+    # idempotency: skip if brew is on the executing shell's path
+    if which("brew") is not None:
         return
 
     shellrc = fs.shellrc()

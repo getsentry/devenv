@@ -21,8 +21,8 @@ def install() -> None:
     unpack_into = f"{root}/bin"
 
     if (
-        which("volta") == f"{unpack_into}/volta"
-        and which("node") == f"{VOLTA_HOME}/bin/node"
+        which("volta", path=unpack_into) == f"{unpack_into}/volta"
+        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
     ):
         return
 
@@ -38,7 +38,8 @@ def install() -> None:
 
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
-    proc.run((f"{root}/bin/volta", "-v"), env={"VOLTA_HOME": VOLTA_HOME})
+    proc.run((f"{root}/bin/volta-migrate",))
+    proc.run((f"{root}/bin/volta", "-v"))
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 
