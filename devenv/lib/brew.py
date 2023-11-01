@@ -55,5 +55,10 @@ chown {user} {dirs}
     if INTEL_MAC:
         os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
 
-    out = proc.run((f"{homebrew_bin}/brew", "shellenv"), stdout=True)
-    fs.idempotent_add(shellrc, out)
+    proc.run(("ls", "-l", "/bin/ps"))
+    fs.idempotent_add(
+        shellrc,
+        f"""
+eval "$({homebrew_bin}/brew shellenv)"
+""",
+    )

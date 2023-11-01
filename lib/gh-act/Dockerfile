@@ -48,5 +48,8 @@ ADD ./apt-install ./apt-install
 
 # minimum prerequisites to fetch source
 RUN ./apt-install git wget ca-certificates
-# used in CI
+# used in CI:
 RUN ./apt-install sudo
+# used by homebrew:
+RUN ./apt-install procps
+RUN ls -l /bin/ps
