@@ -32,13 +32,13 @@ def install() -> None:
         return
 
     system = platform.system()
-    if system == "Linux":
+    if system == "Linux" and platform.machine() == "x86_64":
         name = f"volta-{_version}-linux.tar.gz"
     elif system == "Darwin":
         suffix = "-aarch64" if platform.machine() == "arm64" else ""
         name = f"volta-{_version}-macos{suffix}.tar.gz"
     else:
-        raise UnexpectedPlatformError(f"Unexpected OS: {system}")
+        raise UnexpectedPlatformError(f"Unexpected OS: {platform.platform()}")
 
     url = (
         "https://github.com/volta-cli/volta/releases/download/"
