@@ -126,8 +126,11 @@ _check_checksum() {
 check_checksum() {
   sha256="$1"
   path="$2"
-  test -f "$path"
-  echo "${sha256}  $path" | _check_checksum
+  if [[ -f "$path" ]]; then
+    echo "${sha256}  $path" | _check_checksum
+  else
+    return 1
+  fi
 }
 
 install_python() {
