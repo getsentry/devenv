@@ -20,7 +20,7 @@ env:
 jobs:
   install-devenv:
     runs-on: macos-13
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
