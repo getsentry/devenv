@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import shlex
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
@@ -59,10 +58,10 @@ def run_procs(
                 f"""
 ❌ {name}
 
-{shlex.join(final_cmd)}
+failed command (code p.returncode):
+    {proc.quote(final_cmd)}
 
-Output (returncode {p.returncode}):
-
+Output:
 {out}
 
 """
