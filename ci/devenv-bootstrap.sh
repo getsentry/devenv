@@ -1,4 +1,6 @@
 #!/bin/bash
+exec </dev/null  # no interactive input
+exec >&2  # helps keeps stdout/stderr outputs in order with each other
 set -euxo pipefail
 # we don't have permissions to clone getsentry which is a good thing
 # eventually we should move this bootstrap testing over to getsentry repo

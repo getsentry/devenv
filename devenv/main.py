@@ -65,7 +65,11 @@ def initialize_config(config_path: str, defaults: Config) -> None:
             if val is None:
                 print(var.strip("# "), end="")
             else:
-                val = input(f" [{val}]: ") or val
+                try:
+                    val = input(f" [{val}]: ") or val
+                except EOFError:
+                    # noninterative, use the defaults
+                    print()
                 config.set(section, var, val)
     print("Thank you. Saving answsers...")
     os.makedirs(config_root, exist_ok=True)
