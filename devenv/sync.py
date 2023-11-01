@@ -25,6 +25,8 @@ def run_procs(
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
+        if constants.DEBUG:
+            proc.xtrace(cmd)
         procs.append(
             (
                 name,
@@ -136,8 +138,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             (
                 "python dependencies",
                 (
-                    "/bin/bash",
-                    "-euo",
+                    "bash",
+                    "-eu" + "x" if constants.DEBUG else "",
+                    "-o",
                     "pipefail",
                     "-c",
                     """
@@ -151,8 +154,9 @@ pip uninstall -qqy uwsgi
 
 $pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
 
-pip_install_editable='pip install --no-deps'
-SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
+ls -l ..
+SENTRY_LIGHT_BUILD=1 pip install --no-deps -e . -e ../getsentry
+: SUCCESS
 """,
                 ),
             ),

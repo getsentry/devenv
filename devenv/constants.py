@@ -6,14 +6,15 @@ import pwd
 import sys
 import typing
 
-CI = os.environ.get("CI")
+CI = os.getenv("CI")
 DARWIN = sys.platform == "darwin"
 MACHINE = platform.machine()
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 SHELL_UNSET = "(SHELL unset)"
+DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))
 
 struct_passwd = pwd.getpwuid(os.getuid())
-shell_path = os.environ.get("SHELL", struct_passwd.pw_shell)
+shell_path = os.getenv("SHELL", struct_passwd.pw_shell)
 shell = shell_path.rsplit("/", 1)[-1]
 user = struct_passwd.pw_name
 home = struct_passwd.pw_dir

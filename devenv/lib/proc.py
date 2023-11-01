@@ -25,6 +25,23 @@ base_env = {
 }
 
 
+def quote(cmd: Command) -> str:
+    """convert a command to bash-compatible form"""
+    from pipes import quote
+
+    return " ".join(quote(arg) for arg in cmd)
+
+
+def xtrace(cmd: Command) -> None:
+    """Print a commandline, similar to how xtrace does."""
+
+    teal = "\033[36m"
+    reset = "\033[m"
+    bold = "\033[1m"
+
+    print(f"+ {teal}${reset} {bold}{quote(cmd)}{reset}")
+
+
 @overload
 def run(
     cmd: Command,
@@ -70,6 +87,8 @@ def run(
     if pathprepend:
         env["PATH"] = f"{pathprepend}:{env['PATH']}"
 
+    if constants.DEBUG:
+        xtrace(cmd)
     try:
         proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
         if _stdout:
@@ -83,9 +102,7 @@ def run(
         else:
             raise RuntimeError(f"{e}")
     except CalledProcessError as e:
-        detail = f"""
-`{' '.join(e.cmd)}` returned code {e.returncode}
-"""
+        detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
         if _stdout:
             detail += f"""
 stdout:
