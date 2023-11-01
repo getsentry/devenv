@@ -14,7 +14,12 @@ _version = "1.1.1"
 _sha256 = {
     f"volta-{_version}-macos-aarch64.tar.gz": "013d419550525fa6a212c2693798f9e2e65737e887e3604b08bc15a6be737e01",
     f"volta-{_version}-macos.tar.gz": "778ccaa943de8729d91e9df02a2767b470d97e8d5551faf6d89978db6f5f3c64",
+    f"volta-{_version}-linux.tar.gz": "ab14e5d50ef836f8f43b56323cfbe7ba95a004bad05450b453c5b06a0b433d7b",
 }
+
+
+class UnexpectedPlatformError(Exception):
+    pass
 
 
 def install() -> None:
@@ -26,8 +31,15 @@ def install() -> None:
     ):
         return
 
-    suffix = "-aarch64" if platform.machine() == "arm64" else ""
-    name = f"volta-{_version}-macos{suffix}.tar.gz"
+    system = platform.system()
+    if system == "Linux":
+        name = f"volta-{_version}-linux.tar.gz"
+    elif system == "Darwin":
+        suffix = "-aarch64" if platform.machine() == "arm64" else ""
+        name = f"volta-{_version}-macos{suffix}.tar.gz"
+    else:
+        raise UnexpectedPlatformError(f"Unexpected OS: {system}")
+
     url = (
         "https://github.com/volta-cli/volta/releases/download/"
         f"v{_version}/{name}"
