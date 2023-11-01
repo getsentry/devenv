@@ -98,9 +98,9 @@ def run(
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
-            raise SystemExit(f"{e}")
+            raise SystemExit(f"{e}") from None
         else:
-            raise RuntimeError(f"{e}")
+            raise RuntimeError(f"{e}") from None
     except CalledProcessError as e:
         detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
         if _stdout:
@@ -109,6 +109,6 @@ stdout:
 {"" if e.stdout is None else e.stdout.decode()}
 """
         if exit:
-            raise SystemExit(detail)
+            raise SystemExit(detail) from None
         else:
-            raise RuntimeError(detail)
+            raise RuntimeError(detail) from None
