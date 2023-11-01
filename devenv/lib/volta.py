@@ -4,6 +4,7 @@ import os
 import platform
 from shutil import which
 
+from devenv.constants import homebrew_bin
 from devenv.constants import root
 from devenv.constants import VOLTA_HOME
 from devenv.lib import archive
@@ -22,18 +23,18 @@ class UnexpectedPlatformError(Exception):
     pass
 
 
-def install() -> None:
-    unpack_into = f"{root}/bin"
-
-    if (
-        which("volta", path=unpack_into) == f"{unpack_into}/volta"
-        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
-    ):
-        return
-
+def install_volta(unpack_into: str) -> None:
     system = platform.system()
-    if system == "Linux" and platform.machine() == "x86_64":
-        name = f"volta-{_version}-linux.tar.gz"
+    if system == "Linux":
+        if platform.machine() == "x86_64":
+            name = f"volta-{_version}-linux.tar.gz"
+        else:
+            proc.run(("brew", "install", "volta"), exit=True)
+            proc.run(
+                ("sh", "-c", f"ln -sfn {homebrew_bin}/volta* {unpack_into}/"),
+                exit=True,
+            )
+            return
     elif system == "Darwin":
         suffix = "-aarch64" if platform.machine() == "arm64" else ""
         name = f"volta-{_version}-macos{suffix}.tar.gz"
@@ -47,6 +48,18 @@ def install() -> None:
 
     archive_file = archive.download(url, _sha256[name])
     archive.unpack(archive_file, unpack_into)
+
+
+def install() -> None:
+    unpack_into = f"{root}/bin"
+
+    if (
+        which("volta", path=unpack_into) == f"{unpack_into}/volta"
+        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
+    ):
+        return
+
+    install_volta(unpack_into)
 
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
