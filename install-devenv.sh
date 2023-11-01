@@ -22,12 +22,12 @@ error() { colorize "$ansi_red" "$@"; exit 1; }
 yesno() { # ask a question
   prompt="$1$ansi_green [y/n]$ansi_reset: "
   while :; do
+    info -n "$prompt"
     if [[ "${CI:-}" ]]; then
       REPLY="yes"
-      echo -n "$prompt"
       info "$REPLY"
     else
-      read -r -p "$prompt"
+      read -r
     fi
 
     case $REPLY in
@@ -41,8 +41,11 @@ yesno() { # ask a question
 colorize() {
   color="$1"
   shift 1
-  message="$*"
-  echo >&2 "$color$message$ansi_reset"
+  {
+    echo -n "$color"
+    echo "$@"
+    echo -n "$ansi_reset"
+  } >&2
 }
 http-get() {(
   # print the content of a (https) URL to stdout
@@ -182,11 +185,13 @@ main() {
   export="export PATH=\"$devenv_bin:\$PATH\""
   if [[ -e ~/.zshrc ]] && grep -qFx "$export" ~/.zshrc; then
     : 'already done!'
-  elif yesno 'Use devenv-recommended binaries by default? (modify your default $PATH)'; then
+  elif yesno 'Use devenv-recommended binaries by default?'; then
     echo "$export" >> ~/.bashrc
     echo "$export" >> ~/.zshrc
     mkdir -p "$XDG_CONFIG_HOME/fish/conf.d"
     echo 'set -x PATH '"$devenv_bin"' $PATH' > "$XDG_CONFIG_HOME/fish/conf.d/devenv.fish"
+  else
+    warn 'Skipped. You may want to add this to your $PATH yourself: '"$devenv_bin"
   fi
 
   ## fin
