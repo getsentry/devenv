@@ -14,15 +14,14 @@ defaults:
     shell: bash --login -eo pipefail -x {0}
 env:
   SHELL: /bin/bash
-  # many scripts use this to check whether a shell is interactive:
-  PS1: '$ '
+  PYTHONUNBUFFERED: "1"
+  DEBUG: "1"
 
 jobs:
   install-devenv:
     runs-on: macos-13
     timeout-minutes: 30
     env:
-      DEBUG: 1
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
