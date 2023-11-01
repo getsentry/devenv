@@ -145,6 +145,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                     """
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
+which pip
 pip_install='pip install --constraint requirements-dev-frozen.txt'
 $pip_install --upgrade pip setuptools wheel
 

@@ -17,7 +17,17 @@ cat ~/.bashrc || : just looking
 
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
-devenv bootstrap
+ls -l \
+  "$HOME/repo/getsentry/.venv/bin/activate" \
+  "$HOME/.local/share/sentry-devenv/virtualenvs/sentry" \
+|| true
+devenv bootstrap || true
+
+ls -l \
+  "$HOME/repo/getsentry/.venv/bin/activate" \
+  "$HOME/.local/share/sentry-devenv/virtualenvs/sentry" \
+|| true
+
 
 cd "$HOME/repo/sentry"
 direnv allow

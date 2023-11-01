@@ -138,6 +138,7 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run(
             ("make", "bootstrap"),
+            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
             pathprepend=f"{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )
