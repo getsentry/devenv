@@ -24,8 +24,8 @@ ExitCode: TypeAlias = "str | int | None"
 Config: TypeAlias = "dict[str, dict[str, str | None]]"
 DEFAULT_CONFIG = dict(
     devenv={
-        "# Where do you usually run `git clone`?": None,
-        "coderoot": "~/repo",
+        "# please enter the root directory you want to work in": None,
+        "coderoot": "~/code",
     }
 )
 
@@ -71,7 +71,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
                     # noninterative, use the defaults
                     print()
                 config.set(section, var, val)
-    print("Thank you. Saving answsers...")
+    print("Thank you. Saving answers.")
     os.makedirs(config_root, exist_ok=True)
     with open(config_path, "w") as f:
         config.write(f)
