@@ -1,0 +1,46 @@
+name: install-devenv
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+  run:
+    # enable xtrace by default
+    # use a login shell, to enable ~/.profile
+    # the default default is:
+    #      bash --noprofile --norc -eo pipefail {0}
+    shell: bash --login -eo pipefail -x {0}
+env:
+  SHELL: /bin/bash
+  PYTHONUNBUFFERED: "1"
+  DEBUG: "1"
+
+jobs:
+  install-devenv:
+    runs-on: macos-13
+    timeout-minutes: 60
+    env:
+      SNTY_DEVENV_BRANCH:
+        "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
+    steps:
+      - uses: actions/checkout@v3
+      - name: remove homebrew
+        run: |
+          sudo rm -rf \
+              /usr/local/var/homebrew \
+              /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
+              /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3* \
+              /usr/local/bin/chromedriver
+      - name: install
+        run: |
+          set -u
+          : should be able to be run from anywhere:
+          repo=$PWD
+          mv install-devenv.sh /tmp
+          cd /tmp
+          ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
+
+      - name: bootstrap sentry
+        run: ./ci/devenv-bootstrap.sh

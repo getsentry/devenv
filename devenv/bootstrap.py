@@ -4,6 +4,8 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
+from pathlib import Path
+from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import home
@@ -17,12 +19,17 @@ from devenv.lib import proc
 from devenv.lib import volta
 
 help = "Bootstraps the development environment."
+ExitCode: TypeAlias = "str | int | None"
 
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
+def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "repo", type=str, nargs="?", default="sentry", choices=("sentry", "getsentry")
+        "repo",
+        type=str,
+        nargs="?",
+        default="sentry",
+        choices=("sentry", "getsentry"),
     )
     args = parser.parse_args(argv)
 
@@ -30,23 +37,21 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> int:
         # Setting up sentry means we're setting up both repos.
         args.repo = "sentry"
 
-    if args.repo not in {
-        "sentry",
-    }:
-        print(f"repo {args.repo} not supported yet!")
-        return 1
+    if args.repo not in {"sentry"}:
+        return f"repo {args.repo} not supported yet!"
 
-    # xcode-select --install will take a while,
-    # and involves elevated permissions with a GUI,
-    # so best to just let the user go through that separately then retrying,
-    # rather than waiting for it.
-    # There is a way to perform a headless install but it's more complex
-    # (refer to how homebrew does it).
-    try:
-        proc.run(("/usr/bin/xcrun", "-f", "git"))
-    except RuntimeError:
-        print("Failed to find git. Run xcode-select --install, then re-run bootstrap when done.")
-        return 1
+    if shutil.which("xcrun"):
+        # xcode-select --install will take a while,
+        # and involves elevated permissions with a GUI,
+        # so best to just let the user go through that separately then retrying,
+        # rather than waiting for it.
+        # There is a way to perform a headless install but it's more complex
+        # (refer to how homebrew does it).
+        try:
+            git = proc.run(("xcrun", "-f", "git"), stdout=True)
+        except RuntimeError:
+            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+        assert Path(git).name == "git"
 
     github.add_to_known_hosts()
 
@@ -67,7 +72,9 @@ When done, hit ENTER to continue.
 """
         )
         while not github.check_ssh_access():
-            input("Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit.")
+            input(
+                "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
+            )
 
     brew.install()
     volta.install()
@@ -80,11 +87,7 @@ When done, hit ENTER to continue.
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
             additional_flags = (
-                (
-                    "--depth",
-                    "1",
-                    "https://github.com/getsentry/sentry",
-                )
+                ("--depth", "1", "https://github.com/getsentry/sentry")
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )
@@ -99,7 +102,6 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     *additional_flags,
                 ),
-                stream_output=True,
                 exit=True,
             )
         if not CI and not os.path.exists(f"{coderoot}/getsentry"):
@@ -112,21 +114,16 @@ When done, hit ENTER to continue.
                     "--filter=blob:none",
                     "git@github.com:getsentry/getsentry",
                 ),
-                stream_output=True,
                 exit=True,
             )
 
         print("Installing sentry's brew dependencies...")
-        proc.run((f"{homebrew_bin}/brew", "bundle"), stream_output=True, cwd=f"{coderoot}/sentry")
+        proc.run((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
         proc.run(
             ("devenv", "sync"),
-            stream_output=True,
-            env={
-                "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
-                "VOLTA_HOME": VOLTA_HOME,
-            },
+            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
             pathprepend=f"{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )
@@ -140,15 +137,8 @@ When done, hit ENTER to continue.
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
         proc.run(
-            (
-                "make",
-                "bootstrap",
-            ),
-            stream_output=True,
-            env={
-                "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
-                "VOLTA_HOME": VOLTA_HOME,
-            },
+            ("make", "bootstrap"),
+            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
             pathprepend=f"{venv_root}/{args.repo}/bin",
             cwd=f"{coderoot}/sentry",
         )
@@ -160,11 +150,7 @@ When done, hit ENTER to continue.
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
-                (
-                    "make",
-                    "bootstrap",
-                ),
-                stream_output=True,
+                ("make", "bootstrap"),
                 env={
                     "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
                     "VOLTA_HOME": VOLTA_HOME,

@@ -15,6 +15,9 @@ bash install-devenv.sh
 
 ## develop
 
-Follow the install instructions, then just work on the git repo in `~/.local/share/sentry-devenv/devenv`.
-Changes are immediately reflected in `devenv`.
-It isn't pip editable-installed, we just run python directly against the repo as module `devenv.main`.
+Purpose: enable `gh act` to work quickly on localhost
+
+To that end:
+
+1. build a docker image with python pre-installed at the expected location
+2. the python interpreter machine-architecture should match the host machine

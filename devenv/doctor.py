@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import typing
 from collections.abc import Callable
+from collections.abc import Iterable
 from collections.abc import Sequence
+from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor
 from pkgutil import walk_packages
 from types import ModuleType
@@ -37,22 +40,25 @@ class Check:
     check: Callable[[], Tuple[bool, str]]
     fix: Callable[[], Tuple[bool, str]]
 
-    def __init__(
-        self,
-        module: ModuleType,
-    ):
+    def __init__(self, module: ModuleType):
         # Check that the module has the required attributes.
         assert hasattr(module, "name"), "missing the `name` attribute"
-        assert isinstance(module.name, str), "the `name` attribute should be a str"
+        assert isinstance(
+            module.name, str
+        ), "the `name` attribute should be a str"
         self.name = module.name
 
         assert hasattr(module, "tags"), "missing the `tags` attribute"
-        assert isinstance(module.tags, set), "the `tags` attribute should be a set"
+        assert isinstance(
+            module.tags, set
+        ), "the `tags` attribute should be a set"
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
         assert hasattr(module, "check"), "must have a `check` function"
-        assert callable(module.check), "the `check` attribute must be a function"
+        assert callable(
+            module.check
+        ), "the `check` attribute must be a function"
         check_hints = typing.get_type_hints(module.check)
         assert (
             check_hints["return"] == Tuple[bool, str]
@@ -67,6 +73,8 @@ class Check:
         ), "`fix(...)` should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
+        super().__init__()
+
 
 def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     """
@@ -74,13 +82,22 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
     Optionally filter by tags.
     If a check doesn't have the required attributes, skip it.
     """
-    checks = []
-    for module_finder, name, ispkg in walk_packages((f'{context["reporoot"]}/devenv/checks',)):
-        module = module_finder.find_spec(name).loader.load_module(name)  # type: ignore
+    checks: list[Check] = []
+    for module_finder, module_name, _ in walk_packages(
+        (f'{context["reporoot"]}/devenv/checks',)
+    ):
+        module_spec = module_finder.find_spec(module_name, None)
+
+        # it "should be" impossible to fail these:
+        assert module_spec is not None, module_name
+        assert module_spec.loader is not None, module_name
+
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
         try:
             check = Check(module)
         except AssertionError as e:
-            print(f"⚠️ Skipping {name}: {e}")
+            print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
@@ -89,14 +106,16 @@ def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
 
 
 def run_checks(
-    checks: List[Check], executor: ThreadPoolExecutor, skip: List[Check] = []
+    checks: List[Check],
+    executor: ThreadPoolExecutor,
+    skip: Iterable[Check] = (),
 ) -> Dict[Check, Tuple[bool, str]]:
     """
     Run checks in parallel, and return a dict of results.
     Results are a tuple of (ok, msg).
     """
-    futures = {}
-    results = {}
+    futures: dict[Check, Future[tuple[bool, str]]] = {}
+    results: dict[Check, tuple[bool, str]] = {}
     for check in checks:
         if check in skip:
             print(f"\t⏭️  Skipped {check.name}".expandtabs(4))
@@ -110,9 +129,11 @@ def run_checks(
     return results
 
 
-def filter_failing_checks(results: Dict[Check, Tuple[bool, str]]) -> List[Check]:
+def filter_failing_checks(
+    results: Dict[Check, Tuple[bool, str]]
+) -> List[Check]:
     """Print a report of the results, and return a list of failing checks."""
-    failing_checks = []
+    failing_checks: list[Check] = []
     for check, result in results.items():
         ok, msg = result
         if ok:
@@ -127,11 +148,7 @@ def prompt_for_fix(check: Check) -> bool:
     """Prompt the user to attempt a fix."""
     return input(
         f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
-    ).lower() in {
-        "y",
-        "yes",
-        "",
-    }
+    ).lower() in {"y", "yes", ""}
 
 
 def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
@@ -146,12 +163,17 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "--tag", type=str, action="append", help="Used to match a subset of checks."
+        "--tag",
+        type=str,
+        action="append",
+        help="Used to match a subset of checks.",
     )
-    parser.add_argument("--check-only", action="store_true", help="Do not run fixers.")
+    parser.add_argument(
+        "--check-only", action="store_true", help="Do not run fixers."
+    )
     args = parser.parse_args(argv)
 
-    match_tags = set(args.tag if args.tag else ())
+    match_tags: set[str] = set(args.tag if args.tag else ())
 
     repo = context["repo"]
     if repo not in {"sentry", "getsentry", "devenv"}:
@@ -182,7 +204,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             return 1
 
     print("\nThe following problems have been identified:")
-    skip = []
+    skip: list[Check] = []
     for check in failing_checks:
         print(f"\t❌ {check.name}".expandtabs(4))
         # Prompt for fixes one by one, so the user can decide to skip a fix.

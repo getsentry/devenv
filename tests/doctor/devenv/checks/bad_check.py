@@ -10,7 +10,7 @@ tags: Set[str] = set(["test", "bad"])
 name = "bad check"
 
 
-@checker  # type: ignore
+@checker  # type: ignore # intended error
 def check() -> Tuple[str, str]:
     return "True", ""
 

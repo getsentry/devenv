@@ -15,6 +15,6 @@ def check() -> Tuple[bool, str]:
     return True, ""
 
 
-@fixer  # type: ignore
+@fixer  # type: ignore  # intended error
 def fix() -> Tuple[str, str]:
     return "True", ""

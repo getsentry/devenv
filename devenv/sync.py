@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import argparse
 import os
-import shlex
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
 from typing import Tuple
 
+from devenv import constants
 from devenv import pythons
 from devenv.constants import home
 from devenv.constants import venv_root
@@ -17,11 +17,15 @@ from devenv.lib import proc
 help = "Resyncs the environment."
 
 
-def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]], ...]) -> bool:
-    procs = []
+def run_procs(
+    repo: str, reporoot: str, _procs: Tuple[Tuple[str, proc.Command], ...]
+) -> bool:
+    procs: list[tuple[str, proc.Command, subprocess.Popen[bytes]]] = []
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
+        if constants.DEBUG:
+            proc.xtrace(cmd)
         procs.append(
             (
                 name,
@@ -29,8 +33,8 @@ def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]
                 subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
                     env={
+                        **constants.user_environ,
                         **proc.base_env,
                         "VIRTUAL_ENV": f"{venv_root}/{repo}",
                         "VOLTA_HOME": VOLTA_HOME,
@@ -54,10 +58,10 @@ def run_procs(repo: str, reporoot: str, _procs: Tuple[Tuple[str, Tuple[str, ...]
                 f"""
 ❌ {name}
 
-{shlex.join(final_cmd)}
+failed command (code p.returncode):
+    {proc.quote(final_cmd)}
 
-Output (returncode {p.returncode}):
-
+Output:
 {out}
 
 """
@@ -119,10 +123,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                 "git and precommit",
                 # this can't be done in paralell with python dependencies
                 # as multiple pips cannot act on the same venv
-                (
-                    "make",
-                    "setup-git",
-                ),
+                ("make", "setup-git"),
             ),
         ),
     ):
@@ -132,18 +133,13 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         repo,
         reporoot,
         (
-            (
-                "javascript dependencies",
-                (
-                    "make",
-                    "install-js-dev",
-                ),
-            ),
+            ("javascript dependencies", ("make", "install-js-dev")),
             (
                 "python dependencies",
                 (
-                    "/bin/bash",
-                    "-euo",
+                    "bash",
+                    "-eu" + ("x" if constants.DEBUG else ""),
+                    "-o",
                     "pipefail",
                     "-c",
                     """
@@ -157,8 +153,7 @@ pip uninstall -qqy uwsgi
 
 $pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
 
-pip_install_editable='pip install --no-deps'
-SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
+SENTRY_LIGHT_BUILD=1 pip install --no-deps -e . -e ../getsentry
 """,
                 ),
             ),
@@ -174,15 +169,19 @@ SENTRY_LIGHT_BUILD=1 $pip_install_editable -e . -e ../getsentry
     # TODO: run devservices healthchecks for redis and postgres to bypass this
     proc.run(
         (f"{venv}/bin/sentry", "devservices", "up", "redis", "postgres"),
-        stream_output=True,
         exit=True,
     )
 
-    if not run_procs(
+    if run_procs(
         repo,
         reporoot,
-        (("python migrations", (f"{venv}/bin/sentry", "upgrade", "--noinput")),),
+        (
+            (
+                "python migrations",
+                (f"{venv}/bin/sentry", "upgrade", "--noinput"),
+            ),
+        ),
     ):
+        return 0
+    else:
         return 1
-
-    return 0

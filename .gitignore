@@ -1,2 +1,15 @@
 *.egg-info/
 __pycache__/
+venv/
+
+# dirty hacks
+trash/
+*.log
+*.tmp
+
+# sentinel file for GNU make
+.*.done
+
+# vim swapfiles
+.*.sw[a-z]
+

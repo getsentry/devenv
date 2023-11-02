@@ -1,0 +1,20 @@
+# For detail, see ./doc/gh-act.md
+
+# This image was built by running the command: make -C lib/gh-act
+-P macos-13=localhost/devenv-gh-act:python311
+--container-architecture linux/arm64
+
+# it's not possible to pull this "localhost" image
+--pull=false
+
+--env-file None  # ignore our .env, which isn't appropriate for gh-act
+
+# these can be handy for debugging: (defaults set quiet)
+--verbose=false
+--env RUNNER_DEBUG=0
+
+# the default image runs quite slowly due to lack of installed python
+#-P ubuntu-latest=catthehacker/ubuntu:act-latest
+#-P ubuntu-22.04=node:16-bullseye-slim
+#-P ubuntu-20.04=node:16-buster-slim
+#-P ubuntu-18.04=node:16-buster-slim

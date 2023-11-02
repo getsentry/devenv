@@ -1,4 +1,0 @@
-#!/bin/bash
-
-_pwd="$PWD"
-cd "${HOME}/.local/share/sentry-devenv" && python/bin/python3 -S -m devenv.main "$_pwd" "$@"

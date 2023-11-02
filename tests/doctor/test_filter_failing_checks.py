@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from devenv import doctor
-from devenv.tests.doctor.devenv.checks import failing_check
-from devenv.tests.doctor.devenv.checks import passing_check
+from tests.doctor.devenv.checks import failing_check
+from tests.doctor.devenv.checks import passing_check
 
 
 def test_filter_failing_checks_no_checks() -> None:
@@ -22,9 +22,9 @@ def test_filter_failing_checks_one_failing_check() -> None:
 def test_filter_failing_checks_one_passing_and_one_failing_check() -> None:
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(failing_check)
-    assert doctor.filter_failing_checks({first_check: (True, ""), second_check: (False, "")}) == [
-        second_check
-    ]
+    assert doctor.filter_failing_checks(
+        {first_check: (True, ""), second_check: (False, "")}
+    ) == [second_check]
 
 
 def test_filter_failing_checks_no_duplicate_checks() -> None:
