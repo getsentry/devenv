@@ -8,12 +8,11 @@ on:
 defaults:
   run:
     # enable xtrace by default
-    # use a login shell, to enable ~/.profile
+    # use an interactive shell, to enable ~/.zshrc
     # the default default is:
     #      bash --noprofile --norc -eo pipefail {0}
-    shell: bash --login -eo pipefail -x {0}
+    shell: zsh -li {0}
 env:
-  SHELL: /bin/bash
   PYTHONUNBUFFERED: "1"
   DEBUG: "1"
 
@@ -26,13 +25,27 @@ jobs:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
       - uses: actions/checkout@v3
+      - name: debug info
+        run: |
+          id
+          pwd
+          ls -la
+          env | (grep XDG || : grep got no results)
+
+          cat <<'EOF' | tee -a ~/.zshrc ~/.bashrc
+          export PS4=$'+ %N\033[1;31m$\033[m '
+          set -x
+          : top-level GHA shell commands colorized with bold red prompt
+          EOF
       - name: remove homebrew
         run: |
-          sudo rm -rf \
+          setopt +o nomatch  # continue when glob has no match
+          rm -rf \
               /usr/local/var/homebrew \
               /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
               /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3* \
-              /usr/local/bin/chromedriver
+              /usr/local/bin/chromedriver \
+          ;
       - name: install
         run: |
           set -u

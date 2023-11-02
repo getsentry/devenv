@@ -61,3 +61,6 @@ chown {user} {dirs}
 eval "$({homebrew_bin}/brew shellenv)"
 """,
     )
+
+    proc.run((f"{homebrew_repo}/bin/brew", "info"))
+    proc.run((f"{homebrew_repo}/bin/brew", "doctor"))

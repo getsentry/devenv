@@ -32,7 +32,6 @@ def run_procs(
                 cmd,
                 subprocess.Popen(
                     cmd,
-                    stdout=subprocess.PIPE,
                     env={
                         **constants.user_environ,
                         **proc.base_env,

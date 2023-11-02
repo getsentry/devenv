@@ -1,5 +1,10 @@
 #!/bin/bash
+shopt -s expand_aliases  # NB: aliases must be defined before bash *parses* any usage
+if [[ "$UID" -eq 0 ]]; then
+  alias sudo=
+fi
+
 set -ex
-apt-get update
-apt-get install --yes --no-install-recommends "$@"
-rm -rf /var/lib/apt/lists/*
+sudo apt-get update
+sudo apt-get install --yes --no-install-recommends "$@"
+sudo rm -rf /var/lib/apt/lists/*

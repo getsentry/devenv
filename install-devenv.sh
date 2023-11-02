@@ -8,10 +8,28 @@
 # shellcheck disable=SC2016  # I know that single-quotes are hardquotes
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 ME="$(basename "$0")"
+DEBUG="${SNTY_DEVENV_DEBUG:-${DEBUG:-}}"
 
 ## functions
+shopt -s expand_aliases  # NB: aliases must be defined before bash *parses* any usage
 # let users see important commands
 show() {(set -x; "$@")}
+if [[ "$DEBUG" ]]; then
+  alias show=''  # noop: commands was already shown
+fi
+# show a colorized message
+colorize() {
+  color="$1"
+  shift 1
+  {
+    echo -n "$color"
+    echo "$@"
+    echo -n "$ansi_reset"
+  } >&2
+}
+if [[ "$DEBUG" ]]; then
+  alias colorize=':'  # noop: echo would show the message twice
+fi
 # check if a command exists
 has() { command -v "$@" >/dev/null; }
 # tell the user something
@@ -37,16 +55,6 @@ yesno() { # ask a question
     esac
   done
 }
-# show a colorized message
-colorize() {
-  color="$1"
-  shift 1
-  {
-    echo -n "$color"
-    echo "$@"
-    echo -n "$ansi_reset"
-  } >&2
-}
 http-get() {(
   # print the content of a (https) URL to stdout
   url="$1"
@@ -70,15 +78,14 @@ constants() {
   export PS4="+ $ansi_green\$$ansi_reset "
 
   if [[ "${DEBUG:-}" || "${SNTY_DEVENV_DEBUG:-}" ]]; then
-    set -x
-    colorize() { :; }  # show messages just once
+    set -x   # show all commands, for debug
   fi
 
   # default values for system environment variables
   USER=$(id -un)
   HOME=$(eval 'echo ~')
   XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-  XDG_CACHE_HOME="${XDG_DATA_HOME:-$HOME/.cache}"
+  XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
   XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
   OSTYPE="$(uname -s | tr -d '0-9.' | tr '[:upper:]' '[:lower:]')"
   CPUTYPE="${CPUTYPE:-$(uname -m)}"
@@ -189,6 +196,7 @@ main() {
   if [[ -e ~/.zshrc ]] && grep -qFx "$export" ~/.zshrc; then
     : 'already done!'
   elif yesno 'Use devenv-recommended binaries by default?'; then
+    eval "$export"
     echo "$export" >> ~/.bashrc
     echo "$export" >> ~/.zshrc
     mkdir -p "$XDG_CONFIG_HOME/fish/conf.d"
@@ -199,11 +207,12 @@ main() {
 
   ## fin
   info "All done! Run 'devenv bootstrap' to create your development environment."
-  : start a new login shell, to get fresh env:
-  show "$SHELL" -l
+  : start a new shell, to get fresh env:
+  show "$SHELL"
 }
 
 if [[ "$ME" = "install-devenv.sh" ]]; then
+  # careful: never `set -e` an interactive shell!
   set -eEuo pipefail
   main "$@"
 else
