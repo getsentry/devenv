@@ -138,14 +138,13 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
                 "python dependencies",
                 (
                     "bash",
-                    "-eu" + "x" if constants.DEBUG else "",
+                    "-eu" + ("x" if constants.DEBUG else ""),
                     "-o",
                     "pipefail",
                     "-c",
                     """
 export PIP_DISABLE_PIP_VERSION_CHECK=on
 
-which pip
 pip_install='pip install --constraint requirements-dev-frozen.txt'
 $pip_install --upgrade pip setuptools wheel
 
@@ -154,9 +153,7 @@ pip uninstall -qqy uwsgi
 
 $pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
 
-ls -l ..
 SENTRY_LIGHT_BUILD=1 pip install --no-deps -e . -e ../getsentry
-: SUCCESS
 """,
                 ),
             ),
