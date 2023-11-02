@@ -121,3 +121,6 @@ COPY --from=pyenv /opt/hostedtoolcache/Python /opt/hostedtoolcache/Python
 COPY --from=pyenv /home/builder/.pyenv/versions /home/builder/.pyenv/versions
 COPY --from=rbenv /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/Ruby
 COPY --from=rbenv /home/builder/.rbenv/versions /home/builder/.rbenv/versions
+
+ARG GITHUB_ARCH
+RUN sudo ln -v -svn /opt/hostedtoolcache/*/*/$GITHUB_ARCH/bin/* /usr/local/bin

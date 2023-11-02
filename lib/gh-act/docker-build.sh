@@ -16,6 +16,7 @@ tag="localhost/devenv-gh-act:python$(
 
 set -x
 docker buildx build \
+  --progress=plain \
   --tag="$tag" \
   --load \
   --build-arg="PYTHON_VERSION=$python_version" \

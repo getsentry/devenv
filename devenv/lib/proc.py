@@ -50,6 +50,7 @@ def run(
     exit: bool = False,
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
+    check: bool = True,
     stdout: Literal[False] = False,
 ) -> None:
     ...
@@ -64,6 +65,7 @@ def run(
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
     stdout: Literal[True],
+    check: bool = True,
 ) -> str:
     ...
 
@@ -76,6 +78,7 @@ def run(
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
     stdout: bool = False,
+    check: bool = True,
 ) -> str | None:
     _stdout = PIPE if stdout else None
     del stdout
@@ -90,7 +93,9 @@ def run(
     if constants.DEBUG:
         xtrace(cmd)
     try:
-        proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
+        proc = subprocess_run(
+            cmd, check=check, stdout=_stdout, cwd=cwd, env=env
+        )
         if _stdout:
             return proc.stdout.decode().strip()
         else:

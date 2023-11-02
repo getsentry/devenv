@@ -62,5 +62,5 @@ eval "$({homebrew_bin}/brew shellenv)"
 """,
     )
 
-    proc.run((f"{homebrew_repo}/bin/brew", "info"))
-    proc.run((f"{homebrew_repo}/bin/brew", "doctor"))
+    proc.run((f"{homebrew_repo}/bin/brew", "info"), check=False)
+    proc.run((f"{homebrew_repo}/bin/brew", "doctor"), check=False)
