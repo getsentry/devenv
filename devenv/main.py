@@ -15,7 +15,6 @@ from devenv import pin_gha
 from devenv import sync
 from devenv.constants import config_root
 from devenv.constants import root
-from devenv.constants import src_root
 from devenv.lib.fs import gitroot
 
 ExitCode: TypeAlias = "str | int | None"
@@ -41,10 +40,14 @@ def self_update(force: bool = False) -> int:
             return 0
 
     print("Updating devenv tool...")
-    # We don't have any dependencies. If we do end up adding some,
-    # we should vendor to avoid pip calls to keep it lean and simple.
     rc = subprocess.call(
-        ("git", "-C", src_root, "pull", "--ff-only", "origin", "main")
+        (
+            f"{root}/venv/bin/python",
+            "-m",
+            "pip",
+            "install",
+            "git+https://github.com/getsentry/devenv.git@main",
+        )
     )
     if rc == 0:
         os.utime(fn)
