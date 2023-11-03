@@ -1,9 +1,5 @@
 ---
 minVersion: 0.34.1
-github:
-  owner: getsentry
-  repo: devenv
-changelogPolicy: auto
 targets:
   - name: pypi
   - name: sentry-pypi

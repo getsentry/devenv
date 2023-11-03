@@ -15,9 +15,8 @@ jobs:
           python-version: 3.11
       - name: "Prepare Artifacts"
         run: |
-          pip install wheel
           pip install build
-          python -m build --wheel
+          python -m build
       - uses: actions/upload-artifact@v3.1.3
         with:
           name: ${{ github.sha }}
