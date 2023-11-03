@@ -4,7 +4,6 @@ github:
   owner: getsentry
   repo: devenv
 changelogPolicy: auto
-preReleaseCommand: bash ci/bump-version.sh
 targets:
   - name: pypi
   - name: sentry-pypi
