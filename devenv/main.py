@@ -46,6 +46,7 @@ def self_update(force: bool = False) -> int:
             "-m",
             "pip",
             "install",
+            "-U",
             "git+https://github.com/getsentry/devenv.git@main",
         )
     )
