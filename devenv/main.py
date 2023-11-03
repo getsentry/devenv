@@ -132,6 +132,14 @@ def devenv(argv: Sequence[str]) -> ExitCode:
     if args.command == "bootstrap":
         return bootstrap.main(coderoot, remainder)
 
+    if not args.nocoderoot and not os.getcwd().startswith(coderoot):
+        print(
+            f"You aren't in your code root ({coderoot})!\n"
+            "To ignore, use devenv --nocoderoot [COMMAND]\n"
+            f"To change your code root, you can edit {config_path}.\n"
+        )
+        return 1
+
     # the remaining tools are repo-specific
     reporoot = gitroot()
     repo = reporoot.split("/")[-1]
