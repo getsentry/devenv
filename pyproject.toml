@@ -12,7 +12,6 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
