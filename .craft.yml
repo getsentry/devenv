@@ -1,0 +1,6 @@
+---
+minVersion: 0.34.1
+targets:
+  - name: pypi
+  - name: sentry-pypi
+    internalPypiRepo: getsentry/pypi
