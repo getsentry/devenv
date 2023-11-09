@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import functools
+import os
 
 from devenv.constants import home
 from devenv.constants import shell

@@ -18,9 +18,9 @@ help = "Resyncs the environment."
 
 
 def run_procs(
-    repo: str, reporoot: str, _procs: Tuple[Tuple[str, proc.Command], ...]
+    repo: str, reporoot: str, _procs: Tuple[Tuple[str, tuple[str, ...]], ...]
 ) -> bool:
-    procs: list[tuple[str, proc.Command, subprocess.Popen[bytes]]] = []
+    procs: list[tuple[str, tuple[str, ...], subprocess.Popen[bytes]]] = []
 
     for name, cmd in _procs:
         print(f"⏳ {name}")
