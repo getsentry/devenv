@@ -14,8 +14,6 @@ from devenv.constants import root
 from devenv.constants import shell_path
 from devenv.constants import VOLTA_HOME
 
-Command = tuple[str, ...]
-
 base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{root}/bin"
 base_env = {
     "PATH": base_path,
@@ -25,14 +23,14 @@ base_env = {
 }
 
 
-def quote(cmd: Command) -> str:
+def quote(cmd: tuple[str, ...]) -> str:
     """convert a command to bash-compatible form"""
     from pipes import quote
 
     return " ".join(quote(arg) for arg in cmd)
 
 
-def xtrace(cmd: Command) -> None:
+def xtrace(cmd: tuple[str, ...]) -> None:
     """Print a commandline, similar to how xtrace does."""
 
     teal = "\033[36m"
@@ -44,7 +42,7 @@ def xtrace(cmd: Command) -> None:
 
 @overload
 def run(
-    cmd: Command,
+    cmd: tuple[str, ...],
     *,
     pathprepend: str = "",
     exit: bool = False,
@@ -57,7 +55,7 @@ def run(
 
 @overload
 def run(
-    cmd: Command,
+    cmd: tuple[str, ...],
     *,
     pathprepend: str = "",
     exit: bool = False,
@@ -69,7 +67,7 @@ def run(
 
 
 def run(
-    cmd: Command,
+    cmd: tuple[str, ...],
     *,
     pathprepend: str = "",
     exit: bool = False,

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import functools
 import os
-from functools import cache
 
 from devenv.constants import home
 from devenv.constants import shell
 from devenv.lib import proc
 
 
-@cache
+@functools.lru_cache
 def shellrc() -> str:
     if shell == "zsh":
         return f"{home}/.zshrc"
@@ -19,7 +19,7 @@ def shellrc() -> str:
     raise NotImplementedError(f"unsupported shell: {shell}")
 
 
-@cache
+@functools.lru_cache
 def gitroot(cd: str = "") -> str:
     from os.path import normpath, join
 

@@ -5,7 +5,8 @@ import os
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TypeAlias
+
+from typing_extensions import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import home
