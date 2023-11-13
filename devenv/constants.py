@@ -27,7 +27,6 @@ config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
-venv_root = f"{root}/virtualenvs"
 
 
 if INTEL_MAC:
