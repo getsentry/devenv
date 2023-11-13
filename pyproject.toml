@@ -25,8 +25,8 @@ dependencies = [
 [tool.setuptools.package-data]
 "devenv" = ["py.typed"]
 
-[tool.setuptools.packages.find]
-where = ["devenv"]
+[tool.setuptools.packages]
+find = {}
 
 [tool.black]
 line-length = 80
