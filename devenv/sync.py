@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
@@ -10,7 +11,6 @@ from typing import Tuple
 from devenv import constants
 from devenv import pythons
 from devenv.constants import home
-from devenv.constants import venv_root
 from devenv.constants import VOLTA_HOME
 from devenv.lib import proc
 
@@ -18,7 +18,10 @@ help = "Resyncs the environment."
 
 
 def run_procs(
-    repo: str, reporoot: str, _procs: Tuple[Tuple[str, tuple[str, ...]], ...]
+    repo: str,
+    reporoot: str,
+    venv: str,
+    _procs: Tuple[Tuple[str, tuple[str, ...]], ...],
 ) -> bool:
     procs: list[tuple[str, tuple[str, ...], subprocess.Popen[bytes]]] = []
 
@@ -36,9 +39,9 @@ def run_procs(
                     env={
                         **constants.user_environ,
                         **proc.base_env,
-                        "VIRTUAL_ENV": f"{venv_root}/{repo}",
+                        "VIRTUAL_ENV": venv,
                         "VOLTA_HOME": VOLTA_HOME,
-                        "PATH": f"{venv_root}/{repo}/bin:{proc.base_path}",
+                        "PATH": f"{venv}/bin:{proc.base_path}",
                     },
                     cwd=reporoot,
                 ),
@@ -81,21 +84,14 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         print(f"repo {repo} not supported yet!")
         return 1
 
-    # it's easier to maintain a single venv that sentry and getsentry shares
     reporoot = context["reporoot"]
-    if repo == "getsentry":
-        repo = "sentry"
 
-    # TODO: delete getsentry's .python-version as it will no longer be used
-    with open(f"{reporoot}/../sentry/.python-version", "rt") as f:
+    with open(f"{reporoot}/.python-version", "rt") as f:
         python_version = f.read().strip()
 
-    # If the venv doesn't exist, create it with the expected python version.
-    os.makedirs(venv_root, exist_ok=True)
-    venv = f"{venv_root}/{repo}"
-
+    venv = f"{reporoot}/.venv"
     if not os.path.exists(venv):
-        print(f"virtualenv for {repo} doesn't exist, creating one...")
+        print(f"virtualenv for {repo} doesn't exist, creating one at {venv}...")
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     # Check the python version. If mismatch, then recreate the venv.
@@ -110,7 +106,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if venv_version != python_version:
         print(f"outdated virtualenv version (python {venv_version})!")
         print("creating a new one...")
-        # stampeding over it seems to work (no need for rm -rf)
+        shutil.rmtree(venv)
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
@@ -118,6 +114,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if not run_procs(
         repo,
         reporoot,
+        venv,
         (
             (
                 "git and precommit",
@@ -132,6 +129,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if not run_procs(
         repo,
         reporoot,
+        venv,
         (
             ("javascript dependencies", ("make", "install-js-dev")),
             (
@@ -175,6 +173,7 @@ SENTRY_LIGHT_BUILD=1 pip install --no-deps -e . -e ../getsentry
     if run_procs(
         repo,
         reporoot,
+        venv,
         (
             (
                 "python migrations",

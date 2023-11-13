@@ -11,7 +11,6 @@ from typing_extensions import TypeAlias
 from devenv.constants import CI
 from devenv.constants import home
 from devenv.constants import homebrew_bin
-from devenv.constants import venv_root
 from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
 from devenv.lib import direnv
@@ -122,12 +121,7 @@ When done, hit ENTER to continue.
         proc.run((f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry")
 
         # this'll create the virtualenv if it doesn't exist
-        proc.run(
-            ("devenv", "sync"),
-            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
-            pathprepend=f"{venv_root}/{args.repo}/bin",
-            cwd=f"{coderoot}/sentry",
-        )
+        proc.run(("devenv", "sync"), cwd=f"{coderoot}/sentry")
 
         # HACK: devenv sync created the config files earlier, but make bootstrap will
         #       fail because of an interactive prompt asking if user wants to clobber it...
@@ -139,8 +133,8 @@ When done, hit ENTER to continue.
         # the appropriate devservices are running
         proc.run(
             ("make", "bootstrap"),
-            env={"VIRTUAL_ENV": f"{venv_root}/{args.repo}"},
-            pathprepend=f"{venv_root}/{args.repo}/bin",
+            env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
+            pathprepend=f"{coderoot}/sentry/.venv/bin",
             cwd=f"{coderoot}/sentry",
         )
 
@@ -153,10 +147,10 @@ When done, hit ENTER to continue.
             proc.run(
                 ("make", "bootstrap"),
                 env={
-                    "VIRTUAL_ENV": f"{venv_root}/{args.repo}",
+                    "VIRTUAL_ENV": f"{coderoot}/getsentry/.venv",
                     "VOLTA_HOME": VOLTA_HOME,
                 },
-                pathprepend=f"{venv_root}/{args.repo}/bin",
+                pathprepend=f"{coderoot}/getsentry/.venv/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 
