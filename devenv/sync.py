@@ -90,16 +90,12 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     reporoot = context["reporoot"]
 
-    with open(f"{reporoot}/.python-version", "rt") as f:
-        python_version = f.read().strip()
-
     with open(f"{reporoot}/devenv/config.toml", "rt") as f:
         repo_config = toml.load(f)
 
-    url = repo_config["python"][python_version][f"{sys.platform}_{MACHINE}"]
-    sha256 = repo_config["python"][python_version][
-        f"{sys.platform}_{MACHINE}_sha256"
-    ]
+    python_version = repo_config["python"]["version"]
+    url = repo_config["python"][f"{sys.platform}_{MACHINE}"]
+    sha256 = repo_config["python"][f"{sys.platform}_{MACHINE}_sha256"]
 
     venv = f"{reporoot}/.venv"
     if not os.path.exists(venv):
