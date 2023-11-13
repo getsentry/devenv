@@ -20,6 +20,7 @@ repos:
       - id: mypy
         additional_dependencies:
           - "pytest"
+          - "types-toml"
           # I'd like to just:
           # - "-r requirements-dev.in"
   - repo: https://github.com/shellcheck-py/shellcheck-py
