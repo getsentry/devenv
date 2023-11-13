@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 from collections.abc import Sequence
 from typing import Dict
@@ -105,7 +106,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if venv_version != python_version:
         print(f"outdated virtualenv version (python {venv_version})!")
         print("creating a new one...")
-        # stampeding over it seems to work (no need for rm -rf)
+        shutil.rmtree(venv)
         proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
 
     print("Resyncing your dev environment.")
