@@ -22,8 +22,11 @@ dependencies = [
   "typing_extensions",
 ]
 
-[tool.setuptools.packages]
-find = {}
+[tool.setuptools.package-data]
+"devenv" = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["devenv"]
 
 [tool.black]
 line-length = 80
