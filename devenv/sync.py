@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import os
 import shutil
 import subprocess
+import sys
 from collections.abc import Sequence
 from typing import Dict
 from typing import Tuple
@@ -11,6 +13,7 @@ from typing import Tuple
 from devenv import constants
 from devenv import pythons
 from devenv.constants import home
+from devenv.constants import MACHINE
 from devenv.constants import VOLTA_HOME
 from devenv.lib import proc
 
@@ -86,13 +89,20 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     reporoot = context["reporoot"]
 
-    with open(f"{reporoot}/.python-version", "rt") as f:
-        python_version = f.read().strip()
+    repo_config = configparser.ConfigParser()
+    repo_config.read(f"{reporoot}/devenv/config.ini")
+
+    python_version = repo_config["python"]["version"]
+    url = repo_config["python"][f"{sys.platform}_{MACHINE}"]
+    sha256 = repo_config["python"][f"{sys.platform}_{MACHINE}_sha256"]
 
     venv = f"{reporoot}/.venv"
     if not os.path.exists(venv):
         print(f"virtualenv for {repo} doesn't exist, creating one at {venv}...")
-        proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
+        proc.run(
+            (pythons.get(python_version, url, sha256), "-m", "venv", venv),
+            exit=True,
+        )
 
     # Check the python version. If mismatch, then recreate the venv.
     # This helps smooth out the python version upgrade experience.
@@ -107,7 +117,10 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         print(f"outdated virtualenv version (python {venv_version})!")
         print("creating a new one...")
         shutil.rmtree(venv)
-        proc.run((pythons.get(python_version), "-m", "venv", venv), exit=True)
+        proc.run(
+            (pythons.get(python_version, url, sha256), "-m", "venv", venv),
+            exit=True,
+        )
 
     print("Resyncing your dev environment.")
 
