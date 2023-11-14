@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import os
 import shutil
 import subprocess
@@ -8,8 +9,6 @@ import sys
 from collections.abc import Sequence
 from typing import Dict
 from typing import Tuple
-
-import toml
 
 from devenv import constants
 from devenv import pythons
@@ -90,8 +89,8 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     reporoot = context["reporoot"]
 
-    with open(f"{reporoot}/devenv/config.toml", "rt") as f:
-        repo_config = toml.load(f)
+    repo_config = configparser.ConfigParser()
+    repo_config.read(f"{reporoot}/devenv/config.ini")
 
     python_version = repo_config["python"]["version"]
     url = repo_config["python"][f"{sys.platform}_{MACHINE}"]

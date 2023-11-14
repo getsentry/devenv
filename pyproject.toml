@@ -20,7 +20,6 @@ classifiers = [
 ]
 dependencies = [
   "typing_extensions",
-  "toml",
 ]
 
 [tool.setuptools.packages]
