@@ -1,4 +1,4 @@
-name: install-devenv
+name: bootstrap
 on:
   push:
     branches:
@@ -18,7 +18,7 @@ env:
   DEBUG: "1"
 
 jobs:
-  install-devenv:
+  bootstrap:
     runs-on: macos-13
     timeout-minutes: 60
     env:

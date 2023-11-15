@@ -16,7 +16,7 @@ EOF
 
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
-devenv bootstrap || true
+devenv bootstrap
 
 cd "$HOME/code/sentry"
 direnv allow
