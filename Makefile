@@ -1,5 +1,5 @@
 test: docker-image
-	gh act -W .github/workflows/install-devenv.yml --pull=false
+	gh act -W .github/workflows/bootstrap.yml --pull=false
 
 venv: requirements-dev.in
 	rm -rf venv  # prevent recursion
