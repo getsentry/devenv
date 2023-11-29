@@ -13,3 +13,4 @@ trash/
 # vim swapfiles
 .*.sw[a-z]
 
+.coverage
