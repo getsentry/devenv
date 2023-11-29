@@ -10,27 +10,23 @@ from devenv.lib.volta import install
 
 def test_install_already_installed(tmp_path: str) -> None:
     with patch.multiple(
-        "devenv.lib.volta",
-        root=str(tmp_path),
-        VOLTA_HOME=f"{str(tmp_path)}/volta",
+        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=f"{tmp_path}/volta"
     ):
         with patch("devenv.lib.volta.which") as mock_which:
             mock_which.side_effect = [
-                f"{str(tmp_path)}/bin/volta",
-                f"{str(tmp_path)}/volta/bin/node",
+                f"{tmp_path}/bin/volta",
+                f"{tmp_path}/volta/bin/node",
             ]
             install()
             assert mock_which.call_args_list == [
-                call("volta", path=f"{str(tmp_path)}/bin"),
-                call("node", path=f"{str(tmp_path)}/volta/bin"),
+                call("volta", path=f"{tmp_path}/bin"),
+                call("node", path=f"{tmp_path}/volta/bin"),
             ]
 
 
 def test_install(tmp_path: str) -> None:
     with patch.multiple(
-        "devenv.lib.volta",
-        root=str(tmp_path),
-        VOLTA_HOME=f"{str(tmp_path)}/volta",
+        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=f"{tmp_path}/volta"
     ):
         with patch("devenv.lib.volta.which") as mock_which:
             mock_which.side_effect = [None, None]
@@ -53,24 +49,23 @@ def test_install(tmp_path: str) -> None:
                         install()
 
                         mock_install_volta.assert_called_once_with(
-                            f"{str(tmp_path)}/bin"
+                            f"{tmp_path}/bin"
                         )
                         mock_proc_run.assert_has_calls(
                             [
-                                call((f"{str(tmp_path)}/bin/volta-migrate",)),
+                                call((f"{tmp_path}/bin/volta-migrate",)),
                                 call(
-                                    (f"{str(tmp_path)}/bin/volta", "-v"),
-                                    stdout=True,
+                                    (f"{tmp_path}/bin/volta", "-v"), stdout=True
                                 ),
                             ]
                         )
                         assert mock_idempotent_add.call_args_list == [
                             call(
                                 fs.shellrc(),
-                                f"""\nexport VOLTA_HOME={str(tmp_path)}/volta\nexport PATH="{str(tmp_path)}/volta/bin:$PATH"\n""",
+                                f"""\nexport VOLTA_HOME={tmp_path}/volta\nexport PATH="{tmp_path}/volta/bin:$PATH"\n""",
                             )
                         ]
                         mock_path_exists.assert_called_once_with(
-                            f"{str(tmp_path)}/volta/bin/node"
+                            f"{tmp_path}/volta/bin/node"
                         )
-                        assert os.path.exists(f"{str(tmp_path)}/volta/bin/node")
+                        assert os.path.exists(f"{tmp_path}/volta/bin/node")

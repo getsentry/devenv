@@ -6,7 +6,7 @@ from unittest.mock import patch
 from devenv.lib.volta import populate_volta_home_with_shims
 
 
-def test_populate_volta_home_with_shims(tmp_path: str) -> None:
+def test_populate_volta_home_with_shims() -> None:
     with patch("devenv.lib.volta.proc.run") as mock_run:
         unpack_into = "/path/to/unpack"
         mock_run.side_effect = [
