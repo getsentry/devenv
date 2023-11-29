@@ -20,6 +20,7 @@ classifiers = [
 ]
 dependencies = [
   "typing_extensions",
+  "sentry-sdk",
 ]
 
 [tool.setuptools.package-data]
