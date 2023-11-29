@@ -5,6 +5,7 @@ from unittest.mock import call
 from unittest.mock import patch
 
 from devenv.lib import fs
+from devenv.lib.volta import _version
 from devenv.lib.volta import install
 
 
@@ -37,7 +38,7 @@ def test_install(tmp_path: str) -> None:
             ) as mock_proc_run:
                 mock_proc_run.side_effect = [
                     None,  # volta-migrate
-                    "1.1.1",  # volta -v
+                    _version,  # volta -v
                 ]
 
                 with patch(

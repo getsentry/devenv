@@ -63,13 +63,6 @@ def install_volta(unpack_into: str) -> None:
     download_and_unpack_archive(name, unpack_into)
 
 
-def are_volta_and_node_installed(unpack_into: str) -> bool:
-    return (
-        which("volta", path=f"{root}/bin") == f"{root}/bin/volta"
-        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
-    )
-
-
 def populate_volta_home_with_shims(unpack_into: str) -> None:
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
@@ -81,7 +74,10 @@ def populate_volta_home_with_shims(unpack_into: str) -> None:
 def install() -> None:
     unpack_into = f"{root}/bin"
 
-    if are_volta_and_node_installed(unpack_into):
+    if (
+        which("volta", path=f"{root}/bin") == f"{root}/bin/volta"
+        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
+    ):
         return
 
     install_volta(unpack_into)

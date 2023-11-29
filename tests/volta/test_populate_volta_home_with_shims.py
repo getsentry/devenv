@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import call
 from unittest.mock import patch
 
+from devenv.lib.volta import _version
 from devenv.lib.volta import populate_volta_home_with_shims
 
 
@@ -11,7 +12,7 @@ def test_populate_volta_home_with_shims() -> None:
         unpack_into = "/path/to/unpack"
         mock_run.side_effect = [
             None,  # mock run for volta-migrate
-            "1.1.1",  # mock run for volta -v
+            _version,  # mock run for volta -v
         ]
 
         populate_volta_home_with_shims(unpack_into)

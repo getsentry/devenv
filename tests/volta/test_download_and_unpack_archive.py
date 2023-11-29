@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from devenv.lib.volta import _sha256
+from devenv.lib.volta import _version
 from devenv.lib.volta import download_and_unpack_archive
 
 
@@ -10,7 +11,7 @@ def test_download_and_unpack_archive() -> None:
     with patch("devenv.lib.volta.build_url") as mock_build_url, patch(
         "devenv.lib.volta.archive.download"
     ) as mock_download, patch("devenv.lib.volta.archive.unpack") as mock_unpack:
-        name = "volta-1.1.1-macos.tar.gz"
+        name = f"volta-{_version}-macos.tar.gz"
         unpack_into = "/path/to/unpack"
 
         # Mock the return values of the mocked functions
