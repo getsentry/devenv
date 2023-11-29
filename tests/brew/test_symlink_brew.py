@@ -5,7 +5,7 @@ from unittest.mock import patch
 from devenv.lib.brew import symlink_brew
 
 
-def test_symlink_brew_intel_mac() -> None:
+def test_symlink_brew() -> None:
     # Mock the necessary dependencies
     homebrew_repo = "/path/to/homebrew/repo"
     homebrew_bin = "/path/to/homebrew/bin"
