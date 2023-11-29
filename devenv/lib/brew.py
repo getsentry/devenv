@@ -34,7 +34,23 @@ chown {user} {dirs}
         break
 
 
-def clone_brew() -> None:
+def add_brew_to_shellrc() -> None:
+    shellrc = fs.shellrc()
+    fs.idempotent_add(
+        shellrc,
+        f"""
+eval "$({homebrew_bin}/brew shellenv)"
+""",
+    )
+
+
+def install() -> None:
+    # idempotency: skip if brew is on the executing shell's path
+    if which("brew") is not None:
+        return
+
+    print("You may be prompted for your password to install homebrew.")
+    create_dirs()
     proc.run(
         (
             "git",
@@ -47,30 +63,6 @@ def clone_brew() -> None:
             ".",
         )
     )
-
-
-def add_brew_to_shellrc() -> None:
-    shellrc = fs.shellrc()
-    fs.idempotent_add(
-        shellrc,
-        f"""
-eval "$({homebrew_bin}/brew shellenv)"
-""",
-    )
-
-
-def symlink_brew() -> None:
-    os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
-
-
-def install() -> None:
-    # idempotency: skip if brew is on the executing shell's path
-    if which("brew") is not None:
-        return
-
-    print("You may be prompted for your password to install homebrew.")
-    create_dirs()
-    clone_brew()
     if INTEL_MAC:
-        symlink_brew()
+        os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
     add_brew_to_shellrc()
