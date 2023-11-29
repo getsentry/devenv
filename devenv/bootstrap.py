@@ -9,6 +9,7 @@ from pathlib import Path
 from typing_extensions import TypeAlias
 
 from devenv.constants import CI
+from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.constants import homebrew_bin
 from devenv.constants import VOLTA_HOME
@@ -55,7 +56,17 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
 
     github.add_to_known_hosts()
 
-    if not github.check_ssh_access():
+    if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access():
+        is_employee = input("Are you a Sentry employee? (Y/n): ").lower() in {
+            "y",
+            "yes",
+            "",
+        }
+        if not is_employee:
+            print(
+                "Please set the SENTRY_EXTERNAL_CONTRIBUTOR environment variable and re-run bootstrap."
+            )
+            return 1
         pubkey = github.generate_and_configure_ssh_keypair()
         input(
             f"""
@@ -104,7 +115,11 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        if not CI and not os.path.exists(f"{coderoot}/getsentry"):
+        if (
+            not CI
+            and not EXTERNAL_CONTRIBUTOR
+            and not os.path.exists(f"{coderoot}/getsentry")
+        ):
             proc.run(
                 (
                     "git",
