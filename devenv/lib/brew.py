@@ -11,17 +11,11 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 
-def install() -> None:
-    # idempotency: skip if brew is on the executing shell's path
-    if which("brew") is not None:
-        return
-
-    shellrc = fs.shellrc()
-    print("You may be prompted for your password to install homebrew.")
+def create_dirs() -> None:
+    dirs = homebrew_repo
+    if INTEL_MAC:
+        dirs = f"{dirs} /usr/local/Cellar /usr/local/Caskroom /usr/local/Frameworks /usr/local/bin /usr/local/etc /usr/local/include /usr/local/lib /usr/local/opt /usr/local/sbin /usr/local/share /usr/local/var"
     while True:
-        dirs = homebrew_repo
-        if INTEL_MAC:
-            dirs = f"{dirs} /usr/local/Cellar /usr/local/Caskroom /usr/local/Frameworks /usr/local/bin /usr/local/etc /usr/local/include /usr/local/lib /usr/local/opt /usr/local/sbin /usr/local/share /usr/local/var"
         try:
             proc.run(
                 (
@@ -39,6 +33,8 @@ chown {user} {dirs}
             continue
         break
 
+
+def clone_brew() -> None:
     proc.run(
         (
             "git",
@@ -52,12 +48,29 @@ chown {user} {dirs}
         )
     )
 
-    if INTEL_MAC:
-        os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
 
+def add_brew_to_shellrc() -> None:
+    shellrc = fs.shellrc()
     fs.idempotent_add(
         shellrc,
         f"""
 eval "$({homebrew_bin}/brew shellenv)"
 """,
     )
+
+
+def symlink_brew() -> None:
+    os.symlink(f"{homebrew_repo}/bin/brew", f"{homebrew_bin}/brew")
+
+
+def install() -> None:
+    # idempotency: skip if brew is on the executing shell's path
+    if which("brew") is not None:
+        return
+
+    print("You may be prompted for your password to install homebrew.")
+    create_dirs()
+    clone_brew()
+    if INTEL_MAC:
+        symlink_brew()
+    add_brew_to_shellrc()
