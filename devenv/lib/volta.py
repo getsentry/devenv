@@ -42,15 +42,11 @@ def determine_platform(unpack_into: str) -> str | None:
         raise UnexpectedPlatformError(f"Unexpected OS: {platform.platform()}")
 
 
-def build_url(name: str) -> str:
-    return (
+def download_and_unpack_archive(name: str, unpack_into: str) -> None:
+    url = (
         "https://github.com/volta-cli/volta/releases/download/"
         f"v{_version}/{name}"
     )
-
-
-def download_and_unpack_archive(name: str, unpack_into: str) -> None:
-    url = build_url(name)
 
     archive_file = archive.download(url, _sha256[name])
     archive.unpack(archive_file, unpack_into)

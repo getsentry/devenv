@@ -8,23 +8,27 @@ from devenv.lib.volta import download_and_unpack_archive
 
 
 def test_download_and_unpack_archive() -> None:
-    with patch("devenv.lib.volta.build_url") as mock_build_url, patch(
-        "devenv.lib.volta.archive.download"
-    ) as mock_download, patch("devenv.lib.volta.archive.unpack") as mock_unpack:
+    with patch("platform.system", return_value="Darwin"), patch(
+        "platform.machine", return_value="x86_64"
+    ), patch(
+        "devenv.lib.volta.archive.download",
+        return_value="/path/to/archive_file",
+    ) as mock_download, patch(
+        "devenv.lib.volta.archive.unpack"
+    ) as mock_unpack:
         name = f"volta-{_version}-macos.tar.gz"
         unpack_into = "/path/to/unpack"
-
-        # Mock the return values of the mocked functions
-        mock_build_url.return_value = "http://example.com/archive"
-        mock_download.return_value = "/path/to/archive_file"
 
         # Call the function under test
         download_and_unpack_archive(name, unpack_into)
 
         # Assert that the mocked functions were called with the expected arguments
-        mock_build_url.assert_called_once_with(name)
         mock_download.assert_called_once_with(
-            "http://example.com/archive", _sha256[name]
+            (
+                "https://github.com/volta-cli/volta/releases/download/"
+                f"v{_version}/volta-{_version}-macos.tar.gz"
+            ),
+            _sha256[name],
         )
         mock_unpack.assert_called_once_with(
             "/path/to/archive_file", unpack_into

@@ -6,7 +6,6 @@ import pytest
 
 from devenv.lib.volta import _sha256
 from devenv.lib.volta import _version
-from devenv.lib.volta import build_url
 from devenv.lib.volta import install_volta
 from devenv.lib.volta import UnexpectedPlatformError
 
@@ -23,7 +22,10 @@ def test_install_volta_linux_x86_64() -> None:
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
-            build_url(f"volta-{_version}-linux.tar.gz"),
+            (
+                "https://github.com/volta-cli/volta/releases/download/"
+                f"v{_version}/volta-{_version}-linux.tar.gz"
+            ),
             _sha256[f"volta-{_version}-linux.tar.gz"],
         )
         mock_unpack.assert_called_once_with(
@@ -43,7 +45,10 @@ def test_install_volta_macos_x86_64() -> None:
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
-            build_url(f"volta-{_version}-macos.tar.gz"),
+            (
+                "https://github.com/volta-cli/volta/releases/download/"
+                f"v{_version}/volta-{_version}-macos.tar.gz"
+            ),
             _sha256[f"volta-{_version}-macos.tar.gz"],
         )
         mock_unpack.assert_called_once_with(
@@ -63,7 +68,10 @@ def test_install_volta_macos_arm64() -> None:
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
-            build_url(f"volta-{_version}-macos-aarch64.tar.gz"),
+            (
+                "https://github.com/volta-cli/volta/releases/download/"
+                f"v{_version}/volta-{_version}-macos-aarch64.tar.gz"
+            ),
             _sha256[f"volta-{_version}-macos-aarch64.tar.gz"],
         )
         mock_unpack.assert_called_once_with(
