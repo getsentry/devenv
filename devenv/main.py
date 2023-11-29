@@ -159,6 +159,15 @@ def devenv(argv: Sequence[str]) -> ExitCode:
 def main() -> ExitCode:
     import sys
 
+    import sentry_sdk
+
+    sentry_sdk.init(
+        # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
+        dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
+        # enable performance monitoring
+        enable_tracing=True,
+    )
+
     return devenv(sys.argv)
 
 
