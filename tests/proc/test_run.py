@@ -80,21 +80,12 @@ def test_run_command_not_found() -> None:
 
 
 def test_run_with_custom_env() -> None:
-    cmd = ("echo", "Hello, World!")
-    user_environ = {"PATH": "/usr/local/bin:/usr/bin"}
+    cmd = ("sh", "-c", "printenv VAR1 && printenv VAR2")
     custom_env = {"VAR1": "value1", "VAR2": "value2"}
-    env = {**user_environ, **base_env, **custom_env}
 
-    with patch("devenv.lib.proc.subprocess_run") as mock_run, patch(
-        "devenv.lib.proc.constants.user_environ", user_environ
-    ):
-        mock_run.return_value.stdout = None
-        result = run(cmd, env=custom_env)
+    result = run(cmd, env=custom_env, stdout=True)
 
-    assert result is None
-    mock_run.assert_called_once_with(
-        cmd, check=True, stdout=None, cwd=None, env=env
-    )
+    assert result == "value1\nvalue2"
 
 
 def test_run_with_cwd() -> None:
