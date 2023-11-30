@@ -35,3 +35,25 @@ def test_check_ssh_access_success_ci(ssh: bool, sso: bool) -> None:
         "devenv.lib.github.check_ssh_authentication", return_value=ssh
     ), patch("devenv.lib.github.check_sso_configuration", return_value=sso):
         assert check_ssh_access()
+
+
+@pytest.mark.parametrize("sso", [True, False])
+def test_check_ssh_access_success_external_contributor(sso: bool) -> None:
+    with patch("devenv.lib.github.CI", False), patch(
+        "devenv.lib.github.EXTERNAL_CONTRIBUTOR", "1"
+    ), patch(
+        "devenv.lib.github.check_ssh_authentication", return_value=True
+    ), patch(
+        "devenv.lib.github.check_sso_configuration", return_value=sso
+    ) as mock_check_sso_configuration:
+        assert check_ssh_access()
+
+    # If the user is an external contributor, we should not check for SSO
+    mock_check_sso_configuration.assert_not_called()
+
+
+def test_check_ssh_access_failure_external_contributor() -> None:
+    with patch("devenv.lib.github.CI", False), patch(
+        "devenv.lib.github.EXTERNAL_CONTRIBUTOR", "1"
+    ), patch("devenv.lib.github.check_ssh_authentication", return_value=False):
+        assert not check_ssh_access()

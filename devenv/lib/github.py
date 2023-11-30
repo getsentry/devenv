@@ -4,6 +4,7 @@ import os
 import tempfile
 
 from devenv.constants import CI
+from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.lib import fs
 from devenv.lib import proc
@@ -52,7 +53,12 @@ def check_sso_configuration() -> bool:
 def check_ssh_access() -> bool:
     if CI:
         return True
-    return check_ssh_authentication() and check_sso_configuration()
+    ssh_auth = check_ssh_authentication()
+    return (
+        ssh_auth
+        if EXTERNAL_CONTRIBUTOR
+        else ssh_auth and check_sso_configuration()
+    )
 
 
 def add_to_known_hosts() -> None:
