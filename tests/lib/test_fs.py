@@ -21,37 +21,17 @@ def chdir(d: str | pathlib.Path) -> Generator[None, None, None]:
 
 
 def test_gitroot(tmp_path: pathlib.Path) -> None:
+    subprocess.run(("git", "init", f"{tmp_path}"))
+
     with chdir(tmp_path):
-        subprocess.run(("git", "init"))
-
-        _gitroot = (
-            subprocess.run(
-                ("git", "rev-parse", "--show-toplevel"), capture_output=True
-            )
-            .stdout.decode()
-            .strip()
-        )
-
-        assert gitroot() == _gitroot
+        assert os.path.samefile(tmp_path, gitroot())
         assert os.path.isdir(f"{gitroot()}/.git")
 
 
 def test_gitroot_cd(tmp_path: pathlib.Path) -> None:
-    with chdir(tmp_path):
-        subprocess.run(("git", "init"))
-
-    (tmp_path / "nested").mkdir()
+    subprocess.run(("git", "init", f"{tmp_path}"))
+    subprocess.run(("git", "init", f"{tmp_path}/nested"))
 
     with chdir(f"{tmp_path}/nested"):
-        subprocess.run(("git", "init"))
-
-        _gitroot = (
-            subprocess.run(
-                ("git", "rev-parse", "--show-toplevel"), capture_output=True
-            )
-            .stdout.decode()
-            .strip()
-        )
-
-        assert gitroot() == _gitroot
+        assert os.path.samefile(f"{tmp_path}/nested", gitroot())
         assert os.path.isdir(f"{gitroot()}/.git")
