@@ -138,7 +138,7 @@ When done, hit ENTER to continue.
             # and chromedriver cask flakes occasionally. Really all we need to
             # set up the devenv is colima. This is also required for arm64 macOS GHA runners.
             # TODO: pin colima in sentry via vendored formula and install from that
-            proc.run(("brew", "install", "colima"))
+            proc.run(("brew", "install", "colima", "docker"))
         else:
             proc.run(
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
