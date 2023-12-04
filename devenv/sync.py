@@ -145,29 +145,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         venv,
         (
             ("javascript dependencies", ("make", "install-js-dev")),
-            (
-                "python dependencies",
-                (
-                    "bash",
-                    "-eu" + ("x" if constants.DEBUG else ""),
-                    "-o",
-                    "pipefail",
-                    "-c",
-                    """
-export PIP_DISABLE_PIP_VERSION_CHECK=on
-
-pip_install='pip install --constraint requirements-dev-frozen.txt'
-$pip_install --upgrade pip setuptools wheel
-
-# pip doesn't do well with swapping drop-ins
-pip uninstall -qqy uwsgi
-
-$pip_install -r requirements-dev-frozen.txt -r requirements-getsentry.txt
-
-SENTRY_LIGHT_BUILD=1 pip install --no-deps -e . -e ../getsentry
-""",
-                ),
-            ),
+            ("python dependencies", ("make", "install-py-dev")),
         ),
     ):
         return 1
