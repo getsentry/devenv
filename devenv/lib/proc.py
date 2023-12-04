@@ -4,8 +4,6 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from subprocess import PIPE
 from subprocess import run as subprocess_run
-from typing import Literal
-from typing import overload
 
 from devenv import constants
 from devenv.constants import home
@@ -40,7 +38,6 @@ def xtrace(cmd: tuple[str, ...]) -> None:
     print(f"+ {teal}${reset} {bold}{quote(cmd)}{reset}")
 
 
-@overload
 def run(
     cmd: tuple[str, ...],
     *,
@@ -48,36 +45,7 @@ def run(
     exit: bool = False,
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
-    stdout: Literal[False] = False,
-) -> None:
-    ...
-
-
-@overload
-def run(
-    cmd: tuple[str, ...],
-    *,
-    pathprepend: str = "",
-    exit: bool = False,
-    env: dict[str, str] | None = None,
-    cwd: Path | str | None = None,
-    stdout: Literal[True],
 ) -> str:
-    ...
-
-
-def run(
-    cmd: tuple[str, ...],
-    *,
-    pathprepend: str = "",
-    exit: bool = False,
-    env: dict[str, str] | None = None,
-    cwd: Path | str | None = None,
-    stdout: bool = False,
-) -> str | None:
-    _stdout = PIPE if stdout else None
-    del stdout
-
     if env is None:
         env = {}
     env = {**constants.user_environ, **base_env, **env}
@@ -88,25 +56,27 @@ def run(
     if constants.DEBUG:
         xtrace(cmd)
     try:
-        proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
-        if _stdout:
+        proc = subprocess_run(
+            cmd, check=True, stdout=PIPE, stderr=PIPE, cwd=cwd, env=env
+        )
+        if proc.stdout:
             return proc.stdout.decode().strip()
-        else:
-            return None
+        return ""
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
             raise SystemExit(f"{e}") from None
-        else:
-            raise RuntimeError(f"{e}") from None
+        raise RuntimeError(f"{e}") from None
     except CalledProcessError as e:
-        detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
-        if _stdout:
-            detail += f"""
+        detail = f"""
+Command `{quote(e.cmd)}` failed! (code {e.returncode})"
+
 stdout:
 {"" if e.stdout is None else e.stdout.decode()}
+
+stderr:
+{"" if e.stderr is None else e.stderr.decode()}
 """
         if exit:
             raise SystemExit(detail) from None
-        else:
-            raise RuntimeError(detail) from None
+        raise RuntimeError(detail) from None

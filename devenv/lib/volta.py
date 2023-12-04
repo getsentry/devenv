@@ -63,7 +63,7 @@ def populate_volta_home_with_shims(unpack_into: str) -> None:
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
     proc.run((f"{unpack_into}/volta-migrate",))
-    version = proc.run((f"{unpack_into}/volta", "-v"), stdout=True)
+    version = proc.run((f"{unpack_into}/volta", "-v"))
     assert version == _version, (version, _version)
 
 

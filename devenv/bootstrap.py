@@ -49,7 +49,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         # There is a way to perform a headless install but it's more complex
         # (refer to how homebrew does it).
         try:
-            git = proc.run(("xcrun", "-f", "git"), stdout=True)
+            git = proc.run(("xcrun", "-f", "git"))
         except RuntimeError:
             return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
         assert Path(git).name == "git"

@@ -34,7 +34,7 @@ def install() -> None:
     archive.download(url, _sha256[name], dest=direnv_path)
     os.chmod(direnv_path, 0o775)
 
-    version = proc.run((direnv_path, "version"), stdout=True)
+    version = proc.run((direnv_path, "version"))
     assert version == _version, (version, _version)
 
     fs.idempotent_add(

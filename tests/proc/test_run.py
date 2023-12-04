@@ -12,7 +12,7 @@ def test_run_with_stdout() -> None:
     cmd = ("echo", "Hello, World!")
     expected_output = "Hello, World!"
 
-    result = run(cmd, stdout=True)
+    result = run(cmd)
 
     assert result == expected_output
 
@@ -45,7 +45,7 @@ def test_run_with_pathprepend(tmp_path: str) -> None:
     cmd = ("dummy_executable",)
     pathprepend = tmp_path
 
-    result = run(cmd, pathprepend=pathprepend, stdout=True)
+    result = run(cmd, pathprepend=pathprepend)
 
     assert result == "Hello, World!"
 
@@ -68,7 +68,7 @@ def test_run_with_custom_env() -> None:
     cmd = ("sh", "-c", "printenv VAR1 && printenv VAR2")
     custom_env = {"VAR1": "value1", "VAR2": "value2"}
 
-    result = run(cmd, env=custom_env, stdout=True)
+    result = run(cmd, env=custom_env)
 
     assert result == "value1\nvalue2"
 
@@ -80,7 +80,7 @@ def test_run_with_cwd(tmp_path: str) -> None:
     cmd = ("cat", "test.txt")
     cwd = tmp_path
 
-    result = run(cmd, cwd=cwd, stdout=True)
+    result = run(cmd, cwd=cwd)
 
     assert result == text
 
