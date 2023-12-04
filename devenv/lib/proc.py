@@ -4,8 +4,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from subprocess import PIPE
 from subprocess import run as subprocess_run
-from typing import Literal
-from typing import overload
+from subprocess import STDOUT
 
 from devenv import constants
 from devenv.constants import home
@@ -40,7 +39,6 @@ def xtrace(cmd: tuple[str, ...]) -> None:
     print(f"+ {teal}${reset} {bold}{quote(cmd)}{reset}")
 
 
-@overload
 def run(
     cmd: tuple[str, ...],
     *,
@@ -48,36 +46,7 @@ def run(
     exit: bool = False,
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
-    stdout: Literal[False] = False,
-) -> None:
-    ...
-
-
-@overload
-def run(
-    cmd: tuple[str, ...],
-    *,
-    pathprepend: str = "",
-    exit: bool = False,
-    env: dict[str, str] | None = None,
-    cwd: Path | str | None = None,
-    stdout: Literal[True],
 ) -> str:
-    ...
-
-
-def run(
-    cmd: tuple[str, ...],
-    *,
-    pathprepend: str = "",
-    exit: bool = False,
-    env: dict[str, str] | None = None,
-    cwd: Path | str | None = None,
-    stdout: bool = False,
-) -> str | None:
-    _stdout = PIPE if stdout else None
-    del stdout
-
     if env is None:
         env = {}
     env = {**constants.user_environ, **base_env, **env}
@@ -88,11 +57,13 @@ def run(
     if constants.DEBUG:
         xtrace(cmd)
     try:
-        proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
-        if _stdout:
+        proc = subprocess_run(
+            cmd, check=True, stdout=PIPE, stderr=STDOUT, cwd=cwd, env=env
+        )
+        if proc.stdout:
             return proc.stdout.decode().strip()
         else:
-            return None
+            return ""
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
@@ -100,9 +71,9 @@ def run(
         else:
             raise RuntimeError(f"{e}") from None
     except CalledProcessError as e:
-        detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
-        if _stdout:
-            detail += f"""
+        detail = f"""
+Command `{quote(e.cmd)}` failed! (code {e.returncode})"
+
 stdout:
 {"" if e.stdout is None else e.stdout.decode()}
 """

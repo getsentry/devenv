@@ -20,7 +20,7 @@ github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+V
 def check_ssh_authentication() -> bool:
     try:
         # The remote prints to stderr and exits with code 1 in all cases.
-        proc.run(("sh", "-c", "ssh -T git@github.com 2>&1"), stdout=True)
+        proc.run(("sh", "-c", "ssh -T git@github.com 2>&1"))
     except RuntimeError as e:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
         if "You've successfully authenticated" not in str(e):

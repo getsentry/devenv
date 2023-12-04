@@ -17,6 +17,5 @@ def packages() -> list[str]:
             "HOMEBREW_NO_INSTALL_CLEANUP": "1",
             "HOMEBREW_NO_ANALYTICS": "1",
         },
-        stdout=True,
     )
     return stdout.split()

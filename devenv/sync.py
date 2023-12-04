@@ -123,6 +123,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         )
 
     print("Resyncing your dev environment.")
+    proc.run(("make", "install-py-dev"))
 
     if not run_procs(
         repo,

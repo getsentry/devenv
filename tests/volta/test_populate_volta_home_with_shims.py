@@ -20,6 +20,6 @@ def test_populate_volta_home_with_shims() -> None:
         mock_run.assert_has_calls(
             [
                 call((f"{unpack_into}/volta-migrate",)),
-                call((f"{unpack_into}/volta", "-v"), stdout=True),
+                call((f"{unpack_into}/volta", "-v")),
             ]
         )

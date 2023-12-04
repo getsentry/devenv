@@ -43,7 +43,7 @@ def test_install(tmp_path: str) -> None:
             mock_proc_run.assert_has_calls(
                 [
                     call((f"{tmp_path}/bin/volta-migrate",)),
-                    call((f"{tmp_path}/bin/volta", "-v"), stdout=True),
+                    call((f"{tmp_path}/bin/volta", "-v")),
                 ]
             )
             assert mock_idempotent_add.call_args_list == [
