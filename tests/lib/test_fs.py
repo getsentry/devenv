@@ -30,8 +30,8 @@ def test_gitroot(tmp_path: pathlib.Path) -> None:
 
 def test_gitroot_cd(tmp_path: pathlib.Path) -> None:
     subprocess.run(("git", "init", f"{tmp_path}"))
-    subprocess.run(("git", "init", f"{tmp_path}/nested"))
+    os.mkdir(f"{tmp_path}/foo")
 
-    with chdir(f"{tmp_path}/nested"):
-        assert os.path.samefile(f"{tmp_path}/nested", gitroot())
-        assert os.path.isdir(f"{gitroot()}/.git")
+    _gitroot = gitroot(cd=f"{tmp_path}/foo")
+    assert os.path.samefile(f"{tmp_path}", _gitroot)
+    assert os.path.isdir(f"{_gitroot}/.git")
