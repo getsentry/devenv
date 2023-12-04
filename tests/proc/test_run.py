@@ -8,21 +8,13 @@ import pytest
 from devenv.lib.proc import run
 
 
-def test_run_with_stdout() -> None:
+def test_run() -> None:
     cmd = ("echo", "Hello, World!")
     expected_output = "Hello, World!"
 
     result = run(cmd)
 
     assert result == expected_output
-
-
-def test_run_without_stdout() -> None:
-    cmd = ("echo", "Hello, World!")
-
-    result = run(cmd)
-
-    assert result is None
 
 
 def test_run_with_debug() -> None:
@@ -86,14 +78,58 @@ def test_run_with_cwd(tmp_path: str) -> None:
 
 
 def test_run_command_failed() -> None:
-    cmd = ("ls", "nonexistent_directory")
+    script = """
+echo foo
+>&2 echo bar
+false"""
+    cmd = ("/bin/sh", "-c", script)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as exc_info:
         run(cmd, exit=False)
+
+    assert (
+        f"{exc_info.value}"
+        == """
+Command `/bin/sh -c '
+echo foo
+>&2 echo bar
+false'` failed! (code 1)"
+
+stdout:
+foo
+
+
+stderr:
+bar
+
+"""
+    )
 
 
 def test_run_command_failed_with_exit() -> None:
-    cmd = ("ls", "nonexistent_directory")
+    script = """
+echo foo
+>&2 echo bar
+false"""
+    cmd = ("/bin/sh", "-c", script)
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc_info:
         run(cmd, exit=True)
+
+    assert (
+        f"{exc_info.value}"
+        == """
+Command `/bin/sh -c '
+echo foo
+>&2 echo bar
+false'` failed! (code 1)"
+
+stdout:
+foo
+
+
+stderr:
+bar
+
+"""
+    )
