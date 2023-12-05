@@ -9,6 +9,7 @@ from pathlib import Path
 from typing_extensions import TypeAlias
 
 from devenv.constants import CI
+from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.constants import homebrew_bin
@@ -134,11 +135,12 @@ When done, hit ENTER to continue.
 
         print("Installing sentry's brew dependencies...")
         if CI:
-            # Installing everything from brew takes too much time,
-            # and chromedriver cask flakes occasionally. Really all we need to
-            # set up the devenv is colima. This is also required for arm64 macOS GHA runners.
-            # TODO: pin colima in sentry via vendored formula and install from that
-            proc.run(("brew", "install", "colima", "docker"))
+            if DARWIN:
+                # Installing everything from brew takes too much time,
+                # and chromedriver cask flakes occasionally. Really all we need to
+                # set up the devenv is colima. This is also required for arm64 macOS GHA runners.
+                # TODO: pin colima in sentry via vendored formula and install from that
+                proc.run(("brew", "install", "colima", "docker"))
         else:
             proc.run(
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
