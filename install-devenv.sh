@@ -189,6 +189,7 @@ main() {
   if [[ -e ~/.zshrc ]] && grep -qFx "$export" ~/.zshrc; then
     : 'already done!'
   elif yesno 'Use devenv-recommended binaries by default? If you prefer to modify PATH in your own way, say n'; then
+    echo "$export" >> ~/.profile
     echo "$export" >> ~/.bashrc
     echo "$export" >> ~/.zshrc
     mkdir -p "$XDG_CONFIG_HOME/fish/conf.d"
