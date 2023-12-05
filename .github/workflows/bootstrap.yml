@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: remove homebrew
         run: |
+          which colima || false
           sudo rm -rf \
               /usr/local/var/homebrew \
               /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
