@@ -12,6 +12,10 @@ name = "getsentry-mock"
 version = "0.0.0"
 EOF
 
+cat ~/.zshrc
+cat ~/.bashrc
+cat ~/.profile
+
 : PATH: "$PATH"
 
 # note: colima will be used and is necessary for a docker runtime on
