@@ -42,9 +42,9 @@ colorize() {
   color="$1"
   shift 1
   {
-    echo -n "$color"
-    echo "$@"
-    echo -n "$ansi_reset"
+    builtin echo -n "$color"
+    builtin echo -e "$@"
+    builtin echo -n "$ansi_reset"
   } >&2
 }
 http-get() {(
@@ -183,12 +183,12 @@ main() {
   rm -rf "$devenv_bin"
   mkdir -p "$devenv_bin"
   ln -sfn "$devenv_venv/bin/devenv" "$devenv_bin/"
-  info "devenv installed, at: $devenv_bin/devenv"
+  info "devenv installed, at: $devenv_bin/devenv\n"
 
   export="export PATH=\"$devenv_bin:\$PATH\""
   if [[ -e ~/.zshrc ]] && grep -qFx "$export" ~/.zshrc; then
     : 'already done!'
-  elif yesno 'Use devenv-recommended binaries by default? If you prefer to modify PATH in your own way, say n'; then
+  elif yesno "Modify your shell startup files to include ${HOME}/.local/share/sentry-devenv/bin/ on your PATH?\nIf you prefer to modify PATH in your own way, say n"; then
     echo "$export" >> ~/.profile
     echo "$export" >> ~/.bash_profile
     echo "$export" >> ~/.bashrc
@@ -200,7 +200,7 @@ main() {
   fi
 
   ## fin
-  info "All done! Run 'devenv bootstrap' to create your development environment."
+  info "All done!\nIf you're on a new laptop, run 'devenv bootstrap' to create your sentry development environment."
   : start a new login shell, to get fresh env:
   show "$SHELL" -l
 }
