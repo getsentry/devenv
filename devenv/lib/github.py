@@ -38,6 +38,7 @@ def check_sso_configuration() -> bool:
                     "-C",
                     tmpdir,
                     "clone",
+                    "--quiet",
                     "--depth=1",
                     "git@github.com:getsentry/private.git",
                 )
