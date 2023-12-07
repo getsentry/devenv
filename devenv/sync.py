@@ -16,6 +16,7 @@ from devenv.constants import home
 from devenv.constants import MACHINE
 from devenv.constants import VOLTA_HOME
 from devenv.lib import proc
+from devenv.lib import volta
 
 help = "Resyncs the environment."
 
@@ -138,6 +139,13 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         ),
     ):
         return 1
+
+    # This is for engineers with existing dev environments transitioning over.
+    # Bootstrap will set devenv-managed volta up but they won't be running
+    # devenv bootstrap, just installing devenv then running devenv sync.
+    # make install-js-dev will fail since our run_procs expects devenv-managed
+    # volta.
+    volta.install()
 
     if not run_procs(
         repo,
