@@ -7,6 +7,7 @@ import subprocess
 import time
 from collections.abc import Sequence
 from typing import cast
+from typing import Optional
 
 from typing_extensions import TypeAlias
 
@@ -66,7 +67,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     for section, values in config.items():
         for var, _val in values.items():
             # typshed doesn't account for `allow_no_value`
-            val = cast(str | None, _val)
+            val = cast(Optional[str], _val)
             if val is None:
                 print(var.strip("# "), end="")
             else:
