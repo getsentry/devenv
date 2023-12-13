@@ -4,7 +4,6 @@ import os
 from unittest.mock import call
 from unittest.mock import patch
 
-from devenv.lib import fs
 from devenv.lib.volta import _version
 from devenv.lib.volta import install
 
@@ -34,9 +33,7 @@ def test_install(tmp_path: str) -> None:
             side_effect=[None, _version],  # volta-migrate  # volta -v
         ) as mock_proc_run, patch(
             "devenv.lib.volta.os.path.exists", return_value=True
-        ) as mock_path_exists, patch(
-            "devenv.lib.volta.fs.idempotent_add"
-        ) as mock_idempotent_add:
+        ) as mock_path_exists:
             install()
 
             mock_install_volta.assert_called_once_with(f"{tmp_path}/bin")
@@ -46,12 +43,6 @@ def test_install(tmp_path: str) -> None:
                     call((f"{tmp_path}/bin/volta", "-v"), stdout=True),
                 ]
             )
-            assert mock_idempotent_add.call_args_list == [
-                call(
-                    fs.shellrc(),
-                    f"""\nexport VOLTA_HOME={tmp_path}/volta\nexport PATH="{tmp_path}/volta/bin:$PATH"\n""",
-                )
-            ]
             mock_path_exists.assert_called_once_with(
                 f"{tmp_path}/volta/bin/node"
             )

@@ -8,7 +8,6 @@ from devenv.constants import homebrew_bin
 from devenv.constants import root
 from devenv.constants import VOLTA_HOME
 from devenv.lib import archive
-from devenv.lib import fs
 from devenv.lib import proc
 
 _version = "1.1.1"
@@ -81,11 +80,3 @@ def install() -> None:
 
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
-
-    fs.idempotent_add(
-        fs.shellrc(),
-        f"""
-export VOLTA_HOME={VOLTA_HOME}
-export PATH="{VOLTA_HOME}/bin:$PATH"
-""",
-    )
