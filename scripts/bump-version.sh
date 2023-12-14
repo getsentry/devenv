@@ -2,4 +2,4 @@
 set -euxo pipefail
 
 # macos/bsd sed
-/usr/bin/sed -i "s/^version =.*/version = \"$2\"/" pyproject.toml
+/usr/bin/sed -i '' "s/^version =.*/version = \"$2\"/" pyproject.toml
