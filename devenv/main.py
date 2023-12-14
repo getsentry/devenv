@@ -66,6 +66,11 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     config.read_dict(defaults)
     for section, values in config.items():
         for var, _val in values.items():
+            if section == "devenv" and var == "coderoot":
+                # this is a special case used to make the transition from existing
+                # dev environments easier as we can guess the desired coderoot if
+                # devenv is run inside of a git repo
+                breakpoint()
             # typshed doesn't account for `allow_no_value`
             val = cast(Optional[str], _val)
             if val is None:
