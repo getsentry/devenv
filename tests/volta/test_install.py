@@ -23,14 +23,25 @@ def test_install_already_installed(tmp_path: str) -> None:
 
 
 def test_install(tmp_path: str) -> None:
+    VOLTA_HOME = f"{tmp_path}/volta"
+    os.makedirs(f"{tmp_path}/bin")
+    os.makedirs(f"{VOLTA_HOME}/bin")
+
+    def touch_volta_bins() -> None:
+        for executable in ("node", "npm", "npx", "yarn", "pnpm"):
+            open(f"{VOLTA_HOME}/bin/{executable}", "a").close()
+
     with patch.multiple(
-        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=f"{tmp_path}/volta"
+        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=VOLTA_HOME
     ):
         with patch("devenv.lib.volta.which", side_effect=[None, None]), patch(
             "devenv.lib.volta.install_volta"
         ) as mock_install_volta, patch(
             "devenv.lib.volta.proc.run",
-            side_effect=[None, _version],  # volta-migrate  # volta -v
+            side_effect=[
+                touch_volta_bins,
+                _version,
+            ],  # volta-migrate  # volta -v
         ) as mock_proc_run, patch(
             "devenv.lib.volta.os.path.exists", return_value=True
         ) as mock_path_exists:
@@ -46,4 +57,7 @@ def test_install(tmp_path: str) -> None:
             mock_path_exists.assert_called_once_with(
                 f"{tmp_path}/volta/bin/node"
             )
-            assert os.path.exists(f"{tmp_path}/volta/bin/node")
+            assert (
+                os.readlink(f"{tmp_path}/bin/node")
+                == f"{tmp_path}/volta/bin/node"
+            )
