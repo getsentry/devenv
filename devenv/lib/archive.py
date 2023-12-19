@@ -6,7 +6,12 @@ import secrets
 import shutil
 import tarfile
 import urllib.request
+from typing import IO
+from typing import Literal
 from urllib.error import HTTPError
+
+import zstandard
+from typing_extensions import Self
 
 from devenv.constants import cache_root
 
@@ -42,7 +47,23 @@ def download(url: str, sha256: str, dest: str = "") -> str:
     return dest
 
 
+class ZstdTarfile(tarfile.TarFile):
+    OPEN_METH = {"zstd": "zstdopen", **tarfile.TarFile.OPEN_METH}
+
+    @classmethod
+    def zstdopen(
+        cls,
+        name: str | None,
+        mode: Literal["r", "a", "w"] = "r",
+        fileobj: IO[bytes] | None = None,
+    ) -> Self:
+        try:
+            return cls.taropen(name, mode, fileobj=zstandard.open(name, "rb"))
+        except zstandard.ZstdError:
+            raise tarfile.ReadError("not a zstd file")
+
+
 def unpack(path: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
-    with tarfile.open(name=path, mode="r:*") as tarf:
+    with ZstdTarfile.open(path, "r:*") as tarf:
         tarf.extractall(into)
