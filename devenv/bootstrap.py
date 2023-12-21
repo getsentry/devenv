@@ -15,6 +15,7 @@ from devenv.constants import home
 from devenv.constants import homebrew_bin
 from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
+from devenv.lib import colima
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
@@ -90,6 +91,7 @@ When done, hit ENTER to continue.
 
     brew.install()
     volta.install()
+    colima.install()
     direnv.install()
 
     os.makedirs(coderoot, exist_ok=True)
@@ -138,9 +140,10 @@ When done, hit ENTER to continue.
             if DARWIN:
                 # Installing everything from brew takes too much time,
                 # and chromedriver cask flakes occasionally. Really all we need to
-                # set up the devenv is colima. This is also required for arm64 macOS GHA runners.
-                # TODO: pin colima in sentry via vendored formula and install from that
-                proc.run(("brew", "install", "colima", "docker"))
+                # set up the devenv is colima and docker-cli.
+                # This is also required for arm64 macOS GHA runners.
+                # We manage colima, so just need to install docker here.
+                proc.run(("brew", "install", "docker"))
         else:
             proc.run(
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"

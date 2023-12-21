@@ -26,6 +26,7 @@ user_environ: typing.Mapping[str, str] = os.environ.copy()
 cache_root = f"{home}/.cache/sentry-devenv"
 config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
+bin_root = f"{root}/bin"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 
