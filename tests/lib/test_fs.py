@@ -6,6 +6,8 @@ import pathlib
 import subprocess
 from collections.abc import Generator
 
+import pytest
+
 from devenv.lib.fs import gitroot
 
 
@@ -35,3 +37,9 @@ def test_gitroot_cd(tmp_path: pathlib.Path) -> None:
     _gitroot = gitroot(cd=f"{tmp_path}/foo")
     assert os.path.samefile(f"{tmp_path}", _gitroot)
     assert os.path.isdir(f"{_gitroot}/.git")
+
+
+def test_no_gitroot(tmp_path: pathlib.Path) -> None:
+    with pytest.raises(RuntimeError):
+        with chdir(tmp_path):
+            print(gitroot())

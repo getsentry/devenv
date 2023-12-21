@@ -24,7 +24,7 @@ def gitroot(cd: str = "") -> str:
         cd = os.getcwd()
 
     stdout = proc.run(
-        ("git", "-C", cd, "rev-parse", "--show-cdup"), exit=True, stdout=True
+        ("git", "-C", cd, "rev-parse", "--show-cdup"), stdout=True
     )
     return normpath(join(cd, stdout))
 
