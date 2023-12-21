@@ -42,4 +42,4 @@ def test_gitroot_cd(tmp_path: pathlib.Path) -> None:
 def test_no_gitroot(tmp_path: pathlib.Path) -> None:
     with pytest.raises(RuntimeError):
         with chdir(tmp_path):
-            print(gitroot())
+            gitroot()
