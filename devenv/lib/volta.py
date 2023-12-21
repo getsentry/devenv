@@ -72,6 +72,8 @@ def install() -> None:
     if (
         which("volta", path=f"{root}/bin") == f"{root}/bin/volta"
         and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
+        and os.path.exists(f"{root}/bin/node")
+        and os.readlink(f"{root}/bin/node") == f"{VOLTA_HOME}/bin/node"
     ):
         return
 
@@ -80,3 +82,6 @@ def install() -> None:
 
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
+
+    for executable in ("node", "npm", "npx", "yarn", "pnpm"):
+        os.symlink(f"{VOLTA_HOME}/bin/{executable}", f"{root}/bin/{executable}")
