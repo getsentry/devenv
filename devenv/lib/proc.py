@@ -89,10 +89,6 @@ def run(
         xtrace(cmd)
     try:
         proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
-        if _stdout:
-            return proc.stdout.decode().strip()
-        else:
-            return None
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
@@ -110,3 +106,7 @@ stdout:
             raise SystemExit(detail) from None
         else:
             raise RuntimeError(detail) from None
+    else:
+        if _stdout:
+            return proc.stdout.decode().strip()
+        return None

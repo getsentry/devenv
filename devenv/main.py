@@ -13,6 +13,7 @@ from devenv import bootstrap
 from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
+from devenv.constants import CI
 from devenv.constants import config_root
 from devenv.lib.fs import gitroot
 
@@ -37,6 +38,20 @@ def initialize_config(config_path: str, defaults: Config) -> None:
     config.read_dict(defaults)
     for section, values in config.items():
         for var, _val in values.items():
+            if section == "devenv" and var == "coderoot" and not CI:
+                # this is a special case used to make the transition from existing
+                # dev environments easier as we can guess the desired coderoot if
+                # devenv is run inside of a git repo
+                try:
+                    reporoot = gitroot()
+                except RuntimeError:
+                    pass
+                else:
+                    coderoot = os.path.abspath(f"{reporoot}/..")
+                    print(f"\nWe autodetected a coderoot: {coderoot}")
+                    config.set(section, var, coderoot)
+                    continue
+
             # typshed doesn't account for `allow_no_value`
             val = cast(Optional[str], _val)
             if val is None:
