@@ -58,19 +58,20 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     github.add_to_known_hosts()
 
     if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access():
-        is_employee = input("Are you a Sentry employee? (Y/n): ").lower() in {
+        is_employee = False if CI else input("Are you a Sentry employee? (Y/n): ").lower() in {
             "y",
             "yes",
             "",
         }
-        if not is_employee:
+        if not CI and not is_employee:
             print(
                 "Please set the SENTRY_EXTERNAL_CONTRIBUTOR environment variable and re-run bootstrap."
             )
             return 1
         pubkey = github.generate_and_configure_ssh_keypair()
-        input(
-            f"""
+        if not CI:
+            input(
+                f"""
 Failed to authenticate with an ssh key to GitHub.
 We've generated and configured one for you at ~/.ssh/sentry-github.
 Visit https://github.com/settings/ssh/new and add the following Authentication key:
@@ -82,7 +83,7 @@ and click Configure SSO, for the getsentry organization.
 
 When done, hit ENTER to continue.
 """
-        )
+            )
         while not github.check_ssh_access():
             input(
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
