@@ -157,13 +157,6 @@ When done, hit ENTER to continue.
         #       i'll follow-up with fixing that in sentry
         shutil.rmtree(f"{home}/.sentry")
 
-        proc.run(
-            ("python", "-c", "import shutil; print(shutil.which('colima'))"),
-            env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.venv/bin",
-            cwd=f"{coderoot}/sentry",
-        )
-
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running

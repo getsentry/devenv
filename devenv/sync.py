@@ -124,6 +124,13 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             exit=True,
         )
 
+    proc.run(
+        ("python", "-c", "import shutil; print(shutil.which('colima'))"),
+        env={"VIRTUAL_ENV": f"{reporoot}/.venv"},
+        pathprepend=f"{reporoot}/.venv/bin",
+        cwd=reporoot,
+    )
+
     print("Resyncing your dev environment.")
 
     if not run_procs(
