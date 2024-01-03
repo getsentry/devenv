@@ -30,14 +30,15 @@ bin_root = f"{root}/bin"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
 
-
-if INTEL_MAC:
-    homebrew_repo = "/usr/local/Homebrew"
-    homebrew_bin = "/usr/local/bin"
-else:  # FIXME: elif ARM_MAC
-    homebrew_repo = "/opt/homebrew"
+if DARWIN:
+    if MACHINE == "x86_64":
+        homebrew_repo = "/usr/local/Homebrew"
+        homebrew_bin = "/usr/local/bin"
+    else:
+        homebrew_repo = "/opt/homebrew"
+        homebrew_bin = f"{homebrew_repo}/bin"
+else:
+    homebrew_repo = f"{home}/linuxbrew/.linuxbrew"
     homebrew_bin = f"{homebrew_repo}/bin"
-# FIXME: elif linux: "/home/linuxbrew/.linuxbrew
-# TODO: instead, symlink to /opt/homebrew in all cases, for consistency
 
 VOLTA_HOME = f"{root}/volta"
