@@ -18,6 +18,7 @@ from devenv.lib import brew
 from devenv.lib import colima
 from devenv.lib import direnv
 from devenv.lib import github
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import volta
 
@@ -92,6 +93,7 @@ When done, hit ENTER to continue.
     brew.install()
     volta.install()
     colima.install()
+    limactl.install()
     direnv.install()
 
     os.makedirs(coderoot, exist_ok=True)
@@ -101,7 +103,14 @@ When done, hit ENTER to continue.
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
             additional_flags = (
-                ("--depth", "1", "--single-branch", "--branch", "start-colima-linux", "https://github.com/getsentry/sentry")
+                (
+                    "--depth",
+                    "1",
+                    "--single-branch",
+                    "--branch",
+                    "start-colima-linux",
+                    "https://github.com/getsentry/sentry",
+                )
                 if CI
                 else ("git@github.com:getsentry/sentry",)
             )

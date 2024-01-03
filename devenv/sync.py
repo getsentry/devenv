@@ -18,6 +18,7 @@ from devenv.constants import home
 from devenv.constants import MACHINE
 from devenv.constants import VOLTA_HOME
 from devenv.lib import colima
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import volta
 
@@ -126,16 +127,6 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             exit=True,
         )
 
-    if CI and not DARWIN:
-        # let's test colima on linux CI as well!
-        # this can be moved to devservices in the future (use colima if docker isn't available)
-        proc.run(
-            ("python3", "-uS", "scripts/start-colima.py"),
-            env={"VIRTUAL_ENV": f"{reporoot}/.venv"},
-            pathprepend=f"{reporoot}/.venv/bin",
-            cwd=reporoot,
-        )
-
     print("Resyncing your dev environment.")
 
     if not run_procs(
@@ -160,6 +151,17 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     # volta.
     volta.install()
     colima.install()
+    limactl.install()
+
+    if CI and not DARWIN:
+        # let's test colima on linux CI as well!
+        # this can be moved to devservices in the future (use colima if docker isn't available)
+        proc.run(
+            ("python3", "-uS", "scripts/start-colima.py"),
+            env={"VIRTUAL_ENV": f"{reporoot}/.venv"},
+            pathprepend=f"{reporoot}/.venv/bin",
+            cwd=reporoot,
+        )
 
     if not run_procs(
         repo,

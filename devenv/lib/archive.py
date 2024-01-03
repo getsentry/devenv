@@ -12,6 +12,14 @@ from urllib.error import HTTPError
 from devenv.constants import cache_root
 
 
+def atomic_replace(src: str, dest: str) -> None:
+    if os.path.dirname(src) != os.path.dirname(dest):
+        raise RuntimeError(
+            f"cannot atomically move to dest {dest}; it needs to be in the same dir as {src}"
+        )
+    os.replace(src, dest)
+
+
 def download(url: str, sha256: str, dest: str = "") -> str:
     if not dest:
         dest = f"{cache_root}/{sha256}"
@@ -24,8 +32,7 @@ def download(url: str, sha256: str, dest: str = "") -> str:
             raise RuntimeError(f"Error getting {url}: {e}")
 
         with tempfile.NamedTemporaryFile(
-            delete=False,
-            dir=os.path.dirname(dest),  # needed to guarantee an atomic rename
+            delete=False, dir=os.path.dirname(dest)
         ) as tmpf:
             shutil.copyfileobj(resp, tmpf)
             tmpf.seek(0)
@@ -42,7 +49,7 @@ def download(url: str, sha256: str, dest: str = "") -> str:
                     f"- expected: {sha256}\n"
                 )
 
-            os.replace(tmpf.name, dest)
+            atomic_replace(tmpf.name, dest)
 
     return dest
 
