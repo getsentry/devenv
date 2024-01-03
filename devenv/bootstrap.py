@@ -146,6 +146,7 @@ When done, hit ENTER to continue.
 
         print("Installing sentry's brew dependencies...")
         if CI:
+            proc.run(("brew", "install", "qemu"))
             if DARWIN:
                 # Installing everything from brew takes too much time,
                 # and chromedriver cask flakes occasionally. Really all we need to
