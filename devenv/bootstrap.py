@@ -92,9 +92,11 @@ When done, hit ENTER to continue.
 
     brew.install()
     volta.install()
-    colima.install()
-    limactl.install()
     direnv.install()
+
+    if DARWIN:
+        colima.install()
+        limactl.install()
 
     os.makedirs(coderoot, exist_ok=True)
 
