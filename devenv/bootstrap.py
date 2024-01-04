@@ -146,14 +146,13 @@ When done, hit ENTER to continue.
 
         print("Installing sentry's brew dependencies...")
         if CI:
-            proc.run(("brew", "install", "qemu"))
             if DARWIN:
                 # Installing everything from brew takes too much time,
                 # and chromedriver cask flakes occasionally. Really all we need to
                 # set up the devenv is colima and docker-cli.
                 # This is also required for arm64 macOS GHA runners.
-                # We manage colima, so just need to install docker here.
-                proc.run(("brew", "install", "docker"))
+                # We manage colima, so just need to install docker + qemu here.
+                proc.run(("brew", "install", "docker", "qemu"))
         else:
             proc.run(
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
