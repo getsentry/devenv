@@ -12,8 +12,6 @@ from typing import Tuple
 
 from devenv import constants
 from devenv import pythons
-from devenv.constants import CI
-from devenv.constants import DARWIN
 from devenv.constants import home
 from devenv.constants import MACHINE
 from devenv.constants import VOLTA_HOME
@@ -152,16 +150,6 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     volta.install()
     colima.install()
     limactl.install()
-
-    if CI and not DARWIN:
-        # let's test colima on linux CI as well!
-        # this can be moved to devservices in the future (use colima if docker isn't available)
-        proc.run(
-            ("python3", "-uS", "scripts/start-colima.py"),
-            env={"VIRTUAL_ENV": f"{reporoot}/.venv"},
-            pathprepend=f"{reporoot}/.venv/bin",
-            cwd=reporoot,
-        )
 
     if not run_procs(
         repo,

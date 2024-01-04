@@ -38,6 +38,8 @@ jobs:
       # we explicitly don't support homebrew on linux
       - name: install qemu
         uses: docker/setup-qemu-action@v3
+      - name: install qemu-utils
+        run: sudo apt-get update && sudo apt-get install -y qemu-utils
       - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh
 
