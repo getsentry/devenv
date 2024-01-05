@@ -5,10 +5,19 @@ import os
 import secrets
 import shutil
 import tarfile
+import tempfile
 import urllib.request
 from urllib.error import HTTPError
 
 from devenv.constants import cache_root
+
+
+def atomic_replace(src: str, dest: str) -> None:
+    if os.path.dirname(src) != os.path.dirname(dest):
+        raise RuntimeError(
+            f"cannot atomically move to dest {dest}; it needs to be in the same dir as {src}"
+        )
+    os.replace(src, dest)
 
 
 def download(url: str, sha256: str, dest: str = "") -> str:
@@ -21,23 +30,26 @@ def download(url: str, sha256: str, dest: str = "") -> str:
             resp = urllib.request.urlopen(url)
         except HTTPError as e:
             raise RuntimeError(f"Error getting {url}: {e}")
-        with open(dest, "wb") as f:
-            shutil.copyfileobj(resp, f)
 
-    checksum = hashlib.sha256()
-    with open(dest, mode="rb") as f:
-        bts = f.read(4096)
-        while bts:
-            checksum.update(bts)
-            bts = f.read(4096)
+        with tempfile.NamedTemporaryFile(
+            delete=False, dir=os.path.dirname(dest)
+        ) as tmpf:
+            shutil.copyfileobj(resp, tmpf)
+            tmpf.seek(0)
+            checksum = hashlib.sha256()
+            buf = tmpf.read(4096)
+            while buf:
+                checksum.update(buf)
+                buf = tmpf.read(4096)
 
-    if not secrets.compare_digest(checksum.hexdigest(), sha256):
-        os.remove(dest)
-        raise RuntimeError(
-            f"checksum mismatch for {url}:\n"
-            f"- got: {checksum.hexdigest()}\n"
-            f"- expected: {sha256}\n"
-        )
+            if not secrets.compare_digest(checksum.hexdigest(), sha256):
+                raise RuntimeError(
+                    f"checksum mismatch for {url}:\n"
+                    f"- got: {checksum.hexdigest()}\n"
+                    f"- expected: {sha256}\n"
+                )
+
+            atomic_replace(tmpf.name, dest)
 
     return dest
 
