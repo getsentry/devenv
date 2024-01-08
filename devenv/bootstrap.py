@@ -60,11 +60,12 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     github.add_to_known_hosts()
 
     if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access():
-        is_employee = False if CI else input("Are you a Sentry employee? (Y/n): ").lower() in {
-            "y",
-            "yes",
-            "",
-        }
+        is_employee = (
+            False
+            if CI
+            else input("Are you a Sentry employee? (Y/n): ").lower()
+            in {"y", "yes", ""}
+        )
         if not CI and not is_employee:
             print(
                 "Please set the SENTRY_EXTERNAL_CONTRIBUTOR environment variable and re-run bootstrap."
