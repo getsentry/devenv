@@ -8,7 +8,9 @@ from devenv import bootstrap
 
 
 def test_darwin(tmp_path: str) -> None:
-    with patch("devenv.bootstrap.DARWIN", True), patch(
+    with patch("devenv.bootstrap.CI", True), patch(
+        "devenv.bootstrap.DARWIN", True
+    ), patch(
         "devenv.lib.github.add_to_known_hosts"
     ) as mock_add_to_known_hosts, patch(
         "devenv.lib.github.check_ssh_access", side_effect=(False, True)
@@ -74,7 +76,9 @@ def test_darwin(tmp_path: str) -> None:
 
 
 def test_linux(tmp_path: str) -> None:
-    with patch("devenv.bootstrap.DARWIN", False), patch(
+    with patch("devenv.bootstrap.CI", True), patch(
+        "devenv.bootstrap.DARWIN", False
+    ), patch(
         "devenv.lib.github.add_to_known_hosts"
     ) as mock_add_to_known_hosts, patch(
         "devenv.lib.github.check_ssh_access", side_effect=(False, True)
