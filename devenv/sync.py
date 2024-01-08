@@ -12,9 +12,12 @@ from typing import Tuple
 
 from devenv import constants
 from devenv import pythons
+from devenv.constants import DARWIN
 from devenv.constants import home
 from devenv.constants import MACHINE
 from devenv.constants import VOLTA_HOME
+from devenv.lib import colima
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import volta
 
@@ -146,6 +149,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     # make install-js-dev will fail since our run_procs expects devenv-managed
     # volta.
     volta.install()
+
+    if DARWIN:
+        # we don't support colima on linux
+        colima.install()
+        limactl.install()
 
     if not run_procs(
         repo,

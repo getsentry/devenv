@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from shutil import which
 
+from devenv.constants import DARWIN
 from devenv.constants import homebrew_bin
 from devenv.constants import homebrew_repo
 from devenv.constants import INTEL_MAC
@@ -45,6 +46,9 @@ eval "$({homebrew_bin}/brew shellenv)"
 
 
 def install() -> None:
+    if not DARWIN:
+        return
+
     # idempotency: skip if brew is on the executing shell's path
     if which("brew") is not None:
         return

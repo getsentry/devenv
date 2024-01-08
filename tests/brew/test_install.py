@@ -34,6 +34,8 @@ def test_install_brew_not_installed_intel_mac() -> None:
     ) as mock_add_brew_to_shellrc, patch(
         "devenv.lib.brew.INTEL_MAC", True
     ), patch(
+        "devenv.lib.brew.DARWIN", True
+    ), patch(
         "devenv.lib.brew.proc.run"
     ) as mock_run, patch(
         "os.symlink"
@@ -72,6 +74,8 @@ def test_install_brew_not_installed_non_intel_mac() -> None:
         "devenv.lib.brew.add_brew_to_shellrc"
     ) as mock_add_brew_to_shellrc, patch(
         "devenv.lib.brew.INTEL_MAC", False
+    ), patch(
+        "devenv.lib.brew.DARWIN", True
     ), patch(
         "devenv.lib.brew.proc.run"
     ) as mock_run, patch(
