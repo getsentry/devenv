@@ -17,3 +17,5 @@ jobs:
           python-version: 3.8
       - run: pip install tox
       - run: tox
+        env:
+          CI: 1
