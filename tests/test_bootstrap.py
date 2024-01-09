@@ -31,7 +31,6 @@ def test_darwin(tmp_path: str) -> None:
     ), patch(
         "devenv.lib.proc.run",
         side_effect=[
-            pathlib.Path("git"),
             None,  # git clone sentry
             None,  # brew install docker qemu
             None,  # devenv sync
@@ -49,7 +48,6 @@ def test_darwin(tmp_path: str) -> None:
         mock_limactl_install.assert_called_once()
         mock_proc_run.assert_has_calls(
             [
-                call(("xcrun", "-f", "git"), stdout=True),
                 call(
                     (
                         "git",
@@ -99,7 +97,6 @@ def test_linux(tmp_path: str) -> None:
     ), patch(
         "devenv.lib.proc.run",
         side_effect=[
-            pathlib.Path("git"),
             None,  # git clone sentry
             None,  # devenv sync
             None,  # make bootstrap
@@ -116,7 +113,6 @@ def test_linux(tmp_path: str) -> None:
         mock_limactl_install.assert_not_called()
         mock_proc_run.assert_has_calls(
             [
-                call(("xcrun", "-f", "git"), stdout=True),
                 call(
                     (
                         "git",

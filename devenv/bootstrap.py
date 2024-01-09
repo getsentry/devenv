@@ -4,7 +4,6 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from pathlib import Path
 
 from typing_extensions import TypeAlias
 
@@ -44,7 +43,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     if args.repo not in {"sentry"}:
         return f"repo {args.repo} not supported yet!"
 
-    if shutil.which("xcrun"):
+    if not CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
         # and involves elevated permissions with a GUI,
         # so best to just let the user go through that separately then retrying,
@@ -52,10 +51,9 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         # There is a way to perform a headless install but it's more complex
         # (refer to how homebrew does it).
         try:
-            git = proc.run(("xcrun", "-f", "git"), stdout=True)
+            _ = proc.run(("xcrun", "-f", "git"), stdout=True)
         except RuntimeError:
             return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
-        assert Path(git).name == "git"
 
     github.add_to_known_hosts()
 
