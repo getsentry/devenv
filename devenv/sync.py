@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import configparser
 import os
 import shutil
@@ -83,9 +82,6 @@ Output:
 
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=help)
-    parser.parse_args(argv)
-
     repo = context["repo"]
     if repo not in {"sentry", "getsentry"}:
         print(f"repo {repo} not supported yet!")
