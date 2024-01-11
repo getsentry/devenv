@@ -37,6 +37,6 @@ def test_install() -> None:
                 dest=f"{bin_root}/direnv",
             )
         ]
-        mock_proc_run.mock_calls == [
+        assert mock_proc_run.mock_calls == [
             call((f"{bin_root}/direnv", "version"), stdout=True)
         ]
