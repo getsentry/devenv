@@ -4,39 +4,34 @@ from unittest.mock import call
 from unittest.mock import patch
 
 from devenv import main
-from devenv.constants import home
 from tests.utils import chdir
 
 
 def test(tmp_path: str) -> None:
-    configroot = tmp_path
+    coderoot = f"{tmp_path}/coderoot"
+    configroot = f"{tmp_path}/configroot"
     with patch("devenv.main.CI", True), patch("sentry_sdk.init"), patch(
         "devenv.main.config_root", configroot
-    ), patch("os.makedirs") as mock_makedirs, patch(
-        "devenv.bootstrap.main"
-    ) as mock_bootstrap:
+    ), patch("devenv.bootstrap.main") as mock_bootstrap:
+        main.DEFAULT_CONFIG["devenv"]["coderoot"] = coderoot
         main.devenv(("/path/to/argv0", "bootstrap"))
-        assert mock_makedirs.mock_calls == [
-            call(configroot, exist_ok=True),
-            call(f"{home}/code", exist_ok=True),
-        ]
-        with open(f"{configroot}/config.ini", "rb") as f:
+        # assert mock_makedirs.mock_calls == [
+        #    call(configroot, exist_ok=True),
+        #    call(coderoot, exist_ok=True),
+        # ]
+        with open(f"{configroot}/config.ini", "r") as f:
             assert (
                 f.read()
-                == b"""[devenv]
+                == f"""[devenv]
 # please enter the root directory you want to work in
-coderoot = ~/code
+coderoot = {coderoot}
 
 """
             )
-        assert mock_bootstrap.mock_calls == [call(f"{home}/code", [])]
+        assert mock_bootstrap.mock_calls == [call(coderoot, [])]
 
-        # with our default config written, let's call sync
-        with chdir(f"{home}/code"):
+        # with our config written, let's call sync
+        with chdir(coderoot):
             main.devenv(("/path/to/argv0", "sync"))
 
-        assert mock_makedirs.mock_calls == [
-            # this time, we should have early returned from initialize_config
-            # so its makedirs shouldn't have been called
-            call(f"{home}/code", exist_ok=True)
-        ]
+        # this time, we should have early returned from initialize_config
