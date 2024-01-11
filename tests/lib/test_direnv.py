@@ -27,18 +27,16 @@ def test_install() -> None:
         "devenv.lib.direnv.proc.run", side_effect=[_version]  # direnv version
     ) as mock_proc_run:
         install()
-        mock_lib_fs_idempotent_add.assert_has_calls(
-            [call(f"{home}/.bashrc", '\neval "$(direnv hook bash)"\n')]
-        )
-        mock_archive_download.assert_has_calls(
-            [
-                call(
-                    f"https://github.com/direnv/direnv/releases/download/v{_version}/direnv.darwin-arm64",
-                    _sha256["direnv.darwin-arm64"],
-                    dest=f"{bin_root}/direnv",
-                )
-            ]
-        )
-        mock_proc_run.assert_has_calls(
-            [call((f"{bin_root}/direnv", "version"), stdout=True)]
-        )
+        assert mock_lib_fs_idempotent_add.mock_calls == [
+            call(f"{home}/.bashrc", '\neval "$(direnv hook bash)"\n')
+        ]
+        assert mock_archive_download.mock_calls == [
+            call(
+                f"https://github.com/direnv/direnv/releases/download/v{_version}/direnv.darwin-arm64",
+                _sha256["direnv.darwin-arm64"],
+                dest=f"{bin_root}/direnv",
+            )
+        ]
+        mock_proc_run.mock_calls == [
+            call((f"{bin_root}/direnv", "version"), stdout=True)
+        ]
