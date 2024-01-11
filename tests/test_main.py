@@ -15,19 +15,20 @@ def test_bootstrap(tmp_path: str) -> None:
         "devenv.bootstrap.main"
     ) as mock_bootstrap:
         main.devenv(("/path/to/argv0", "bootstrap"))
-        # TODO: replace assert_has_calls with something serial, not subset check
-        mock_makedirs.assert_has_calls(
-            [
-                call(configroot, exist_ok=True),
-                call(f"{home}/code", exist_ok=True),
-            ]
-        )
-        # TODO: assert for file contents of config.ini that defaults were written
-        """[devenv]
+        assert mock_makedirs.mock_calls == [
+            call(configroot, exist_ok=True),
+            call(f"{home}/code", exist_ok=True),
+        ]
+        with open(f"{configroot}/config.ini", "rb") as f:
+            assert (
+                f.read()
+                == b"""[devenv]
 # please enter the root directory you want to work in
-coderoot = /Users/josh/dev"""
+coderoot = ~/code
 
-        mock_bootstrap.assert_has_calls([call(f"{home}/code", [])])
+"""
+            )
+        assert mock_bootstrap.mock_calls == [call(f"{home}/code", [])]
 
 
 # def test_sync() -> None:
