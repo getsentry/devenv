@@ -6,7 +6,8 @@ from unittest.mock import call
 from unittest.mock import patch
 
 
-# imo this is enough coverage for such a trivial thing
+# imo this is enough coverage (as in just keeping it to bash + darwin-arm64)
+# we just want to verify that the important functions were called like fs_idempotent_add
 def test_install() -> None:
     with mock.patch.dict(os.environ, {"SHELL": "/bin/bash"}):
         # need to import devenv first here so that SHELL can take effect
