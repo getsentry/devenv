@@ -17,8 +17,8 @@ def test_install() -> None:
     from devenv.lib.direnv import _version
     from devenv.lib.direnv import _sha256
 
-    with patch("devenv.constants.MACHINE", "arm64"), patch(
-        "sys.platform", "darwin"
+    with patch("devenv.lib.direnv.MACHINE", "arm64"), patch(
+        "devenv.lib.direnv.sys.platform", "darwin"
     ), patch("devenv.lib.archive.download") as mock_archive_download, patch(
         "devenv.lib.fs.idempotent_add"
     ) as mock_lib_fs_idempotent_add, patch(
