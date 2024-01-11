@@ -4,69 +4,31 @@ from unittest.mock import call
 from unittest.mock import patch
 
 from devenv import main
+from devenv.constants import home
 
 
-def test_darwin(tmp_path: str) -> None:
-    with patch("devenv.bootstrap.CI", True), patch(
-        "devenv.bootstrap.DARWIN", True
-    ), patch(
-        "devenv.lib.github.add_to_known_hosts"
-    ) as mock_add_to_known_hosts, patch(
-        "devenv.lib.github.check_ssh_access", side_effect=(False, True)
-    ), patch(
-        "devenv.lib.github.generate_and_configure_ssh_keypair"
-    ) as mock_generate_and_configure_ssh_keypair, patch(
-        "devenv.lib.brew.install"
-    ) as mock_brew_install, patch(
-        "devenv.lib.volta.install"
-    ) as mock_volta_install, patch(
-        "devenv.lib.direnv.install"
-    ) as mock_direnv_install, patch(
-        "devenv.lib.colima.install"
-    ) as mock_colima_install, patch(
-        "devenv.lib.limactl.install"
-    ) as mock_limactl_install, patch(
-        "shutil.rmtree"
-    ), patch(
-        "devenv.lib.proc.run",
-        side_effect=[
-            None,  # git clone sentry
-            None,  # brew install docker qemu
-            None,  # devenv sync
-            None,  # make bootstrap
-        ],
-    ) as mock_proc_run:
-        coderoot = f"{tmp_path}/coderoot"
-        bootstrap.main(coderoot=coderoot, argv=("sentry",))
-        mock_add_to_known_hosts.assert_called_once()
-        mock_generate_and_configure_ssh_keypair.assert_called_once()
-        mock_brew_install.assert_called_once()
-        mock_volta_install.assert_called_once()
-        mock_direnv_install.assert_called_once()
-        mock_colima_install.assert_called_once()
-        mock_limactl_install.assert_called_once()
-        mock_proc_run.assert_has_calls(
+def test_bootstrap(tmp_path: str) -> None:
+    configroot = tmp_path
+    with patch("devenv.main.CI", True), patch("sentry_sdk.init"), patch(
+        "devenv.main.config_root", configroot
+    ), patch("os.makedirs") as mock_makedirs, patch(
+        "devenv.bootstrap.main"
+    ) as mock_bootstrap:
+        main.devenv(("/path/to/argv0", "bootstrap"))
+        # TODO: replace assert_has_calls with something serial, not subset check
+        mock_makedirs.assert_has_calls(
             [
-                call(
-                    (
-                        "git",
-                        "-C",
-                        coderoot,
-                        "clone",
-                        "--filter=blob:none",
-                        "--depth",
-                        "1",
-                        "https://github.com/getsentry/sentry",
-                    ),
-                    exit=True,
-                ),
-                call(("brew", "install", "docker", "qemu")),
-                call(("devenv", "sync"), cwd=f"{coderoot}/sentry"),
-                call(
-                    ("make", "bootstrap"),
-                    env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-                    pathprepend=f"{coderoot}/sentry/.venv/bin",
-                    cwd=f"{coderoot}/sentry",
-                ),
+                call(configroot, exist_ok=True),
+                call(f"{home}/code", exist_ok=True),
             ]
         )
+        # TODO: assert for file contents of config.ini that defaults were written
+        """[devenv]
+# please enter the root directory you want to work in
+coderoot = /Users/josh/dev"""
+
+        mock_bootstrap.assert_has_calls([call(f"{home}/code", [])])
+
+
+# def test_sync() -> None:
+# this time let's also just write a config beforehand so we immediately return from init config
