@@ -45,31 +45,29 @@ def test_darwin(tmp_path: str) -> None:
         mock_direnv_install.assert_called_once()
         mock_colima_install.assert_called_once()
         mock_limactl_install.assert_called_once()
-        mock_proc_run.assert_has_calls(
-            [
-                call(
-                    (
-                        "git",
-                        "-C",
-                        coderoot,
-                        "clone",
-                        "--filter=blob:none",
-                        "--depth",
-                        "1",
-                        "https://github.com/getsentry/sentry",
-                    ),
-                    exit=True,
+        assert mock_proc_run.mock_calls == [
+            call(
+                (
+                    "git",
+                    "-C",
+                    coderoot,
+                    "clone",
+                    "--filter=blob:none",
+                    "--depth",
+                    "1",
+                    "https://github.com/getsentry/sentry",
                 ),
-                call(("brew", "install", "docker", "qemu")),
-                call(("devenv", "sync"), cwd=f"{coderoot}/sentry"),
-                call(
-                    ("make", "bootstrap"),
-                    env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-                    pathprepend=f"{coderoot}/sentry/.venv/bin",
-                    cwd=f"{coderoot}/sentry",
-                ),
-            ]
-        )
+                exit=True,
+            ),
+            call(("brew", "install", "docker", "qemu")),
+            call(("devenv", "sync"), cwd=f"{coderoot}/sentry"),
+            call(
+                ("make", "bootstrap"),
+                env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
+                pathprepend=f"{coderoot}/sentry/.venv/bin",
+                cwd=f"{coderoot}/sentry",
+            ),
+        ]
 
 
 def test_linux(tmp_path: str) -> None:
@@ -110,27 +108,25 @@ def test_linux(tmp_path: str) -> None:
         mock_direnv_install.assert_called_once()
         mock_colima_install.assert_not_called()
         mock_limactl_install.assert_not_called()
-        mock_proc_run.assert_has_calls(
-            [
-                call(
-                    (
-                        "git",
-                        "-C",
-                        coderoot,
-                        "clone",
-                        "--filter=blob:none",
-                        "--depth",
-                        "1",
-                        "https://github.com/getsentry/sentry",
-                    ),
-                    exit=True,
+        assert mock_proc_run.mock_calls == [
+            call(
+                (
+                    "git",
+                    "-C",
+                    coderoot,
+                    "clone",
+                    "--filter=blob:none",
+                    "--depth",
+                    "1",
+                    "https://github.com/getsentry/sentry",
                 ),
-                call(("devenv", "sync"), cwd=f"{coderoot}/sentry"),
-                call(
-                    ("make", "bootstrap"),
-                    env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-                    pathprepend=f"{coderoot}/sentry/.venv/bin",
-                    cwd=f"{coderoot}/sentry",
-                ),
-            ]
-        )
+                exit=True,
+            ),
+            call(("devenv", "sync"), cwd=f"{coderoot}/sentry"),
+            call(
+                ("make", "bootstrap"),
+                env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
+                pathprepend=f"{coderoot}/sentry/.venv/bin",
+                cwd=f"{coderoot}/sentry",
+            ),
+        ]
