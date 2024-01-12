@@ -1,25 +1,13 @@
 from __future__ import annotations
 
-import contextlib
 import os
 import pathlib
 import subprocess
-from collections.abc import Generator
 
 import pytest
 
 from devenv.lib.fs import gitroot
-
-
-# TODO: replace with contextlib.chdir when we can use python3.11
-@contextlib.contextmanager
-def chdir(d: str | pathlib.Path) -> Generator[None, None, None]:
-    curdir = os.getcwd()
-    try:
-        os.chdir(d)
-        yield
-    finally:
-        os.chdir(curdir)
+from tests.utils import chdir
 
 
 def test_gitroot(tmp_path: pathlib.Path) -> None:
