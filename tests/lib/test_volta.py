@@ -33,12 +33,10 @@ def test_install(tmp_path: str) -> None:
             install()
 
             mock_install_volta.assert_called_once_with(f"{tmp_path}/bin")
-            mock_proc_run.assert_has_calls(
-                [
-                    call((f"{tmp_path}/bin/volta-migrate",)),
-                    call((f"{tmp_path}/bin/volta", "-v"), stdout=True),
-                ]
-            )
+            assert mock_proc_run.mock_calls == [
+                call((f"{tmp_path}/bin/volta-migrate",)),
+                call((f"{tmp_path}/bin/volta", "-v"), stdout=True),
+            ]
             assert (
                 os.readlink(f"{tmp_path}/bin/node")
                 == f"{tmp_path}/volta/bin/node"
@@ -140,9 +138,7 @@ def test_populate_volta_home_with_shims() -> None:
 
         populate_volta_home_with_shims(unpack_into)
 
-        mock_run.assert_has_calls(
-            [
-                call((f"{unpack_into}/volta-migrate",)),
-                call((f"{unpack_into}/volta", "-v"), stdout=True),
-            ]
-        )
+        assert mock_run.mock_calls == [
+            call((f"{unpack_into}/volta-migrate",)),
+            call((f"{unpack_into}/volta", "-v"), stdout=True),
+        ]

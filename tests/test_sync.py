@@ -52,60 +52,56 @@ def test_darwin(tmp_path: str) -> None:
         mock_volta_install.assert_called_once()
         mock_colima_install.assert_called_once()
         mock_limactl_install.assert_called_once()
-        mock_proc_run.assert_has_calls(
-            [
-                call(
-                    (
-                        f"{pythons_root}/{python_version}/python/bin/python3",
-                        "-m",
-                        "venv",
-                        venv,
-                    ),
-                    exit=True,
-                ),
-                call((f"{venv}/bin/sentry", "init", "--dev")),
-                call(
-                    (
-                        f"{venv}/bin/sentry",
-                        "devservices",
-                        "up",
-                        "redis",
-                        "postgres",
-                    ),
-                    exit=True,
-                ),
-            ]
-        )
-        mock_run_procs.assert_has_calls(
-            [
-                call(
-                    "sentry",
-                    reporoot,
+        assert mock_proc_run.mock_calls == [
+            call(
+                (
+                    f"{pythons_root}/{python_version}/python/bin/python3",
+                    "-m",
+                    "venv",
                     venv,
-                    (("git and precommit", ("make", "setup-git")),),
                 ),
-                call(
-                    "sentry",
-                    reporoot,
-                    venv,
+                exit=True,
+            ),
+            call((f"{venv}/bin/sentry", "init", "--dev")),
+            call(
+                (
+                    f"{venv}/bin/sentry",
+                    "devservices",
+                    "up",
+                    "redis",
+                    "postgres",
+                ),
+                exit=True,
+            ),
+        ]
+        assert mock_run_procs.mock_calls == [
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (("git and precommit", ("make", "setup-git")),),
+            ),
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (
+                    ("javascript dependencies", ("make", "install-js-dev")),
+                    ("python dependencies", ("make", "install-py-dev")),
+                ),
+            ),
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (
                     (
-                        ("javascript dependencies", ("make", "install-js-dev")),
-                        ("python dependencies", ("make", "install-py-dev")),
+                        "python migrations",
+                        (f"{venv}/bin/sentry", "upgrade", "--noinput"),
                     ),
                 ),
-                call(
-                    "sentry",
-                    reporoot,
-                    venv,
-                    (
-                        (
-                            "python migrations",
-                            (f"{venv}/bin/sentry", "upgrade", "--noinput"),
-                        ),
-                    ),
-                ),
-            ]
-        )
+            ),
+        ]
 
 
 def test_linux(tmp_path: str) -> None:
@@ -138,57 +134,53 @@ def test_linux(tmp_path: str) -> None:
         mock_volta_install.assert_called_once()
         mock_colima_install.assert_not_called()
         mock_limactl_install.assert_not_called()
-        mock_proc_run.assert_has_calls(
-            [
-                call(
-                    (
-                        f"{pythons_root}/{python_version}/python/bin/python3",
-                        "-m",
-                        "venv",
-                        venv,
-                    ),
-                    exit=True,
-                ),
-                call((f"{venv}/bin/sentry", "init", "--dev")),
-                call(
-                    (
-                        f"{venv}/bin/sentry",
-                        "devservices",
-                        "up",
-                        "redis",
-                        "postgres",
-                    ),
-                    exit=True,
-                ),
-            ]
-        )
-        mock_run_procs.assert_has_calls(
-            [
-                call(
-                    "sentry",
-                    reporoot,
+        assert mock_proc_run.mock_calls == [
+            call(
+                (
+                    f"{pythons_root}/{python_version}/python/bin/python3",
+                    "-m",
+                    "venv",
                     venv,
-                    (("git and precommit", ("make", "setup-git")),),
                 ),
-                call(
-                    "sentry",
-                    reporoot,
-                    venv,
+                exit=True,
+            ),
+            call((f"{venv}/bin/sentry", "init", "--dev")),
+            call(
+                (
+                    f"{venv}/bin/sentry",
+                    "devservices",
+                    "up",
+                    "redis",
+                    "postgres",
+                ),
+                exit=True,
+            ),
+        ]
+        assert mock_run_procs.mock_calls == [
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (("git and precommit", ("make", "setup-git")),),
+            ),
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (
+                    ("javascript dependencies", ("make", "install-js-dev")),
+                    ("python dependencies", ("make", "install-py-dev")),
+                ),
+            ),
+            call(
+                "sentry",
+                reporoot,
+                venv,
+                (
                     (
-                        ("javascript dependencies", ("make", "install-js-dev")),
-                        ("python dependencies", ("make", "install-py-dev")),
+                        "python migrations",
+                        (f"{venv}/bin/sentry", "upgrade", "--noinput"),
                     ),
                 ),
-                call(
-                    "sentry",
-                    reporoot,
-                    venv,
-                    (
-                        (
-                            "python migrations",
-                            (f"{venv}/bin/sentry", "upgrade", "--noinput"),
-                        ),
-                    ),
-                ),
-            ]
-        )
+            ),
+        ]
