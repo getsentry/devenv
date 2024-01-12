@@ -1,23 +1,18 @@
 from __future__ import annotations
 
-import os
-from unittest import mock
 from unittest.mock import call
 from unittest.mock import patch
+
+from devenv.constants import bin_root
+from devenv.constants import home
+from devenv.lib.direnv import _sha256
+from devenv.lib.direnv import _version
+from devenv.lib.direnv import install
 
 
 # imo this is enough coverage (as in just keeping it to bash + darwin-arm64)
 # we just want to verify that the important functions were called like fs_idempotent_add
 def test_install() -> None:
-    with mock.patch.dict(os.environ, {"SHELL": "/bin/bash"}):
-        # need to import devenv first here so that SHELL can take effect
-        from devenv.constants import bin_root
-        from devenv.constants import home
-
-    from devenv.lib.direnv import install
-    from devenv.lib.direnv import _version
-    from devenv.lib.direnv import _sha256
-
     with patch("devenv.lib.direnv.MACHINE", "arm64"), patch(
         "devenv.lib.direnv.sys.platform", "darwin"
     ), patch("devenv.lib.archive.download") as mock_archive_download, patch(
@@ -29,6 +24,7 @@ def test_install() -> None:
     ) as mock_proc_run:
         install()
         assert mock_lib_fs_idempotent_add.mock_calls == [
+            # SHELL is set in conftest.py
             call(f"{home}/.bashrc", '\neval "$(direnv hook bash)"\n')
         ]
         assert mock_archive_download.mock_calls == [
