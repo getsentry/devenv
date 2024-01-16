@@ -10,11 +10,11 @@ Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-
 bash install-devenv.sh
 ```
 
-**If you are setting up a new development environment, run `devenv bootstrap` after installing.**
+**If you are setting up a new laptop, run `devenv bootstrap` after installing.**
 
 
 
-## what is it / technical overview
+## technical overview
 
 `devenv` is a command-line interface to a set of environment management commands
 that can be custom implemented for a particular repository.
