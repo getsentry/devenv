@@ -20,15 +20,20 @@ def test_python_project(tmp_path: str) -> None:
     with open(f"{config_dir}/config.ini", "w") as f:
         f.write(config_template.format(coderoot=coderoot))
 
-    reporoot = f"{coderoot}/repo"
-    os.makedirs(f"{reporoot}/.venv")
-    with open(f"{reporoot}/config.ini", "w") as f:
+    reporoot = f"{coderoot}/sentry"
+
+    os.makedirs(f"{reporoot}/.venv/bin")
+    os.symlink("/bin/echo", f"{reporoot}/.venv/bin/venv-executable")
+
+    os.makedirs(f"{reporoot}/devenv")
+    with open(f"{reporoot}/devenv/config.ini", "w") as f:
         f.write(
             """
 [python]
 version = 3.10.3
 """
         )
+    subprocess.run(("git", "init", "--quiet", "--bare", reporoot))
 
     # first, let's test an outdated venv
     with open(f"{reporoot}/.venv/pyvenv.cfg", "w") as f:
@@ -36,9 +41,17 @@ version = 3.10.3
 
     env = {**os.environ, "HOME": home}
     p = subprocess.run(
-        ("devenv", "exec", "env"), cwd=coderoot, env=env, capture_output=True
+        ("devenv", "exec", "venv-executable", "gr3at succe$$"),
+        cwd=reporoot,
+        env=env,
+        capture_output=True,
     )
-    assert p.returncode == 0
+    assert (
+        b"WARN: venv doesn't exist or isn't up to date. You should create it with devenv sync."
+        in p.stdout
+    )
+    assert b"command not found" in p.stdout
+    assert p.returncode == 1
 
     # now we should modify cfg and it should amtch
 

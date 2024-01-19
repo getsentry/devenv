@@ -27,7 +27,9 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> None:
         or venv_status == venv.VENV_VERSION_MISMATCH
     ):
         print(
-            "WARN: venv doesn't exist or isn't up to date. You should create it with devenv sync."
+            "WARN: venv doesn't exist or isn't up to date. You should create it with devenv sync.",
+            # unflushed stdout is likely to dissappear due to the imminent exec
+            flush=True,
         )
     elif venv_status == venv.VENV_OK:
         # if there is a good venv, we should use it for the exec.

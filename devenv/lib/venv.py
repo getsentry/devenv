@@ -23,6 +23,7 @@ def check(reporoot: str) -> bool:
         return VENV_NOT_PRESENT
 
     python_version = repo_config["python"]["version"]
+
     with open(f"{reporoot}/.venv/pyvenv.cfg", "r") as f:
         for line in f:
             if line.startswith("version"):
