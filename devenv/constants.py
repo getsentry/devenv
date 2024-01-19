@@ -18,7 +18,7 @@ struct_passwd = pwd.getpwuid(os.getuid())
 shell_path = os.getenv("SHELL", struct_passwd.pw_shell)
 shell = shell_path.rsplit("/", 1)[-1]
 user = struct_passwd.pw_name
-home = struct_passwd.pw_dir
+home = os.getenv("HOME") if CI else struct_passwd.pw_dir
 
 # the *original* user's environment, readonly
 user_environ: typing.Mapping[str, str] = os.environ.copy()
