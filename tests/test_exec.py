@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-from unittest.mock import call
-from unittest.mock import patch
 
 config_template = """
 [devenv]
@@ -50,10 +48,27 @@ version = 3.10.3
         b"WARN: venv doesn't exist or isn't up to date. You should create it with devenv sync."
         in p.stdout
     )
-    assert b"command not found" in p.stdout
+    # since the venv wasn't in good standing it shouldn't have been
+    # used for the exec
+    assert b"FileNotFoundError" in p.stderr
     assert p.returncode == 1
 
-    # now we should modify cfg and it should amtch
+    with open(f"{reporoot}/.venv/pyvenv.cfg", "w") as f:
+        f.write("version = 3.10.3")
 
-    # devenv exec -- env should also work (argparse)
-    # lets also have a test for .venv/bin/foo
+    p = subprocess.run(
+        ("devenv", "exec", "venv-executable", "gr3at succe$$"),
+        cwd=reporoot,
+        env=env,
+        capture_output=True,
+    )
+    assert p.stdout == b"gr3at succe$$\n"
+
+    p = subprocess.run(
+        # -- should also work
+        ("devenv", "exec", "--", "venv-executable", "gr3at succe$$"),
+        cwd=reporoot,
+        env=env,
+        capture_output=True,
+    )
+    assert p.stdout == b"gr3at succe$$\n"
