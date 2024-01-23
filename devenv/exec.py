@@ -11,10 +11,9 @@ help = """Executes a command, using devenv's repo-specific environment.
 Useful if your local environment's broken."""
 
 
-def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> None:
-    repo = context["repo"]
-    if repo not in {"sentry", "getsentry"}:
-        print(f"repo {repo} not supported yet!")
+def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
+    if argv is None:
+        print(help)
         return 1
 
     reporoot = context["reporoot"]
@@ -39,4 +38,6 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> None:
     # note: p variant of exec does in fact take env["PATH"] into
     #       account for searches (you would think we may need to
     #       also modify os.environ but it works without it)
-    os.execvpe(argv[0], argv, env)
+    cmd = argv[0]
+    args = tuple(argv[1:])
+    os.execvpe(cmd, args, env)

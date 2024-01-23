@@ -9,7 +9,7 @@ VENV_NOT_PRESENT = 3
 VENV_NOT_CONFIGURED = 4
 
 
-def check(reporoot: str) -> bool:
+def check(reporoot: str) -> int:
     repo_config = configparser.ConfigParser()
     repo_config.read(f"{reporoot}/devenv/config.ini")
 
