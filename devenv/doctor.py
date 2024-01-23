@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import typing
+import os
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -175,10 +176,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     match_tags: set[str] = set(args.tag if args.tag else ())
 
-    repo = context["repo"]
-    if repo not in {"sentry", "getsentry", "devenv"}:
-        print(f"repo {repo} not supported yet!")
-        return 1
+    os.chdir(context["reporoot"])
 
     checks = load_checks(context, match_tags)
 
