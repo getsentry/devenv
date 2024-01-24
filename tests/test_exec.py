@@ -21,7 +21,7 @@ def test_python_project(tmp_path: str) -> None:
     reporoot = f"{coderoot}/sentry"
 
     os.makedirs(f"{reporoot}/.venv/bin")
-    os.symlink("/bin/echo", f"{reporoot}/.venv/bin/venv-executable")
+    os.symlink("/bin/sh", f"{reporoot}/.venv/bin/venv-executable")
 
     os.makedirs(f"{reporoot}/devenv")
     with open(f"{reporoot}/devenv/config.ini", "w") as f:
@@ -37,9 +37,9 @@ version = 3.10.3
     with open(f"{reporoot}/.venv/pyvenv.cfg", "w") as f:
         f.write("version = 3.8.16")
 
-    env = {**os.environ, "HOME": home}
+    env = {**os.environ, "HOME": home, "CI": "1"}
     p = subprocess.run(
-        ("devenv", "exec", "venv-executable", "gr3at succe$$"),
+        ("devenv", "exec", "venv-executable", "-c", "echo great success"),
         cwd=reporoot,
         env=env,
         capture_output=True,
@@ -57,18 +57,18 @@ version = 3.10.3
         f.write("version = 3.10.3")
 
     p = subprocess.run(
-        ("devenv", "exec", "venv-executable", "gr3at succe$$"),
+        ("devenv", "exec", "venv-executable", "-c", "echo great success"),
         cwd=reporoot,
         env=env,
         capture_output=True,
     )
-    assert p.stdout == b"gr3at succe$$\n"
+    assert p.stdout == b"great success\n"
 
     p = subprocess.run(
         # -- should also work
-        ("devenv", "exec", "--", "venv-executable", "gr3at succe$$"),
+        ("devenv", "exec", "--", "venv-executable", "-c", "echo great success"),
         cwd=reporoot,
         env=env,
         capture_output=True,
     )
-    assert p.stdout == b"gr3at succe$$\n"
+    assert p.stdout == b"great success\n"
