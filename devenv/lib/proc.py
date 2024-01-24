@@ -12,9 +12,10 @@ from devenv.constants import home
 from devenv.constants import homebrew_bin
 from devenv.constants import root
 from devenv.constants import shell_path
+from devenv.constants import user_environ
 from devenv.constants import VOLTA_HOME
 
-base_path = f"{VOLTA_HOME}/bin:{homebrew_bin}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{root}/bin"
+base_path = f"{root}/bin:{VOLTA_HOME}/bin:{homebrew_bin}:{user_environ['PATH']}"
 base_env = {
     "PATH": base_path,
     "HOME": home,
