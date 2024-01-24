@@ -38,8 +38,9 @@ version = 3.10.3
         f.write("version = 3.8.16")
 
     env = {**os.environ, "HOME": home, "CI": "1"}
+
     p = subprocess.run(
-        ("devenv", "exec", "venv-executable", "-c", "echo great success"),
+        ("devenv", "exec", "command", "-v", "venv-executable"),
         cwd=reporoot,
         env=env,
         capture_output=True,
@@ -50,8 +51,8 @@ version = 3.10.3
     )
     # since the venv wasn't in good standing it shouldn't have been
     # used for the exec
-    assert b"FileNotFoundError" in p.stderr
-    assert p.returncode == 1
+    assert b"venv-executable: command not found" in p.stderr
+    assert p.returncode != 0
 
     with open(f"{reporoot}/.venv/pyvenv.cfg", "w") as f:
         f.write("version = 3.10.3")
