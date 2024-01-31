@@ -85,7 +85,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     reporoot = context["reporoot"]
 
-    venv.ensure(reporoot)
+    venv.ensure_repolocal(reporoot)
 
     print("Resyncing your dev environment.")
 
