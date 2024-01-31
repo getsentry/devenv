@@ -22,6 +22,7 @@ home = struct_passwd.pw_dir
 
 # the *original* user's environment, readonly
 user_environ: typing.Mapping[str, str] = os.environ.copy()
+user_path: str = user_environ["PATH"]
 
 cache_root = f"{home}/.cache/sentry-devenv"
 config_root = f"{home}/.config/sentry-devenv"

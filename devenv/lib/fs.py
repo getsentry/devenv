@@ -38,3 +38,9 @@ def idempotent_add(filepath: str, text: str) -> None:
         contents = f.read()
         if text not in contents:
             f.write(f"\n{text}\n")
+
+
+def write_script(filepath: str, text: str) -> None:
+    with open(filepath, "w") as f:
+        f.write(text)
+    os.chmod(filepath, 0o775)
