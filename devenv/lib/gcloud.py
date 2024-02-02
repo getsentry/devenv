@@ -8,9 +8,9 @@ from shutil import which
 from devenv.constants import bin_root
 from devenv.constants import MACHINE
 from devenv.constants import root
-from devenv.constants import user_path
 from devenv.lib import archive
 from devenv.lib import fs
+from devenv.lib import proc
 
 _sha256 = {
     "google-cloud-sdk-461.0.0-linux-x86_64.tar.gz": "066d84a50e8d3e83f8f32096f0aa88b947fe747280dd3b16991540ab79895ae5",
@@ -63,13 +63,13 @@ def _install(version: str, into: str) -> None:
     fs.write_script(
         f"{into}/gcloud",
         f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python PATH={into}/google-cloud-sdk/bin:{user_path} gcloud "$@"
+exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gcloud "$@"
 """,
     )
     fs.write_script(
         f"{into}/gsutil",
         f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python PATH={into}/google-cloud-sdk/bin:{user_path} gsutil "$@"
+exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gsutil "$@"
 """,
     )
 
@@ -83,6 +83,7 @@ def install(version: str) -> None:
 
     _install(version, bin_root)
 
-    # we should actually run gcloud
-    if not os.path.exists(f"{bin_root}/gcloud"):
-        raise SystemExit("Failed to install gcloud!")
+    stdout = proc.run((f"{bin_root}/gcloud", "--version"), stdout=True)
+
+    if f"Google Cloud SDK {version}" not in stdout:
+        raise SystemExit("Failed to install gcloud {version}!")
