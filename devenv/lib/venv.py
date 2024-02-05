@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import os
 import shutil
-from typing import Optional
 
 from devenv import pythons
-from devenv.constants import bin_root
 from devenv.constants import venvs_root
 from devenv.lib import config
-from devenv.lib import fs
 from devenv.lib import proc
 
 VENV_OK = 1
@@ -17,35 +14,34 @@ VENV_NOT_PRESENT = 3
 VENV_NOT_CONFIGURED = 4
 
 
-# example venv configuration section:
+# example venv configuration section.
 #
 # [venv.sentry-kube]
 # python = 3.11.6
 # requirements = k8s/cli/requirements.txt
 # path = optional
-# editable =
-#   k8s/cli
-#   k8s/cli/libsentrykube
-# bins =
-#   sentry-kube
-#   sentry-kube-pop
 #
 # [venv.salt]
-# python = 3.10.13
-# requirements = salt/requirements.txt
-# bins =
-#   salt-ssh
-#   ...
+# python = 3.11.6
+# ...
 #
-# example usage:
-#
-# venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
+# path, python_version, requirements = get(reporoot, "sentry-kube")
 # url, sha256 = config.get_python(reporoot, python_version)
 # ensure(path, python_version, url, sha256)
-# sync(venv_dir, requirements, editable_paths, bins)
-def get(
-    reporoot: str, name: str
-) -> tuple[str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]]:
+def get(reporoot: str, name: str) -> tuple[str, str, str]:
+    cfg = config.get_repo(reporoot)
+
+    if not cfg.has_section(f"venv.{name}"):
+        raise KeyError(f"section venv.{name} not found in repo config")
+
+    venv = cfg[f"venv.{name}"]
+    path = venv.get("path", f"{venvs_root}/{name}")
+    # TODO: return tuple of read requirements
+    return path, venv["python"], venv["requirements"]
+
+
+# legacy, used for sentry/getsentry
+def check_repolocal(reporoot: str) -> int:
     cfg = config.get_repo(reporoot)
 
     if not cfg.has_section(f"venv.{name}"):
@@ -117,37 +113,6 @@ def check(venv: str, python_version: str) -> int:
     return VENV_OK
 
 
-def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
-    venv_status = check(venv, python_version)
-    if venv_status == VENV_OK:
-        return
-
-    print(
-        f"virtualenv doesn't exist or is using an outdated python, recreating at {venv}..."
-    )
-    if os.path.exists(venv):
-        shutil.rmtree(venv)
-
-    proc.run(
-        (pythons.get(python_version, url, sha256), "-m", "venv", venv),
-        exit=True,
-    )
-
-
-# legacy, used for sentry/getsentry
-def check_repolocal(reporoot: str) -> int:
-    cfg = config.get_repo(reporoot)
-
-    if not cfg.has_section("python"):
-        # the repo doesn't configure venv support
-        # this is mainly here for `devenv exec` which
-        # may or may not be run in a python project
-        return VENV_NOT_CONFIGURED
-
-    python_version = cfg["python"]["version"]
-    return check(f"{reporoot}/.venv", python_version)
-
-
 # legacy, used for sentry/getsentry
 def ensure_repolocal(reporoot: str) -> None:
     venv_status = check_repolocal(reporoot)
@@ -159,7 +124,8 @@ def ensure_repolocal(reporoot: str) -> None:
         )
         return
 
+    url, sha256 = config.get_python(reporoot, "xxx")
     cfg = config.get_repo(reporoot)
     python_version = cfg["python"]["version"]
-    url, sha256 = config.get_python_legacy(reporoot, python_version)
+    url, sha256 = config.get_python(reporoot, python_version)
     ensure(f"{reporoot}/.venv", python_version, url, sha256)
