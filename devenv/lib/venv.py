@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 
 from devenv import pythons
-from devenv.constants import MACHINE
+from devenv.constants import venvs_root
+from devenv.lib import config
 from devenv.lib import proc
-from devenv.lib.config import repo_config
 
 VENV_OK = 1
 VENV_VERSION_MISMATCH = 2
@@ -15,8 +14,35 @@ VENV_NOT_PRESENT = 3
 VENV_NOT_CONFIGURED = 4
 
 
+# example venv configuration section.
+#
+# [venv.sentry-kube]
+# python = 3.11.6
+# requirements = k8s/cli/requirements.txt
+# path = optional
+#
+# [venv.salt]
+# python = 3.11.6
+# ...
+#
+# path, python_version, requirements = get(reporoot, "sentry-kube")
+# url, sha256 = config.get_python(reporoot, python_version)
+# ensure(path, python_version, url, sha256)
+def get(reporoot: str, name: str) -> tuple[str, str, str]:
+    cfg = config.get_repo(reporoot)
+
+    if not cfg.has_section(f"venv.{name}"):
+        raise KeyError(f"section venv.{name} not found in repo config")
+
+    venv = cfg[f"venv.{name}"]
+    path = venv.get("path", f"{venvs_root}/{name}")
+    # TODO: return tuple of read requirements
+    return path, venv["python"], venv["requirements"]
+
+
+# legacy, used for sentry/getsentry
 def check_repolocal(reporoot: str) -> int:
-    cfg = repo_config(reporoot)
+    cfg = config.get_repo(reporoot)
 
     if not cfg.has_section("python"):
         # the repo doesn't configure venv support
@@ -42,6 +68,7 @@ def check(venv: str, python_version: str) -> int:
     return VENV_OK
 
 
+# legacy, used for sentry/getsentry
 def ensure_repolocal(reporoot: str) -> None:
     venv_status = check_repolocal(reporoot)
     if venv_status == VENV_OK:
@@ -52,10 +79,10 @@ def ensure_repolocal(reporoot: str) -> None:
         )
         return
 
-    cfg = repo_config(reporoot)
+    url, sha256 = config.get_python(reporoot, "xxx")
+    cfg = config.get_repo(reporoot)
     python_version = cfg["python"]["version"]
-    url = cfg["python"][f"{sys.platform}_{MACHINE}"]
-    sha256 = cfg["python"][f"{sys.platform}_{MACHINE}_sha256"]
+    url, sha256 = config.get_python(reporoot, python_version)
     ensure(f"{reporoot}/.venv", python_version, url, sha256)
 
 
