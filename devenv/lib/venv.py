@@ -32,7 +32,9 @@ VENV_NOT_CONFIGURED = 4
 # venv_dir, python_version, requirements, editable_paths = get(reporoot, "sentry-kube")
 # url, sha256 = config.get_python(reporoot, python_version)
 # ensure(path, python_version, url, sha256)
-def get(reporoot: str, name: str) -> tuple[str, str, str, tuple[str, ...]]:
+def get(
+    reporoot: str, name: str
+) -> tuple[str, str, str, Optional[tuple[str, ...]]]:
     cfg = config.get_repo(reporoot)
 
     if not cfg.has_section(f"venv.{name}"):
@@ -41,7 +43,12 @@ def get(reporoot: str, name: str) -> tuple[str, str, str, tuple[str, ...]]:
     venv = cfg[f"venv.{name}"]
     reponame = os.path.basename(reporoot)
     venv_dir = venv.get("path", f"{venvs_root}/{reponame}-{name}")
-    editable_paths = tuple(venv.get("editable").strip().split("\n"))
+    editable_paths = venv.get("editable", None)
+    if editable_paths is not None:
+        editable_paths = tuple(
+            f"{reporoot}/{path}" for path in editable_paths.strip().split("\n")
+        )
+
     return (
         venv_dir,
         venv["python"],
@@ -70,7 +77,6 @@ def sync(
     if editable_paths is not None:
         for path in editable_paths:
             cmd = (*cmd, "-e", path)
-    print(cmd)
     proc.run(cmd)
 
 
