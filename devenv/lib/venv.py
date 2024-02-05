@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from typing import Optional
 
 from devenv import pythons
 from devenv.constants import venvs_root
@@ -20,24 +21,57 @@ VENV_NOT_CONFIGURED = 4
 # python = 3.11.6
 # requirements = k8s/cli/requirements.txt
 # path = optional
+# editable =
+#   k8s/cli
+#   k8s/cli/libsentrykube
 #
 # [venv.salt]
 # python = 3.11.6
 # ...
 #
-# path, python_version, requirements = get(reporoot, "sentry-kube")
+# venv_dir, python_version, requirements, editable_paths = get(reporoot, "sentry-kube")
 # url, sha256 = config.get_python(reporoot, python_version)
 # ensure(path, python_version, url, sha256)
-def get(reporoot: str, name: str) -> tuple[str, str, str]:
+def get(reporoot: str, name: str) -> tuple[str, str, str, tuple[str, ...]]:
     cfg = config.get_repo(reporoot)
 
     if not cfg.has_section(f"venv.{name}"):
         raise KeyError(f"section venv.{name} not found in repo config")
 
     venv = cfg[f"venv.{name}"]
-    path = venv.get("path", f"{venvs_root}/{name}")
-    # TODO: return tuple of read requirements
-    return path, venv["python"], venv["requirements"]
+    reponame = os.path.basename(reporoot)
+    venv_dir = venv.get("path", f"{venvs_root}/{reponame}-{name}")
+    editable_paths = tuple(venv.get("editable").strip().split("\n"))
+    return (
+        venv_dir,
+        venv["python"],
+        f"{reporoot}/{venv['requirements']}",
+        editable_paths,
+    )
+
+
+def sync(
+    venv_dir: str,
+    requirements: str,
+    editable_paths: Optional[tuple[str, ...]] = None,
+) -> None:
+    cmd: tuple[str, ...] = (
+        f"{venv_dir}/bin/python",
+        "-m",
+        "pip",
+        "--disable-pip-version-check",
+        "--no-color",
+        "--quiet",
+        "--require-virtualenv",
+        "install",
+        "-r",
+        requirements,
+    )
+    if editable_paths is not None:
+        for path in editable_paths:
+            cmd = (*cmd, "-e", path)
+    print(cmd)
+    proc.run(cmd)
 
 
 # legacy, used for sentry/getsentry
@@ -92,7 +126,7 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         return
 
     print(
-        "virtualenv doesn't exist or is using an outdated python, recreating..."
+        f"virtualenv doesn't exist or is using an outdated python, recreating at {venv}..."
     )
     if os.path.exists(venv):
         shutil.rmtree(venv)
