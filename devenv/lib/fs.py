@@ -44,3 +44,18 @@ def write_script(filepath: str, text: str) -> None:
     with open(filepath, "w") as f:
         f.write(text)
     os.chmod(filepath, 0o775)
+
+
+def ensure_symlink(expected_src: str, dest: str) -> None:
+    try:
+        src = os.readlink(dest)
+    except FileNotFoundError:
+        pass
+    except OSError as e:
+        if e.errno == 22:
+            print(f"WARNING: {dest} exists and isn't a symlink")
+            return
+    if src != expected_src:
+        print(f"WARNING: {dest} unexpectedly points to {src}")
+        return
+    os.symlink(expected_src, dest)
