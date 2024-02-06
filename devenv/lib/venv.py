@@ -62,9 +62,7 @@ def get(
 
     bins = venv.get("bins", None)
     if bins is not None:
-        bins = tuple(
-            f"{venv_dir}/bin/{name}" for name in bins.strip().split("\n")
-        )
+        bins = tuple(bins.strip().split("\n"))
 
     return (
         venv_dir,
