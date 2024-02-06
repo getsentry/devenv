@@ -31,7 +31,7 @@ VENV_NOT_CONFIGURED = 4
 #   sentry-kube-pop
 #
 # [venv.salt]
-# python = 3.11.6
+# python = 3.10.13
 # requirements = salt/requirements.txt
 # bins =
 #   salt-ssh
@@ -103,65 +103,6 @@ def sync(
             )
 
 
-# legacy, used for sentry/getsentry
-def check_repolocal(reporoot: str) -> int:
-    cfg = config.get_repo(reporoot)
-
-    if not cfg.has_section(f"venv.{name}"):
-        raise KeyError(f"section venv.{name} not found in repo config")
-
-    venv = cfg[f"venv.{name}"]
-    reponame = os.path.basename(reporoot)
-    venv_dir = venv.get("path", f"{venvs_root}/{reponame}-{name}")
-    editable_paths = venv.get("editable", None)
-    if editable_paths is not None:
-        editable_paths = tuple(
-            f"{reporoot}/{path}" for path in editable_paths.strip().split("\n")
-        )
-
-    bins = venv.get("bins", None)
-    if bins is not None:
-        bins = tuple(bins.strip().split("\n"))
-
-    return (
-        venv_dir,
-        venv["python"],
-        f"{reporoot}/{venv['requirements']}",
-        editable_paths,
-        bins,
-    )
-
-
-def sync(
-    venv_dir: str,
-    requirements: str,
-    editable_paths: Optional[tuple[str, ...]] = None,
-    bins: Optional[tuple[str, ...]] = None,
-) -> None:
-    cmd: tuple[str, ...] = (
-        f"{venv_dir}/bin/python",
-        "-m",
-        "pip",
-        "--disable-pip-version-check",
-        "--no-color",
-        "--quiet",
-        "--require-virtualenv",
-        "install",
-        "-r",
-        requirements,
-    )
-    if editable_paths is not None:
-        for path in editable_paths:
-            cmd = (*cmd, "-e", path)
-    proc.run(cmd)
-
-    if bins is not None:
-        for name in bins:
-            fs.ensure_symlink(
-                expected_src=f"{venv_dir}/bin/{name}", dest=f"{bin_root}/{name}"
-            )
-
-
 def check(venv: str, python_version: str) -> int:
     if not os.path.exists(f"{venv}/pyvenv.cfg"):
         return VENV_NOT_PRESENT
@@ -174,24 +115,6 @@ def check(venv: str, python_version: str) -> int:
                     return VENV_VERSION_MISMATCH
 
     return VENV_OK
-
-
-# legacy, used for sentry/getsentry
-def ensure_repolocal(reporoot: str) -> None:
-    venv_status = check_repolocal(reporoot)
-    if venv_status == VENV_OK:
-        return
-    if venv_status == VENV_NOT_CONFIGURED:
-        print(
-            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
-        )
-        return
-
-    url, sha256 = config.get_python(reporoot, "xxx")
-    cfg = config.get_repo(reporoot)
-    python_version = cfg["python"]["version"]
-    url, sha256 = config.get_python(reporoot, python_version)
-    ensure(f"{reporoot}/.venv", python_version, url, sha256)
 
 
 def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
@@ -209,3 +132,34 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
+
+
+# legacy, used for sentry/getsentry
+def check_repolocal(reporoot: str) -> int:
+    cfg = config.get_repo(reporoot)
+
+    if not cfg.has_section("python"):
+        # the repo doesn't configure venv support
+        # this is mainly here for `devenv exec` which
+        # may or may not be run in a python project
+        return VENV_NOT_CONFIGURED
+
+    python_version = cfg["python"]["version"]
+    return check(f"{reporoot}/.venv", python_version)
+
+
+# legacy, used for sentry/getsentry
+def ensure_repolocal(reporoot: str) -> None:
+    venv_status = check_repolocal(reporoot)
+    if venv_status == VENV_OK:
+        return
+    if venv_status == VENV_NOT_CONFIGURED:
+        print(
+            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
+        )
+        return
+
+    cfg = config.get_repo(reporoot)
+    python_version = cfg["python"]["version"]
+    url, sha256 = config.get_python_legacy(reporoot, python_version)
+    ensure(f"{reporoot}/.venv", python_version, url, sha256)
