@@ -31,7 +31,7 @@ VENV_NOT_CONFIGURED = 4
 #   sentry-kube-pop
 #
 # [venv.salt]
-# python = 3.11.6
+# python = 3.10.13
 # requirements = salt/requirements.txt
 # bins =
 #   salt-ssh
@@ -103,20 +103,6 @@ def sync(
             )
 
 
-# legacy, used for sentry/getsentry
-def check_repolocal(reporoot: str) -> int:
-    cfg = config.get_repo(reporoot)
-
-    if not cfg.has_section("python"):
-        # the repo doesn't configure venv support
-        # this is mainly here for `devenv exec` which
-        # may or may not be run in a python project
-        return VENV_NOT_CONFIGURED
-
-    python_version = cfg["python"]["version"]
-    return check(f"{reporoot}/.venv", python_version)
-
-
 def check(venv: str, python_version: str) -> int:
     if not os.path.exists(f"{venv}/pyvenv.cfg"):
         return VENV_NOT_PRESENT
@@ -129,24 +115,6 @@ def check(venv: str, python_version: str) -> int:
                     return VENV_VERSION_MISMATCH
 
     return VENV_OK
-
-
-# legacy, used for sentry/getsentry
-def ensure_repolocal(reporoot: str) -> None:
-    venv_status = check_repolocal(reporoot)
-    if venv_status == VENV_OK:
-        return
-    if venv_status == VENV_NOT_CONFIGURED:
-        print(
-            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
-        )
-        return
-
-    url, sha256 = config.get_python(reporoot, "xxx")
-    cfg = config.get_repo(reporoot)
-    python_version = cfg["python"]["version"]
-    url, sha256 = config.get_python(reporoot, python_version)
-    ensure(f"{reporoot}/.venv", python_version, url, sha256)
 
 
 def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
@@ -164,3 +132,34 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
+
+
+# legacy, used for sentry/getsentry
+def check_repolocal(reporoot: str) -> int:
+    cfg = config.get_repo(reporoot)
+
+    if not cfg.has_section("python"):
+        # the repo doesn't configure venv support
+        # this is mainly here for `devenv exec` which
+        # may or may not be run in a python project
+        return VENV_NOT_CONFIGURED
+
+    python_version = cfg["python"]["version"]
+    return check(f"{reporoot}/.venv", python_version)
+
+
+# legacy, used for sentry/getsentry
+def ensure_repolocal(reporoot: str) -> None:
+    venv_status = check_repolocal(reporoot)
+    if venv_status == VENV_OK:
+        return
+    if venv_status == VENV_NOT_CONFIGURED:
+        print(
+            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
+        )
+        return
+
+    cfg = config.get_repo(reporoot)
+    python_version = cfg["python"]["version"]
+    url, sha256 = config.get_python_legacy(reporoot, python_version)
+    ensure(f"{reporoot}/.venv", python_version, url, sha256)
