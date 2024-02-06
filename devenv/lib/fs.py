@@ -53,10 +53,8 @@ def ensure_symlink(expected_src: str, dest: str) -> None:
             print(f"WARNING: {dest} unexpectedly points to {src}")
             return
     except FileNotFoundError:
-        pass
+        os.symlink(expected_src, dest)
     except OSError as e:
         if e.errno == 22:
             print(f"WARNING: {dest} exists and isn't a symlink")
             return
-
-    os.symlink(expected_src, dest)
