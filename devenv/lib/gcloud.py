@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
-from shutil import which
 
 from devenv.constants import bin_root
 from devenv.constants import root
@@ -38,14 +38,24 @@ exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-c
     )
 
 
+def uninstall() -> None:
+    for d in (f"{bin_root}/google-cloud-sdk",):
+        shutil.rmtree(d, ignore_errors=True)
+
+    for f in (f"{bin_root}/gcloud", f"{bin_root}/gsutil"):
+        if os.path.exists(f):
+            os.remove(f)
+
+
 def install(url: str, sha256: str) -> None:
     if (
-        which("gcloud", path=bin_root) == f"{bin_root}/gcloud"
-        and which("gsutil", path=bin_root) == f"{bin_root}/gsutil"
+        shutil.which("gcloud", path=bin_root) == f"{bin_root}/gcloud"
+        and shutil.which("gsutil", path=bin_root) == f"{bin_root}/gsutil"
     ):
         return
 
     print("gcloud not installed, installing...")
+    uninstall()
     _install(url, sha256, bin_root)
 
     proc.run(
@@ -55,7 +65,8 @@ def install(url: str, sha256: str) -> None:
             "install",
             "-q",
             "gke-gcloud-auth-plugin",
-        )
+        ),
+        stdout=True,  # just to silence annoying output
     )
 
     stdout = proc.run((f"{bin_root}/gcloud", "--version"), stdout=True)
