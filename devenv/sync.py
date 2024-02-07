@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import os
 import subprocess
 from collections.abc import Sequence
@@ -79,11 +80,19 @@ Output:
 
 def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     repo = context["repo"]
-    if repo not in {"sentry", "getsentry"}:
-        print(f"repo {repo} not supported yet!")
-        return 1
-
     reporoot = context["reporoot"]
+
+    if os.path.exists(f"{reporoot}/devenv/sync.py"):
+        spec = importlib.util.spec_from_file_location(  # type: ignore[attr-defined]
+            "sync", f"{reporoot}/devenv/sync.py"
+        )
+        module = importlib.util.module_from_spec(spec)  # type: ignore[attr-defined]
+        spec.loader.exec_module(module)
+        return module.main(context)  # type: ignore
+
+    # past this point is legacy code that should only be run for sentry/getsentry
+    # eventually to be moved to sentry/devenv/sync.py
+    assert repo in {"sentry", "getsentry"}
 
     venv.ensure_repolocal(reporoot)
 
