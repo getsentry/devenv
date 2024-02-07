@@ -64,9 +64,9 @@ def install(url: str, sha256: str) -> None:
             "components",
             "install",
             "-q",
+            "--verbosity=error",
             "gke-gcloud-auth-plugin",
-        ),
-        stdout=True,  # just to silence annoying output
+        )
     )
 
     stdout = proc.run((f"{bin_root}/gcloud", "--version"), stdout=True)
