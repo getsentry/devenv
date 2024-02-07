@@ -83,7 +83,19 @@ def install(version: str) -> None:
 
     _install(version, bin_root)
 
+    proc.run(
+        (
+            f"{bin_root}/gcloud",
+            "components",
+            "install",
+            "-q",
+            "gke-gcloud-auth-plugin",
+        )
+    )
     stdout = proc.run((f"{bin_root}/gcloud", "--version"), stdout=True)
 
-    if f"Google Cloud SDK {version}" not in stdout:
+    if (
+        f"Google Cloud SDK {version}" not in stdout
+        or "gke-gcloud-auth-plugin" not in stdout
+    ):
         raise SystemExit("Failed to install gcloud {version}!")
