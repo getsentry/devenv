@@ -8,11 +8,15 @@ import typing
 
 CI = os.getenv("CI")
 DARWIN = sys.platform == "darwin"
+SYSTEM = platform.system()
 MACHINE = platform.machine()
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 SHELL_UNSET = "(SHELL unset)"
 DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))
 EXTERNAL_CONTRIBUTOR = os.getenv("SENTRY_EXTERNAL_CONTRIBUTOR", "")
+
+# for matching in repo config
+SYSTEM_MACHINE = f"{SYSTEM.lower()}_{MACHINE}"
 
 struct_passwd = pwd.getpwuid(os.getuid())
 shell_path = os.getenv("SHELL", struct_passwd.pw_shell)
@@ -29,6 +33,11 @@ root = f"{home}/.local/share/sentry-devenv"
 bin_root = f"{root}/bin"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
+venvs_root = f"{root}/venvs"
+
+# TODO: makedirs everything but change to a dict
+# root = {"cache": "...", ...}
+os.makedirs(venvs_root, exist_ok=True)
 
 homebrew_repo = "/opt/homebrew"
 homebrew_bin = f"{homebrew_repo}/bin"
