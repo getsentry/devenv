@@ -178,7 +178,7 @@ main() {
 
   show "$devenv_python" -m venv --clear "$devenv_venv"
 
-  show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+  show "$devenv_venv"/bin/pip install -e ~/dev/devenv
 
   rm -rf "$devenv_bin"
   mkdir -p "$devenv_bin"
