@@ -22,7 +22,7 @@ help = "Resyncs the environment."
 def run_procs(
     repo: str,
     reporoot: str,
-    venv: str,
+    venv_path: str,
     _procs: Tuple[Tuple[str, tuple[str, ...]], ...],
 ) -> bool:
     procs: list[tuple[str, tuple[str, ...], subprocess.Popen[bytes]]] = []
@@ -41,9 +41,9 @@ def run_procs(
                     env={
                         **constants.user_environ,
                         **proc.base_env,
-                        "VIRTUAL_ENV": venv,
+                        "VIRTUAL_ENV": venv_path,
                         "VOLTA_HOME": VOLTA_HOME,
-                        "PATH": f"{venv}/bin:{proc.base_path}",
+                        "PATH": f"{venv_path}/bin:{proc.base_path}",
                     },
                     cwd=reporoot,
                 ),
@@ -130,11 +130,17 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     if not os.path.exists(f"{home}/.sentry/config.yml") or not os.path.exists(
         f"{home}/.sentry/sentry.conf.py"
     ):
-        proc.run((f"{venv}/bin/sentry", "init", "--dev"))
+        proc.run((f"{reporoot}/.venv/bin/sentry", "init", "--dev"))
 
     # TODO: run devservices healthchecks for redis and postgres to bypass this
     proc.run(
-        (f"{venv}/bin/sentry", "devservices", "up", "redis", "postgres"),
+        (
+            f"{reporoot}/.venv/bin/sentry",
+            "devservices",
+            "up",
+            "redis",
+            "postgres",
+        ),
         exit=True,
     )
 
@@ -145,7 +151,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         (
             (
                 "python migrations",
-                (f"{venv}/bin/sentry", "upgrade", "--noinput"),
+                (f"{reporoot}/.venv/bin/sentry", "upgrade", "--noinput"),
             ),
         ),
     ):
