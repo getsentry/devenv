@@ -83,11 +83,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     reporoot = context["reporoot"]
 
     if os.path.exists(f"{reporoot}/devenv/sync.py"):
-        spec = importlib.util.spec_from_file_location(  # type: ignore[attr-defined]
+        spec = importlib.util.spec_from_file_location(
             "sync", f"{reporoot}/devenv/sync.py"
         )
-        module = importlib.util.module_from_spec(spec)  # type: ignore[attr-defined]
-        spec.loader.exec_module(module)
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
         return module.main(context)  # type: ignore
 
     # past this point is legacy code that should only be run for sentry/getsentry

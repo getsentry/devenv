@@ -4,8 +4,7 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import DARWIN
