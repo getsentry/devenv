@@ -6,8 +6,7 @@ import os
 from collections.abc import Sequence
 from typing import cast
 from typing import Optional
-
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor
