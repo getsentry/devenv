@@ -28,7 +28,8 @@ def uninstall() -> None:
 
 def install(version: str, url: str, sha256: str) -> None:
     if shutil.which("colima", path=bin_root) == f"{bin_root}/colima":
-        installed_version = None  # TODO
+        stdout = proc.run((f"{bin_root}/colima", "--version"), stdout=True)
+        installed_version = stdout.strip().split()[-1]
         if version == installed_version:
             return
         print(f"installed colima {installed_version} is outdated!")
@@ -37,6 +38,6 @@ def install(version: str, url: str, sha256: str) -> None:
     uninstall()
     _install(url, sha256, bin_root)
 
-    stdout = proc.run((f"{bin_root}/colima", "version"), stdout=True)
+    stdout = proc.run((f"{bin_root}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
         raise SystemExit("Failed to install colima {version}!")
