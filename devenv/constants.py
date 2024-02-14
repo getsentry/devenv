@@ -8,11 +8,15 @@ import typing
 
 CI = os.getenv("CI")
 DARWIN = sys.platform == "darwin"
+SYSTEM = platform.system()
 MACHINE = platform.machine()
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 SHELL_UNSET = "(SHELL unset)"
 DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))
 EXTERNAL_CONTRIBUTOR = os.getenv("SENTRY_EXTERNAL_CONTRIBUTOR", "")
+
+# for matching to download urls in repo config
+SYSTEM_MACHINE = f"{SYSTEM.lower()}_{MACHINE}"
 
 struct_passwd = pwd.getpwuid(os.getuid())
 shell_path = os.getenv("SHELL", struct_passwd.pw_shell)
