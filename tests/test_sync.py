@@ -19,6 +19,17 @@ linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/down
 linux_x86_64_sha256 = 5d0429c67c992da19ba3eb58b3acd0b35ec5e915b8cae9a4aa8ca565c423847a
 linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-aarch64-unknown-linux-gnu-install_only.tar.gz
 linux_arm64_sha256 = 8675915ff454ed2f1597e27794bc7df44f5933c26b94aa06af510fe91b58bb97
+
+[colima]
+darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.8/colima-Darwin-x86_64
+darwin_x86_64_sha256 = e5aa67eb339616effe1604ecdcfcbc0e4899a3584048921b5bc063b850fa0b44
+darwin_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.8/colima-Darwin-arm64
+darwin_arm64_sha256 = bcac7db4452136ed649acde7dc93204574293db7c5bff93bc813122173281385
+linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.8/colima-Linux-x86_64
+linux_x86_64_sha256 = 8c5f7b041fb8b37f4760bf20dc5cbb44eee6aa9ef4db5845826ecbba1cb422d4
+linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.8/colima-Linux-aarch64
+linux_arm64_sha256 = e3bc5267cbe57ab43f181994330b7f89dc486ba80bc734ea9d1644db13458274
+version = v0.6.8
 """
 
 
@@ -50,7 +61,11 @@ def test_darwin(tmp_path: str) -> None:
 
         sync.main(context={"repo": "sentry", "reporoot": reporoot})
         mock_volta_install.assert_called_once()
-        mock_colima_install.assert_called_once()
+        mock_colima_install.assert_called_once_with(
+            "v0.6.8",
+            "https://github.com/abiosoft/colima/releases/download/v0.6.8/colima-Darwin-arm64",
+            "bcac7db4452136ed649acde7dc93204574293db7c5bff93bc813122173281385",
+        )
         mock_limactl_install.assert_called_once()
         assert mock_proc_run.mock_calls == [
             call(
