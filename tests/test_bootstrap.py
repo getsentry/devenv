@@ -4,8 +4,6 @@ import os
 from unittest.mock import call
 from unittest.mock import patch
 
-from devenv import bootstrap
-
 
 mock_config = """
 [colima]
@@ -22,8 +20,8 @@ version = v0.6.8
 
 
 def test_darwin(tmp_path: str) -> None:
-    with patch("devenv.bootstrap.CI", True), patch(
-        "devenv.bootstrap.DARWIN", True
+    with patch("platform.system", return_value="Darwin"), patch(
+        "platform.machine", return_value="arm64"
     ), patch(
         "devenv.lib.github.add_to_known_hosts"
     ) as mock_add_to_known_hosts, patch(
@@ -51,6 +49,8 @@ def test_darwin(tmp_path: str) -> None:
             None,  # make bootstrap
         ],
     ) as mock_proc_run:
+        from devenv import bootstrap
+
         coderoot = f"{tmp_path}/coderoot"
         os.makedirs(f"{coderoot}/sentry/devenv")
         with open(f"{coderoot}/sentry/devenv/config.ini", "w") as f:
@@ -95,8 +95,8 @@ def test_darwin(tmp_path: str) -> None:
 
 
 def test_linux(tmp_path: str) -> None:
-    with patch("devenv.bootstrap.CI", True), patch(
-        "devenv.bootstrap.DARWIN", False
+    with patch("platform.system", return_value="Linux"), patch(
+        "platform.machine", return_value="x86_64"
     ), patch(
         "devenv.lib.github.add_to_known_hosts"
     ) as mock_add_to_known_hosts, patch(
@@ -123,6 +123,8 @@ def test_linux(tmp_path: str) -> None:
             None,  # make bootstrap
         ],
     ) as mock_proc_run:
+        from devenv import bootstrap
+
         coderoot = f"{tmp_path}/coderoot"
         os.makedirs(f"{coderoot}/sentry/devenv")
         with open(f"{coderoot}/sentry/devenv/config.ini", "w") as f:
