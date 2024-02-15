@@ -12,9 +12,11 @@ from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.constants import homebrew_bin
+from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
 from devenv.lib import colima
+from devenv.lib import config
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import limactl
@@ -94,10 +96,6 @@ When done, hit ENTER to continue.
     volta.install()
     direnv.install()
 
-    if DARWIN:
-        colima.install()
-        limactl.install()
-
     os.makedirs(coderoot, exist_ok=True)
 
     if args.repo == "sentry":
@@ -152,6 +150,18 @@ When done, hit ENTER to continue.
             proc.run(
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
             )
+
+        if DARWIN:
+            # we don't officially support colima on linux yet
+            cfg = config.get_repo(f"{coderoot}/sentry")
+            colima.install(
+                cfg["colima"]["version"],
+                cfg["colima"][SYSTEM_MACHINE],
+                cfg["colima"][f"{SYSTEM_MACHINE}_sha256"],
+            )
+
+            # TODO: move limactl version into per-repo config
+            limactl.install()
 
         # this'll create the virtualenv if it doesn't exist
         proc.run(("devenv", "sync"), cwd=f"{coderoot}/sentry")
