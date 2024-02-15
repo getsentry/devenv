@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import importlib
+import configparser
+import importlib.util
 import os
 import subprocess
 from collections.abc import Sequence
@@ -10,6 +11,7 @@ from typing import Tuple
 from devenv import constants
 from devenv.constants import DARWIN
 from devenv.constants import home
+from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import VOLTA_HOME
 from devenv.lib import colima
 from devenv.lib import limactl
@@ -121,8 +123,17 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     volta.install()
 
     if DARWIN:
-        # we don't support colima on linux
-        colima.install()
+        repo_config = configparser.ConfigParser()
+        repo_config.read(f"{reporoot}/devenv/config.ini")
+
+        # we don't officially support colima on linux yet
+        colima.install(
+            repo_config["colima"]["version"],
+            repo_config["colima"][SYSTEM_MACHINE],
+            repo_config["colima"][f"{SYSTEM_MACHINE}_sha256"],
+        )
+
+        # TODO: move limactl version into per-repo config
         limactl.install()
 
     if not run_procs(
