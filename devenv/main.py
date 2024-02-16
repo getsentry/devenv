@@ -11,6 +11,7 @@ from typing_extensions import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor
+from devenv import exec
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import CI
@@ -82,12 +83,16 @@ def parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
     parser.add_argument(
         "command",
-        choices=("bootstrap", "doctor", "sync", "pin-gha"),
+        choices=("exec", "bootstrap", "doctor", "sync", "pin-gha"),
         metavar="COMMAND",
         help=f"""\
+core commands:
 bootstrap - {bootstrap.help}
 doctor    - {doctor.help}
+exec      - {exec.help}
 sync      - {sync.help}
+
+utilities:
 pin-gha   - {pin_gha.help}
 """,
     )
@@ -102,7 +107,7 @@ pin-gha   - {pin_gha.help}
 def devenv(argv: Sequence[str]) -> ExitCode:
     args, remainder = parser().parse_known_args(argv[1:])
 
-    # generic/standalone tools that do not care about devenv configuration
+    # generic/standalone commands that do not care about devenv configuration
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
 
@@ -125,12 +130,14 @@ def devenv(argv: Sequence[str]) -> ExitCode:
         )
         return 1
 
-    # the remaining tools are repo-specific
+    # these commands are run inside a repo
     reporoot = gitroot()
     repo = reporoot.split("/")[-1]
 
     context = {"repo": repo, "reporoot": reporoot}
 
+    if args.command == "exec":
+        return exec.main(context, remainder)
     if args.command == "doctor":
         return doctor.main(context, remainder)
     if args.command == "sync":
