@@ -37,6 +37,7 @@ jobs:
       - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh
 
+  # macos-14 doesn't support the virtualization needed for colima... yet
   bootstrap-macos-13:
     # This job takes half an hour and costs a lot of money.
     # Let's just run on main commits.
