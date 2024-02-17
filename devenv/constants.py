@@ -32,6 +32,11 @@ root = f"{home}/.local/share/sentry-devenv"
 bin_root = f"{root}/bin"
 src_root = f"{root}/devenv"
 pythons_root = f"{root}/pythons"
+venvs_root = f"{root}/venvs"
+
+# TODO: makedirs everything but change to a dict
+# root = {"cache": "...", ...}
+os.makedirs(venvs_root, exist_ok=True)
 
 homebrew_repo = "/opt/homebrew"
 homebrew_bin = f"{homebrew_repo}/bin"
