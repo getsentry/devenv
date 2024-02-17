@@ -9,6 +9,7 @@ from typing import Dict
 from typing import Tuple
 
 from devenv import constants
+from devenv.constants import CI
 from devenv.constants import DARWIN
 from devenv.constants import home
 from devenv.constants import SYSTEM_MACHINE
@@ -127,11 +128,20 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         repo_config.read(f"{reporoot}/devenv/config.ini")
 
         # we don't officially support colima on linux yet
-        colima.install(
-            repo_config["colima"]["version"],
-            repo_config["colima"][SYSTEM_MACHINE],
-            repo_config["colima"][f"{SYSTEM_MACHINE}_sha256"],
-        )
+        if CI:
+            # colima 0.6.8 doesn't work with macos-13,
+            # but integration coverage is still handy
+            colima.install(
+                "v0.6.2",
+                "https://github.com/abiosoft/colima/releases/download/v0.6.2/colima-Darwin-x86_64",
+                "43ef3fc80a8347d51b8ec1706f9caf8863bd8727a6f7532caf1ccd20497d8485",
+            )
+        else:
+            colima.install(
+                repo_config["colima"]["version"],
+                repo_config["colima"][SYSTEM_MACHINE],
+                repo_config["colima"][f"{SYSTEM_MACHINE}_sha256"],
+            )
 
         # TODO: move limactl version into per-repo config
         limactl.install()
