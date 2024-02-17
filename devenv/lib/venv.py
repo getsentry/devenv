@@ -41,7 +41,7 @@ VenvStatus = Enum(
 #
 # venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
 # url, sha256 = config.get_python(reporoot, python_version)
-# ensure(venv_dir, python_version, url, sha256)
+# ensure(path, python_version, url, sha256)
 # sync(venv_dir, requirements, editable_paths, bins)
 def get(
     reporoot: str, name: str
