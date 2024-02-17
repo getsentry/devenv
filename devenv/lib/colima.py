@@ -40,4 +40,4 @@ def install(version: str, url: str, sha256: str) -> None:
 
     stdout = proc.run((f"{bin_root}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
-        raise SystemExit("Failed to install colima {version}!")
+        raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
