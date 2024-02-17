@@ -155,7 +155,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             # but integration coverage is still handy
             colima.install(
                 "0.6.2",
-                "darwin_x86_64",
+                "https://github.com/abiosoft/colima/releases/download/v0.6.2/colima-Darwin-x86_64",
                 "43ef3fc80a8347d51b8ec1706f9caf8863bd8727a6f7532caf1ccd20497d8485",
             )
         else:
