@@ -132,34 +132,3 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
-
-
-# legacy, used for sentry/getsentry
-def check_repolocal(reporoot: str) -> VenvStatus:
-    cfg = config.get_repo(reporoot)
-
-    if not cfg.has_section("python"):
-        # the repo doesn't configure venv support
-        # this is mainly here for `devenv exec` which
-        # may or may not be run in a python project
-        return VenvStatus.NOT_CONFIGURED
-
-    python_version = cfg["python"]["version"]
-    return check(f"{reporoot}/.venv", python_version)
-
-
-# legacy, used for sentry/getsentry
-def ensure_repolocal(reporoot: str) -> None:
-    venv_status = check_repolocal(reporoot)
-    if venv_status == VenvStatus.OK:
-        return
-    if venv_status == VenvStatus.NOT_CONFIGURED:
-        print(
-            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
-        )
-        return
-
-    cfg = config.get_repo(reporoot)
-    python_version = cfg["python"]["version"]
-    url, sha256 = config.get_python_legacy(reporoot, python_version)
-    ensure(f"{reporoot}/.venv", python_version, url, sha256)

@@ -30,9 +30,6 @@ linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/downl
 linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504cc84ec
 """
 
-# not gonna write tests for legacy repolocal as those are slated for
-# removal quite soon
-
 
 def test_get_ensure(tmp_path: pathlib.Path) -> None:
     os.environ["HOME"] = f"{tmp_path}"
