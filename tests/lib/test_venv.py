@@ -19,16 +19,6 @@ bins =
   sentry-kube
   sentry-kube-pop
 
-[venv.salt]
-python = 3.10.13
-requirements = salt/requirements.txt
-bins =
-  salt
-  salt-ssh
-  salt-call
-  salt-api
-  salt-run
-
 [python3.11.6]
 darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.11.6+20231002-x86_64-apple-darwin-install_only.tar.gz
 darwin_x86_64_sha256 = 178cb1716c2abc25cb56ae915096c1a083e60abeba57af001996e8bc6ce1a371
@@ -38,20 +28,13 @@ linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/down
 linux_x86_64_sha256 = ee37a7eae6e80148c7e3abc56e48a397c1664f044920463ad0df0fc706eacea8
 linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.11.6+20231002-aarch64-unknown-linux-gnu-install_only.tar.gz
 linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504cc84ec
-
-[python3.10.13]
-darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-x86_64-apple-darwin-install_only.tar.gz
-darwin_x86_64_sha256 = be0b19b6af1f7d8c667e5abef5505ad06cf72e5a11bb5844970c395a7e5b1275
-darwin_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-aarch64-apple-darwin-install_only.tar.gz
-darwin_arm64_sha256 = fd027b1dedf1ea034cdaa272e91771bdf75ddef4c8653b05d224a0645aa2ca3c
-linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-x86_64-unknown-linux-gnu-install_only.tar.gz
-linux_x86_64_sha256 = 5d0429c67c992da19ba3eb58b3acd0b35ec5e915b8cae9a4aa8ca565c423847a
-linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-aarch64-unknown-linux-gnu-install_only.tar.gz
-linux_arm64_sha256 = 8675915ff454ed2f1597e27794bc7df44f5933c26b94aa06af510fe91b58bb97
 """
 
+# not gonna write tests for legacy repolocal as those are slated for
+# removal quite soon
 
-def test_get_ensure_sync(tmp_path: pathlib.Path) -> None:
+
+def test_get_ensure(tmp_path: pathlib.Path) -> None:
     os.environ["HOME"] = f"{tmp_path}"
 
     from devenv.lib import venv
@@ -88,7 +71,12 @@ def test_get_ensure_sync(tmp_path: pathlib.Path) -> None:
             call(("python", "-m", "venv", venv_dir), exit=True)
         ]
 
-    # venv.sync(venv_dir, requirements, editable_paths, bins)
+    # fake venv
+    os.makedirs(venv_dir)
+    with open(f"{venv_dir}/pyvenv.cfg", "w") as f:
+        f.write(f"version = {python_version}\n")
 
+    assert venv.check(venv_dir, python_version) == venv.VenvStatus.OK
 
-# test_ensure_no_python_defined
+    # unittesting venv.sync(venv_dir, requirements, editable_paths, bins)
+    # isn't really useful and is covered better with integration
