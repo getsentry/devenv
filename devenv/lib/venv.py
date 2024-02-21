@@ -91,9 +91,9 @@ def sync(
         "-r",
         requirements,
     )
-    #    if editable_paths is not None:
-    #        for path in editable_paths:
-    #            cmd = (*cmd, "-e", path)
+    if editable_paths is not None:
+        for path in editable_paths:
+            cmd = (*cmd, "-e", path)
     proc.run(cmd)
 
     if bins is not None:
