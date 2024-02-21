@@ -139,7 +139,7 @@ def filter_failing_checks(
         if ok:
             print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
-        print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
+        print(f"\t❌ check: {check.name} ({msg})".expandtabs(4))
         failing_checks.append(check)
     return failing_checks
 
