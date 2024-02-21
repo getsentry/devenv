@@ -213,7 +213,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             if ok:
                 print(f"\t\t✅ fix: {check.name}".expandtabs(4))
             else:
-                print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
+                print(f"\t\t❌ fix: {check.name} ({msg})".expandtabs(4))
         else:
             print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
