@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
+      SENTRY_BRANCH: master
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
@@ -45,6 +46,7 @@ jobs:
     runs-on: macos-13
     timeout-minutes: 60
     env:
+      SENTRY_BRANCH: master
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:

@@ -21,11 +21,11 @@ struct_passwd = pwd.getpwuid(os.getuid())
 shell_path = os.getenv("SHELL", struct_passwd.pw_shell)
 shell = shell_path.rsplit("/", 1)[-1]
 user = struct_passwd.pw_name
-home = struct_passwd.pw_dir
 
 # the *original* user's environment, readonly
 user_environ: typing.Mapping[str, str] = os.environ.copy()
 
+home = user_environ["HOME"] if CI else struct_passwd.pw_dir
 cache_root = f"{home}/.cache/sentry-devenv"
 config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
