@@ -1,6 +1,4 @@
 from __future__ import annotations
 
-from typing import Set
-
-tags: Set[str] = set()
+tags: set[str] = set()
 name = "no check"

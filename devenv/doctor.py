@@ -12,8 +12,6 @@ from pkgutil import walk_packages
 from types import ModuleType
 from typing import Dict
 from typing import List
-from typing import Set
-from typing import Tuple
 
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
@@ -25,9 +23,9 @@ class Check:
     """
     A check is a module with the following attributes:
     - name: str
-    - tags: Set[str]
-    - check: Callable[[], Tuple[bool, str]]
-    - fix: Callable[[], Tuple[bool, str]]
+    - tags: set[str]
+    - check: Callable[[], tuple[bool, str]]
+    - fix: Callable[[], tuple[bool, str]]
 
     The check function should return a tuple of (ok, msg).
     The fix function should return a tuple of (ok, msg).
@@ -36,9 +34,9 @@ class Check:
     """
 
     name: str
-    tags: Set[str]
-    check: Callable[[], Tuple[bool, str]]
-    fix: Callable[[], Tuple[bool, str]]
+    tags: set[str]
+    check: Callable[[], tuple[bool, str]]
+    fix: Callable[[], tuple[bool, str]]
 
     def __init__(self, module: ModuleType):
         # Check that the module has the required attributes.
@@ -61,7 +59,7 @@ class Check:
         ), "the `check` attribute must be a function"
         check_hints = typing.get_type_hints(module.check)
         assert (
-            check_hints["return"] == Tuple[bool, str]
+            check_hints["return"] == tuple[bool, str]
         ), "`check(...)` should return a tuple of (bool, str)"
         self.check = checker(module.check)
 
@@ -69,14 +67,14 @@ class Check:
         assert callable(module.fix), "the `fix` attribute should be a function"
         fix_hints = typing.get_type_hints(module.fix)
         assert (
-            fix_hints["return"] == Tuple[bool, str]
+            fix_hints["return"] == tuple[bool, str]
         ), "`fix(...)` should return a tuple of (bool, str)"
         self.fix = fixer(module.fix)
 
         super().__init__()
 
 
-def load_checks(context: Dict[str, str], match_tags: Set[str]) -> List[Check]:
+def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
     """
     Load all checks from the checks directory.
     Optionally filter by tags.
@@ -109,7 +107,7 @@ def run_checks(
     checks: List[Check],
     executor: ThreadPoolExecutor,
     skip: Iterable[Check] = (),
-) -> Dict[Check, Tuple[bool, str]]:
+) -> Dict[Check, tuple[bool, str]]:
     """
     Run checks in parallel, and return a dict of results.
     Results are a tuple of (ok, msg).
@@ -130,7 +128,7 @@ def run_checks(
 
 
 def filter_failing_checks(
-    results: Dict[Check, Tuple[bool, str]]
+    results: Dict[Check, tuple[bool, str]]
 ) -> List[Check]:
     """Print a report of the results, and return a list of failing checks."""
     failing_checks: list[Check] = []
@@ -151,7 +149,7 @@ def prompt_for_fix(check: Check) -> bool:
     ).lower() in {"y", "yes", ""}
 
 
-def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> Tuple[bool, str]:
+def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
     """Attempt to fix a check, and return a tuple of (ok, msg)."""
     future = executor.submit(check.fix)
     try:
