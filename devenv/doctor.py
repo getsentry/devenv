@@ -137,7 +137,7 @@ def filter_failing_checks(
         if ok:
             print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
-        print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
+        print(f"\t❌ check: {check.name} ({msg})".expandtabs(4))
         failing_checks.append(check)
     return failing_checks
 
@@ -211,7 +211,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
             if ok:
                 print(f"\t\t✅ fix: {check.name}".expandtabs(4))
             else:
-                print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
+                print(f"\t\t❌ fix: {check.name} ({msg})".expandtabs(4))
         else:
             print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
