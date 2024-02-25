@@ -47,14 +47,18 @@ def uninstall() -> None:
             os.remove(f)
 
 
-def install(url: str, sha256: str) -> None:
+def install(version: str, url: str, sha256: str) -> None:
     if (
         shutil.which("gcloud", path=bin_root) == f"{bin_root}/gcloud"
         and shutil.which("gsutil", path=bin_root) == f"{bin_root}/gsutil"
     ):
-        return
+        with open(f"{bin_root}/google-cloud-sdk/VERSION", "r") as f:
+            installed_version = f.read().strip()
+            if version == installed_version:
+                return
+            print(f"installed gcloud {installed_version} is outdated!")
 
-    print("gcloud not installed, installing...")
+    print(f"installing gcloud {version}...")
     uninstall()
     _install(url, sha256, bin_root)
 

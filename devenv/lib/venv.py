@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+from enum import Enum
 from typing import Optional
 
 from devenv import pythons
@@ -11,10 +12,9 @@ from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
 
-VENV_OK = 1
-VENV_VERSION_MISMATCH = 2
-VENV_NOT_PRESENT = 3
-VENV_NOT_CONFIGURED = 4
+VenvStatus = Enum(
+    "VenvStatus", ("OK", "VERSION_MISMATCH", "NOT_PRESENT", "NOT_CONFIGURED")
+)
 
 
 # example venv configuration section:
@@ -103,23 +103,23 @@ def sync(
             )
 
 
-def check(venv: str, python_version: str) -> int:
+def check(venv: str, python_version: str) -> VenvStatus:
     if not os.path.exists(f"{venv}/pyvenv.cfg"):
-        return VENV_NOT_PRESENT
+        return VenvStatus.NOT_PRESENT
 
     with open(f"{venv}/pyvenv.cfg", "r") as f:
         for line in f:
             if line.startswith("version"):
                 venv_version = line.split("=")[1].strip()
                 if venv_version != python_version:
-                    return VENV_VERSION_MISMATCH
+                    return VenvStatus.VERSION_MISMATCH
 
-    return VENV_OK
+    return VenvStatus.OK
 
 
 def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
     venv_status = check(venv, python_version)
-    if venv_status == VENV_OK:
+    if venv_status == VenvStatus.OK:
         return
 
     print(
@@ -132,34 +132,3 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
-
-
-# legacy, used for sentry/getsentry
-def check_repolocal(reporoot: str) -> int:
-    cfg = config.get_repo(reporoot)
-
-    if not cfg.has_section("python"):
-        # the repo doesn't configure venv support
-        # this is mainly here for `devenv exec` which
-        # may or may not be run in a python project
-        return VENV_NOT_CONFIGURED
-
-    python_version = cfg["python"]["version"]
-    return check(f"{reporoot}/.venv", python_version)
-
-
-# legacy, used for sentry/getsentry
-def ensure_repolocal(reporoot: str) -> None:
-    venv_status = check_repolocal(reporoot)
-    if venv_status == VENV_OK:
-        return
-    if venv_status == VENV_NOT_CONFIGURED:
-        print(
-            f"warn: virtualenv isn't configured in {reporoot}/devenv/config.ini"
-        )
-        return
-
-    cfg = config.get_repo(reporoot)
-    python_version = cfg["python"]["version"]
-    url, sha256 = config.get_python_legacy(reporoot, python_version)
-    ensure(f"{reporoot}/.venv", python_version, url, sha256)
