@@ -120,10 +120,6 @@ When done, hit ENTER to continue.
     elif args.repo == "sentry":
         volta.install()
 
-        if DARWIN:
-            colima.install()
-            limactl.install()
-
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
