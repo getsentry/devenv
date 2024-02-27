@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: devenv-debug
+      SENTRY_BRANCH: devenv-fixes
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
@@ -35,8 +35,7 @@ jobs:
           mv install-devenv.sh /tmp
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
-      - name: bootstrap sentry
-        run: ./ci/devenv-bootstrap.sh
+      - uses: mxschmitt/action-tmate@v3
 
   # macos-14 doesn't support the virtualization needed for colima... yet
   bootstrap-macos-13:
