@@ -35,6 +35,8 @@ jobs:
           mv install-devenv.sh /tmp
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
+      - name: bootstrap sentry
+        run: ./ci/devenv-bootstrap.sh
       - uses: mxschmitt/action-tmate@v3
 
   # macos-14 doesn't support the virtualization needed for colima... yet

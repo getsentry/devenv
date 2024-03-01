@@ -19,4 +19,4 @@ EOF
 devenv bootstrap
 
 cd "$HOME/code/sentry"
-direnv allow
+#direnv allow
