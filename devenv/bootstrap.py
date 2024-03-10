@@ -158,7 +158,7 @@ When done, hit ENTER to continue.
         # HACK: devenv sync created the config files earlier, but make bootstrap will
         #       fail because of an interactive prompt asking if user wants to clobber it...
         #       i'll follow-up with fixing that in sentry
-        shutil.rmtree(f"{home}/.sentry")
+        shutil.rmtree(f"{home}/.sentry", ignore_errors=True)
 
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
