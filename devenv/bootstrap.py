@@ -154,7 +154,6 @@ When done, hit ENTER to continue.
 
         # this'll create the virtualenv if it doesn't exist
         proc.run(("devenv", "sync"), cwd=f"{coderoot}/sentry")
-        return 0
 
         # HACK: devenv sync created the config files earlier, but make bootstrap will
         #       fail because of an interactive prompt asking if user wants to clobber it...
