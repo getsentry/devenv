@@ -47,7 +47,7 @@ jobs:
     runs-on: macos-13
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: devenv-debug
+      SENTRY_BRANCH: devenv-fixes
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
