@@ -42,6 +42,7 @@ devenv = "devenv.main:main"
 [tool.mypy]
 python_version = "3.11"
 strict = true
+exclude = ['^tests/']
 
 # disallow Any typing:
 disallow_any_unimported = true

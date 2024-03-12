@@ -2,3 +2,4 @@ mypy
 pytest
 pre-commit
 black
+pyfakefs
