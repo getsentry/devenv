@@ -1,11 +1,9 @@
 from __future__ import annotations
 
+import os
+import pathlib
 from unittest.mock import call
 from unittest.mock import patch
-
-from devenv.constants import venvs_root
-from devenv.lib import config
-from devenv.lib import venv
 
 
 mock_config = """
@@ -33,9 +31,15 @@ linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504c
 """
 
 
-def test_get_ensure(tmp_path, fs) -> None:
+def test_get_ensure(tmp_path: pathlib.Path) -> None:
+    os.environ["HOME"] = f"{tmp_path}"
+
+    from devenv.lib import venv
+    from devenv.lib import config
+    from devenv.constants import venvs_root
+
     reporoot = f"{tmp_path}/ops"
-    fs.create_dir(f"{reporoot}/devenv")
+    os.makedirs(f"{reporoot}/devenv")
     with open(f"{reporoot}/devenv/config.ini", "w") as f:
         f.write(mock_config)
 
@@ -65,7 +69,7 @@ def test_get_ensure(tmp_path, fs) -> None:
         ]
 
     # fake venv
-    fs.create_dir(venv_dir)
+    os.makedirs(venv_dir)
     with open(f"{venv_dir}/pyvenv.cfg", "w") as f:
         f.write(f"version = {python_version}\n")
 
