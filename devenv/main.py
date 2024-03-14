@@ -13,7 +13,7 @@ from devenv import doctor
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import CI
-from devenv.constants import config_root
+from devenv.constants import home
 from devenv.lib.fs import gitroot
 
 ExitCode: TypeAlias = "str | int | None"
@@ -65,7 +65,7 @@ def initialize_config(config_path: str, defaults: Config) -> None:
                         print()
                     config.set(section, var, val)
     print("Thank you. Saving answers.")
-    os.makedirs(config_root, exist_ok=True)
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
     with open(config_path, "w") as f:
         config.write(f)
     print(f"If you made a mistake, you can edit {config_path}.")
@@ -105,11 +105,11 @@ def devenv(argv: Sequence[str]) -> ExitCode:
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
 
-    config_path = f"{config_root}/config.ini"
+    config_path = f"{home}/.config/sentry-devenv/config.ini"
     initialize_config(config_path, DEFAULT_CONFIG)
-
     config = configparser.ConfigParser(allow_no_value=True)
     config.read(config_path)
+
     coderoot = os.path.expanduser(config["devenv"]["coderoot"])
     os.makedirs(coderoot, exist_ok=True)
 
