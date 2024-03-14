@@ -7,7 +7,6 @@ from typing import Optional
 
 from devenv import pythons
 from devenv.constants import bin_root
-from devenv.constants import venvs_root
 from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
@@ -52,8 +51,7 @@ def get(
         raise KeyError(f"section venv.{name} not found in repo config")
 
     venv = cfg[f"venv.{name}"]
-    reponame = os.path.basename(reporoot)
-    venv_dir = venv.get("path", f"{venvs_root}/{reponame}-{name}")
+    venv_dir = venv.get("path", f"{reporoot}/.venv-{name}")
     editable_paths = venv.get("editable", None)
     if editable_paths is not None:
         editable_paths = tuple(
