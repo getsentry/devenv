@@ -26,7 +26,6 @@ user = struct_passwd.pw_name
 user_environ: typing.Mapping[str, str] = os.environ.copy()
 
 home = user_environ["HOME"] if CI else struct_passwd.pw_dir
-cache_root = f"{home}/.cache/sentry-devenv"
 config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
 bin_root = f"{root}/bin"
