@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import sys
 from collections.abc import Sequence
 from typing import TypeAlias
 
@@ -121,11 +122,9 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        if (
-            not CI
-            and not EXTERNAL_CONTRIBUTOR
-            and not os.path.exists(f"{coderoot}/getsentry")
-        ):
+
+        bootstrap_getsentry = not CI and not EXTERNAL_CONTRIBUTOR
+        if bootstrap_getsentry and not os.path.exists(f"{coderoot}/getsentry"):
             proc.run(
                 (
                     "git",
@@ -153,7 +152,10 @@ When done, hit ENTER to continue.
             )
 
         # this'll create the virtualenv if it doesn't exist
-        proc.run(("devenv", "sync"), cwd=f"{coderoot}/sentry")
+        proc.run(
+            (sys.executable, "-P", "-m", "devenv", "sync"),
+            cwd=f"{coderoot}/sentry",
+        )
 
         # HACK: devenv sync created the config files earlier, but make bootstrap will
         #       fail because of an interactive prompt asking if user wants to clobber it...
@@ -170,7 +172,13 @@ When done, hit ENTER to continue.
             cwd=f"{coderoot}/sentry",
         )
 
-        if not CI:
+        if bootstrap_getsentry:
+            # this'll create the virtualenv if it doesn't exist
+            proc.run(
+                (sys.executable, "-P", "-m", "devenv", "sync"),
+                cwd=f"{coderoot}/getsentry",
+            )
+
             # HACK: see above
             shutil.rmtree(f"{home}/.sentry")
 
