@@ -98,14 +98,13 @@ pin-gha   - {pin_gha.help}
     return parser
 
 
-def devenv(argv: Sequence[str]) -> ExitCode:
+def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     args, remainder = parser().parse_known_args(argv[1:])
 
     # generic/standalone tools that do not care about devenv configuration
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
 
-    config_path = f"{home}/.config/sentry-devenv/config.ini"
     initialize_config(config_path, DEFAULT_CONFIG)
     config = configparser.ConfigParser(allow_no_value=True)
     config.read(config_path)
@@ -150,7 +149,7 @@ def main() -> ExitCode:
         enable_tracing=True,
     )
 
-    return devenv(sys.argv)
+    return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
 
 
 if __name__ == "__main__":
