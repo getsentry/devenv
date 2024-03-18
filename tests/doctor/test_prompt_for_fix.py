@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import builtins
-import os
 from unittest import mock
 
 import pytest
 
 from devenv import doctor
-from tests.utils import import_module_from_file
-
-here = os.path.join(os.path.dirname(__file__))
+from tests.doctor.devenv.checks import passing_check
 
 
 prompts_for_fix_yes: list[str] = [
@@ -38,10 +35,6 @@ prompts_for_fix_no: list[str] = [
 
 @pytest.mark.parametrize("yes", prompts_for_fix_yes)
 def test_prompt_for_fix_yes(yes: str) -> None:
-    passing_check = import_module_from_file(
-        f"{here}/checks/passing_check.py", "passing_check"
-    )
-
     check = doctor.Check(passing_check)
 
     def fake_input(_: str) -> str:
@@ -53,10 +46,6 @@ def test_prompt_for_fix_yes(yes: str) -> None:
 
 @pytest.mark.parametrize("no", prompts_for_fix_no)
 def test_prompt_for_fix_no(no: str) -> None:
-    passing_check = import_module_from_file(
-        f"{here}/checks/passing_check.py", "passing_check"
-    )
-
     check = doctor.Check(passing_check)
 
     def fake_input(_: str) -> str:
