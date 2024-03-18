@@ -35,8 +35,8 @@ linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504c
 
 def test_get_ensure(tmp_path: pathlib.Path) -> None:
     reporoot = f"{tmp_path}/ops"
-    os.makedirs(f"{reporoot}/devenv")
-    with open(f"{reporoot}/devenv/config.ini", "w") as f:
+    os.makedirs(f"{reporoot}/.devenv")
+    with open(f"{reporoot}/.devenv/config.ini", "w") as f:
         f.write(mock_config)
 
     venv_dir, python_version, requirements, editable_paths, bins = venv.get(

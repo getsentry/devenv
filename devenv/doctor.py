@@ -82,7 +82,7 @@ def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
     """
     checks: list[Check] = []
     for module_finder, module_name, _ in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
+        (f'{context["reporoot"]}/.devenv/checks',)
     ):
         module_spec = module_finder.find_spec(module_name, None)
 
