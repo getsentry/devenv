@@ -9,7 +9,7 @@ import tempfile
 import urllib.request
 from urllib.error import HTTPError
 
-from devenv.constants import cache_root
+from devenv.constants import home
 
 
 def atomic_replace(src: str, dest: str) -> None:
@@ -22,6 +22,7 @@ def atomic_replace(src: str, dest: str) -> None:
 
 def download(url: str, sha256: str, dest: str = "") -> str:
     if not dest:
+        cache_root = f"{home}/.cache/sentry-devenv"
         dest = f"{cache_root}/{sha256}"
         os.makedirs(cache_root, exist_ok=True)
 

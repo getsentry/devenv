@@ -20,6 +20,8 @@ def test_install() -> None:
     ) as mock_lib_fs_idempotent_add, patch(
         "os.chmod"
     ), patch(
+        "shutil.which", return_value=False
+    ), patch(
         "devenv.lib.direnv.proc.run", side_effect=[_version]  # direnv version
     ) as mock_proc_run:
         install()
