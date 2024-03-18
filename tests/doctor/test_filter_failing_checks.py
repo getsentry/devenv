@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
+
 from devenv import doctor
-from tests.doctor.devenv.checks import failing_check
-from tests.doctor.devenv.checks import passing_check
+from tests.utils import import_module_from_file
+
+here = os.path.join(os.path.dirname(__file__))
 
 
 def test_filter_failing_checks_no_checks() -> None:
@@ -10,16 +13,31 @@ def test_filter_failing_checks_no_checks() -> None:
 
 
 def test_filter_failing_checks_one_passing_check() -> None:
+    passing_check = import_module_from_file(
+        f"{here}/checks/passing_check.py", "passing_check"
+    )
+
     check = doctor.Check(passing_check)
     assert doctor.filter_failing_checks({check: (True, "")}) == []
 
 
 def test_filter_failing_checks_one_failing_check() -> None:
+    failing_check = import_module_from_file(
+        f"{here}/checks/failing_check.py", "failing_check"
+    )
+
     check = doctor.Check(failing_check)
     assert doctor.filter_failing_checks({check: (False, "")}) == [check]
 
 
 def test_filter_failing_checks_one_passing_and_one_failing_check() -> None:
+    passing_check = import_module_from_file(
+        f"{here}/checks/passing_check.py", "passing_check"
+    )
+    failing_check = import_module_from_file(
+        f"{here}/checks/failing_check.py", "failing_check"
+    )
+
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(failing_check)
     assert doctor.filter_failing_checks(
@@ -28,6 +46,13 @@ def test_filter_failing_checks_one_passing_and_one_failing_check() -> None:
 
 
 def test_filter_failing_checks_no_duplicate_checks() -> None:
+    passing_check = import_module_from_file(
+        f"{here}/checks/passing_check.py", "passing_check"
+    )
+    failing_check = import_module_from_file(
+        f"{here}/checks/failing_check.py", "failing_check"
+    )
+
     first_check = doctor.Check(passing_check)
     second_check = doctor.Check(failing_check)
     assert doctor.filter_failing_checks(
