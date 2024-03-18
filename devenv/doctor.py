@@ -74,16 +74,13 @@ class Check:
         super().__init__()
 
 
-def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
+def load_checks(from_dir: str, match_tags: set[str]) -> List[Check]:
     """
-    Load all checks from the checks directory.
-    Optionally filter by tags.
+    Load checks from a dir and optionally filter by tags.
     If a check doesn't have the required attributes, skip it.
     """
     checks: list[Check] = []
-    for module_finder, module_name, _ in walk_packages(
-        (f'{context["reporoot"]}/.devenv/checks',)
-    ):
+    for module_finder, module_name, _ in walk_packages((from_dir,)):
         module_spec = module_finder.find_spec(module_name, None)
 
         # it "should be" impossible to fail these:
@@ -173,12 +170,8 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     match_tags: set[str] = set(args.tag if args.tag else ())
 
-    repo = context["repo"]
-    if repo not in {"sentry", "getsentry", "devenv"}:
-        print(f"repo {repo} not supported yet!")
-        return 1
-
-    checks = load_checks(context, match_tags)
+    checks_dir = f'{context["reporoot"]}/.devenv/checks'
+    checks = load_checks(checks_dir, match_tags)
 
     if not checks:
         print(f"No checks found for tags: {args.tag}")
