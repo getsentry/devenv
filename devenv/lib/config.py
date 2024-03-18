@@ -10,7 +10,7 @@ from devenv.constants import MACHINE
 @functools.lru_cache(maxsize=None)
 def get_repo(reporoot: str) -> configparser.ConfigParser:
     config = configparser.ConfigParser()
-    config.read(f"{reporoot}/devenv/config.ini")
+    config.read(f"{reporoot}/.devenv/config.ini")
     return config
 
 
