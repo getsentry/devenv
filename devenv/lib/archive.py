@@ -32,9 +32,10 @@ def download(url: str, sha256: str, dest: str = "") -> str:
         except HTTPError as e:
             raise RuntimeError(f"Error getting {url}: {e}")
 
-        with tempfile.NamedTemporaryFile(
-            delete=False, dir=os.path.dirname(dest)
-        ) as tmpf:
+        dest_dir = os.path.dirname(dest)
+        os.makedirs(dest_dir, exist_ok=True)
+
+        with tempfile.NamedTemporaryFile(delete=False, dir=dest_dir) as tmpf:
             shutil.copyfileobj(resp, tmpf)
             tmpf.seek(0)
             checksum = hashlib.sha256()

@@ -3,8 +3,8 @@ from __future__ import annotations
 from unittest.mock import call
 from unittest.mock import patch
 
-from devenv.constants import bin_root
 from devenv.constants import home
+from devenv.constants import root
 from devenv.lib.direnv import _sha256
 from devenv.lib.direnv import _version
 from devenv.lib.direnv import install
@@ -33,9 +33,9 @@ def test_install() -> None:
             call(
                 f"https://github.com/direnv/direnv/releases/download/v{_version}/direnv.darwin-arm64",
                 _sha256["direnv.darwin-arm64"],
-                dest=f"{bin_root}/direnv",
+                dest=f"{root}/bin/direnv",
             )
         ]
         assert mock_proc_run.mock_calls == [
-            call((f"{bin_root}/direnv", "version"), stdout=True)
+            call((f"{root}/bin/direnv", "version"), stdout=True)
         ]
