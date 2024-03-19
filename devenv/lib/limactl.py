@@ -5,7 +5,6 @@ import platform
 import tempfile
 from shutil import which
 
-from devenv.constants import bin_root
 from devenv.constants import MACHINE
 from devenv.lib import archive
 
@@ -71,7 +70,7 @@ def _install(into: str) -> None:
         )
 
 
-def install() -> None:
+def install(bin_root: str) -> None:
     # this needs to be better
     if (
         which("lima", path=bin_root) == f"{bin_root}/lima"
