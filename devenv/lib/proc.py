@@ -13,15 +13,9 @@ from devenv.constants import homebrew_bin
 from devenv.constants import root
 from devenv.constants import shell_path
 from devenv.constants import user_environ
-from devenv.constants import VOLTA_HOME
 
-base_path = f"{root}/bin:{VOLTA_HOME}/bin:{homebrew_bin}:{user_environ['PATH']}"
-base_env = {
-    "PATH": base_path,
-    "HOME": home,
-    "SHELL": shell_path,
-    "VOLTA_HOME": VOLTA_HOME,
-}
+base_path = f"{root}/bin:{homebrew_bin}:{user_environ['PATH']}"
+base_env = {"PATH": base_path, "HOME": home, "SHELL": shell_path}
 
 
 def quote(cmd: tuple[str, ...]) -> str:

@@ -12,7 +12,6 @@ from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.constants import homebrew_bin
-from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -186,10 +185,7 @@ When done, hit ENTER to continue.
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
                 ("make", "bootstrap"),
-                env={
-                    "VIRTUAL_ENV": f"{coderoot}/getsentry/.venv",
-                    "VOLTA_HOME": VOLTA_HOME,
-                },
+                env={"VIRTUAL_ENV": f"{coderoot}/getsentry/.venv"},
                 pathprepend=f"{coderoot}/getsentry/.venv/bin",
                 cwd=f"{coderoot}/getsentry",
             )

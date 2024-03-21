@@ -33,5 +33,3 @@ homebrew_bin = f"{homebrew_repo}/bin"
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"
-
-VOLTA_HOME = f"{root}/volta"
