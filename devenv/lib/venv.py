@@ -95,8 +95,7 @@ def sync(
     proc.run(cmd)
 
     if bins is not None:
-        binroot = f"{reporoot}/.devenv/bin"
-        os.makedirs(binroot, exist_ok=True)
+        binroot = fs.ensure_binroot(reporoot)
         for name in bins:
             fs.ensure_symlink(
                 expected_src=f"{venv_dir}/bin/{name}", dest=f"{binroot}/{name}"

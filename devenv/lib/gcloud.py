@@ -38,33 +38,35 @@ exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-c
     )
 
 
-def uninstall(bin_root: str) -> None:
-    for d in (f"{bin_root}/google-cloud-sdk",):
+def uninstall(binroot: str) -> None:
+    for d in (f"{binroot}/google-cloud-sdk",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for f in (f"{bin_root}/gcloud", f"{bin_root}/gsutil"):
+    for f in (f"{binroot}/gcloud", f"{binroot}/gsutil"):
         if os.path.exists(f):
             os.remove(f)
 
 
-def install(version: str, url: str, sha256: str, bin_root: str) -> None:
+def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
+
     if (
-        shutil.which("gcloud", path=bin_root) == f"{bin_root}/gcloud"
-        and shutil.which("gsutil", path=bin_root) == f"{bin_root}/gsutil"
+        shutil.which("gcloud", path=binroot) == f"{binroot}/gcloud"
+        and shutil.which("gsutil", path=binroot) == f"{binroot}/gsutil"
     ):
-        with open(f"{bin_root}/google-cloud-sdk/VERSION", "r") as f:
+        with open(f"{binroot}/google-cloud-sdk/VERSION", "r") as f:
             installed_version = f.read().strip()
             if version == installed_version:
                 return
             print(f"installed gcloud {installed_version} is outdated!")
 
     print(f"installing gcloud {version}...")
-    uninstall(bin_root)
-    _install(url, sha256, bin_root)
+    uninstall(binroot)
+    _install(url, sha256, binroot)
 
     proc.run(
         (
-            f"{bin_root}/gcloud",
+            f"{binroot}/gcloud",
             "components",
             "install",
             "-q",
@@ -73,6 +75,6 @@ def install(version: str, url: str, sha256: str, bin_root: str) -> None:
         )
     )
 
-    stdout = proc.run((f"{bin_root}/gcloud", "--version"), stdout=True)
+    stdout = proc.run((f"{binroot}/gcloud", "--version"), stdout=True)
     if "gke-gcloud-auth-plugin" not in stdout:
         raise SystemExit("Failed to install gcloud {version}!")

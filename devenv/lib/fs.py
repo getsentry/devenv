@@ -46,6 +46,14 @@ def write_script(filepath: str, text: str) -> None:
     os.chmod(filepath, 0o775)
 
 
+def ensure_binroot(reporoot: str) -> str:
+    binroot = f"{reporoot}/.devenv/bin"
+    os.makedirs(binroot, exist_ok=True)
+    with open(f"{binroot}/.gitignore", "w") as f:
+        f.write("'*'")
+    return binroot
+
+
 def ensure_symlink(expected_src: str, dest: str) -> None:
     try:
         src = os.readlink(dest)
