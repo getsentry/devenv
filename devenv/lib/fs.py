@@ -50,7 +50,7 @@ def ensure_binroot(reporoot: str) -> str:
     binroot = f"{reporoot}/.devenv/bin"
     os.makedirs(binroot, exist_ok=True)
     with open(f"{binroot}/.gitignore", "w") as f:
-        f.write("'*'")
+        f.write("*")
     return binroot
 
 
