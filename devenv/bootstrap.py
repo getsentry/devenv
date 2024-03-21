@@ -16,7 +16,6 @@ from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
-from devenv.lib import volta
 
 help = "Bootstraps the development environment."
 ExitCode: TypeAlias = "str | int | None"
@@ -88,7 +87,6 @@ When done, hit ENTER to continue.
             )
 
     brew.install()
-    volta.install()
     direnv.install()
 
     os.makedirs(coderoot, exist_ok=True)
