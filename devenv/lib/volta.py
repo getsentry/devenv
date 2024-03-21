@@ -74,7 +74,7 @@ def populate_volta_home_with_shims(unpack_into: str, volta_home: str) -> None:
 def install(reporoot: Optional[str] = "") -> None:
     if reporoot:
         binroot = fs.ensure_binroot(reporoot)
-        VOLTA_HOME = f"{binroot}/../volta"
+        VOLTA_HOME = f"{binroot}/volta-home"
     else:
         # compatibility with devenv <= 1.4.0
         binroot = f"{root}/bin"
