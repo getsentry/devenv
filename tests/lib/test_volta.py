@@ -15,41 +15,38 @@ from devenv.lib.volta import UnexpectedPlatformError
 
 
 def test_install(tmp_path: str) -> None:
-    VOLTA_HOME = f"{tmp_path}/volta"
-    os.makedirs(f"{tmp_path}/bin")
+    reporoot = f"{tmp_path}/reporoot"
+    binroot = f"{reporoot}/.devenv/bin"
+    VOLTA_HOME = f"{binroot}/volta-home"
     os.makedirs(f"{VOLTA_HOME}/bin")
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
         open(f"{VOLTA_HOME}/bin/{executable}", "a").close()
 
-    with patch.multiple(
-        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=VOLTA_HOME
-    ):
-        with patch("devenv.lib.volta.which", side_effect=[None, None]), patch(
-            "devenv.lib.volta.install_volta"
-        ) as mock_install_volta, patch(
-            "devenv.lib.volta.proc.run",
-            side_effect=[None, _version],  # volta-migrate  # volta -v
-        ) as mock_proc_run:
-            install()
+    with patch("devenv.lib.volta.which", side_effect=[None, None]), patch(
+        "devenv.lib.volta.install_volta"
+    ) as mock_install_volta, patch(
+        "devenv.lib.volta.proc.run",
+        side_effect=[None, _version],  # volta-migrate  # volta -v
+    ) as mock_proc_run:
+        install(reporoot)
 
-            mock_install_volta.assert_called_once_with(f"{tmp_path}/bin")
-            assert mock_proc_run.mock_calls == [
-                call((f"{tmp_path}/bin/volta-migrate",)),
-                call((f"{tmp_path}/bin/volta", "-v"), stdout=True),
-            ]
-            assert (
-                os.readlink(f"{tmp_path}/bin/node")
-                == f"{tmp_path}/volta/bin/node"
-            )
+        mock_install_volta.assert_called_once_with(binroot)
+        assert mock_proc_run.mock_calls == [
+            call((f"{binroot}/volta-migrate",), env={"VOLTA_HOME": VOLTA_HOME}),
+            call(
+                (f"{binroot}/volta", "-v"),
+                env={"VOLTA_HOME": VOLTA_HOME},
+                stdout=True,
+            ),
+        ]
+        assert os.readlink(f"{binroot}/node") == f"{VOLTA_HOME}/bin/node"
 
     # now test already installed
-    with patch.multiple(
-        "devenv.lib.volta", root=tmp_path, VOLTA_HOME=VOLTA_HOME
-    ), patch("devenv.lib.volta.install_volta") as mock_install_volta, patch(
+    with patch("devenv.lib.volta.install_volta") as mock_install_volta, patch(
         "devenv.lib.volta.which",
-        side_effect=[f"{tmp_path}/bin/volta", f"{tmp_path}/volta/bin/node"],
+        side_effect=[f"{binroot}/volta", f"{VOLTA_HOME}/bin/node"],
     ):
-        install()
+        install(reporoot)
         assert not mock_install_volta.called
 
 
@@ -136,9 +133,13 @@ def test_populate_volta_home_with_shims() -> None:
             _version,  # mock run for volta -v
         ]
 
-        populate_volta_home_with_shims(unpack_into)
+        populate_volta_home_with_shims(unpack_into, "foo")
 
         assert mock_run.mock_calls == [
-            call((f"{unpack_into}/volta-migrate",)),
-            call((f"{unpack_into}/volta", "-v"), stdout=True),
+            call((f"{unpack_into}/volta-migrate",), env={"VOLTA_HOME": "foo"}),
+            call(
+                (f"{unpack_into}/volta", "-v"),
+                env={"VOLTA_HOME": "foo"},
+                stdout=True,
+            ),
         ]
