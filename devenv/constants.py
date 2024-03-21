@@ -33,3 +33,7 @@ homebrew_bin = f"{homebrew_repo}/bin"
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"
+
+# compatibility with devenv <= 1.4.0
+# (used in sentry sync.py)
+VOLTA_HOME = f"{root}/volta"
