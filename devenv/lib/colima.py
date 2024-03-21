@@ -3,8 +3,10 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
+from typing import Optional
 
 from devenv.constants import home
+from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import proc
 
@@ -26,7 +28,13 @@ def uninstall(bin_root: str) -> None:
             os.remove(f)
 
 
-def install(version: str, url: str, sha256: str, bin_root: str) -> None:
+def install(
+    version: str, url: str, sha256: str, bin_root: Optional[str] = ""
+) -> None:
+    if not bin_root:
+        # compatibility with devenv <= 1.4.0
+        bin_root = f"{root}/bin"
+
     if shutil.which("colima", path=bin_root) == f"{bin_root}/colima":
         stdout = proc.run((f"{bin_root}/colima", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]

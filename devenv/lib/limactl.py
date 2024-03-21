@@ -4,8 +4,10 @@ import os
 import platform
 import tempfile
 from shutil import which
+from typing import Optional
 
 from devenv.constants import MACHINE
+from devenv.constants import root
 from devenv.lib import archive
 
 _version = "0.19.1"
@@ -70,7 +72,11 @@ def _install(into: str) -> None:
         )
 
 
-def install(bin_root: str) -> None:
+def install(bin_root: Optional[str] = "") -> None:
+    if not bin_root:
+        # compatibility with devenv <= 1.4.0
+        bin_root = f"{root}/bin"
+
     # this needs to be better
     if (
         which("lima", path=bin_root) == f"{bin_root}/lima"
