@@ -49,8 +49,13 @@ def write_script(filepath: str, text: str) -> None:
 def ensure_binroot(reporoot: str) -> str:
     binroot = f"{reporoot}/.devenv/bin"
     os.makedirs(binroot, exist_ok=True)
-    with open(f"{binroot}/.gitignore", "w") as f:
-        f.write("*")
+    if not os.path.exists(f"{binroot}/.gitignore"):
+        with open(f"{binroot}/.gitignore", "w") as f:
+            f.write(
+                """*
+# automatically written by devenv ensure_binroot! feel free to modify.
+"""
+            )
     return binroot
 
 
