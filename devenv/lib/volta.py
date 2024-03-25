@@ -3,11 +3,12 @@ from __future__ import annotations
 import os
 import platform
 from shutil import which
+from typing import Optional
 
 from devenv.constants import homebrew_bin
 from devenv.constants import root
-from devenv.constants import VOLTA_HOME
 from devenv.lib import archive
+from devenv.lib import fs
 from devenv.lib import proc
 
 _version = "1.1.1"
@@ -58,30 +59,42 @@ def install_volta(unpack_into: str) -> None:
     download_and_unpack_archive(name, unpack_into)
 
 
-def populate_volta_home_with_shims(unpack_into: str) -> None:
+def populate_volta_home_with_shims(unpack_into: str, volta_home: str) -> None:
     # executing volta -v will populate the VOLTA_HOME directory
     # with node/npm/yarn shims
-    proc.run((f"{unpack_into}/volta-migrate",))
-    version = proc.run((f"{unpack_into}/volta", "-v"), stdout=True)
+    proc.run((f"{unpack_into}/volta-migrate",), env={"VOLTA_HOME": volta_home})
+    version = proc.run(
+        (f"{unpack_into}/volta", "-v"),
+        env={"VOLTA_HOME": volta_home},
+        stdout=True,
+    )
     assert version == _version, (version, _version)
 
 
-def install() -> None:
-    unpack_into = f"{root}/bin"
+def install(reporoot: Optional[str] = "") -> None:
+    if reporoot:
+        binroot = fs.ensure_binroot(reporoot)
+        VOLTA_HOME = f"{binroot}/volta-home"
+    else:
+        # compatibility with devenv <= 1.4.0
+        binroot = f"{root}/bin"
+        os.makedirs(binroot, exist_ok=True)
+        VOLTA_HOME = f"{root}/volta"
 
     if (
-        which("volta", path=f"{root}/bin") == f"{root}/bin/volta"
+        which("volta", path=binroot) == f"{binroot}/volta"
         and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
-        and os.path.exists(f"{root}/bin/node")
-        and os.readlink(f"{root}/bin/node") == f"{VOLTA_HOME}/bin/node"
+        and os.path.exists(f"{binroot}/node")
+        and os.readlink(f"{binroot}/node") == f"{VOLTA_HOME}/bin/node"
     ):
         return
 
-    install_volta(unpack_into)
-    populate_volta_home_with_shims(unpack_into)
+    # TODO(josh): uninstall
+    install_volta(binroot)
+    populate_volta_home_with_shims(binroot, VOLTA_HOME)
 
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
-        os.symlink(f"{VOLTA_HOME}/bin/{executable}", f"{root}/bin/{executable}")
+        os.symlink(f"{VOLTA_HOME}/bin/{executable}", f"{binroot}/{executable}")

@@ -12,12 +12,10 @@ from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import home
 from devenv.constants import homebrew_bin
-from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
-from devenv.lib import volta
 
 help = "Bootstraps the development environment."
 ExitCode: TypeAlias = "str | int | None"
@@ -89,7 +87,6 @@ When done, hit ENTER to continue.
             )
 
     brew.install()
-    volta.install()
     direnv.install()
 
     os.makedirs(coderoot, exist_ok=True)
@@ -168,7 +165,7 @@ When done, hit ENTER to continue.
         proc.run(
             ("make", "bootstrap"),
             env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.venv/bin",
+            pathprepend=f"{coderoot}/sentry/.devenv/bin:{coderoot}/sentry/.venv/bin",
             cwd=f"{coderoot}/sentry",
         )
 
@@ -186,11 +183,8 @@ When done, hit ENTER to continue.
             # eventually we should move this bootstrap testing over to getsentry repo
             proc.run(
                 ("make", "bootstrap"),
-                env={
-                    "VIRTUAL_ENV": f"{coderoot}/getsentry/.venv",
-                    "VOLTA_HOME": VOLTA_HOME,
-                },
-                pathprepend=f"{coderoot}/getsentry/.venv/bin",
+                env={"VIRTUAL_ENV": f"{coderoot}/getsentry/.venv"},
+                pathprepend=f"{coderoot}/getsentry/.devenv/bin:{coderoot}/getsentry/.venv/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 

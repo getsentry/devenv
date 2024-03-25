@@ -4,10 +4,12 @@ import os
 import platform
 import tempfile
 from shutil import which
+from typing import Optional
 
-from devenv.constants import bin_root
 from devenv.constants import MACHINE
+from devenv.constants import root
 from devenv.lib import archive
+from devenv.lib import fs
 
 _version = "0.19.1"
 _sha256 = {
@@ -71,17 +73,25 @@ def _install(into: str) -> None:
         )
 
 
-def install() -> None:
+def install(reporoot: Optional[str] = "") -> None:
+    if reporoot:
+        binroot = fs.ensure_binroot(reporoot)
+    else:
+        # compatibility with devenv <= 1.4.0
+        binroot = f"{root}/bin"
+        os.makedirs(binroot, exist_ok=True)
+
     # this needs to be better
     if (
-        which("lima", path=bin_root) == f"{bin_root}/lima"
-        and which("limactl", path=bin_root) == f"{bin_root}/limactl"
+        which("lima", path=binroot) == f"{binroot}/lima"
+        and which("limactl", path=binroot) == f"{binroot}/limactl"
     ):
         return
 
-    _install(bin_root)
+    # TODO: uninstall and repolocal config for versions
+    _install(binroot)
 
-    if not os.path.exists(f"{bin_root}/lima") or not os.path.exists(
-        f"{bin_root}/limactl"
+    if not os.path.exists(f"{binroot}/lima") or not os.path.exists(
+        f"{binroot}/limactl"
     ):
         raise SystemExit("Failed to install colima!")

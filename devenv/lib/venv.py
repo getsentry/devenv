@@ -6,7 +6,6 @@ from enum import Enum
 from typing import Optional
 
 from devenv import pythons
-from devenv.constants import bin_root
 from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
@@ -41,7 +40,7 @@ VenvStatus = Enum(
 # venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
 # url, sha256 = config.get_python(reporoot, python_version)
 # ensure(path, python_version, url, sha256)
-# sync(venv_dir, requirements, editable_paths, bins)
+# sync(reporoot, venv_dir, requirements, editable_paths, bins)
 def get(
     reporoot: str, name: str
 ) -> tuple[str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]]:
@@ -72,6 +71,7 @@ def get(
 
 
 def sync(
+    reporoot: str,
     venv_dir: str,
     requirements: str,
     editable_paths: Optional[tuple[str, ...]] = None,
@@ -95,9 +95,10 @@ def sync(
     proc.run(cmd)
 
     if bins is not None:
+        binroot = fs.ensure_binroot(reporoot)
         for name in bins:
             fs.ensure_symlink(
-                expected_src=f"{venv_dir}/bin/{name}", dest=f"{bin_root}/{name}"
+                expected_src=f"{venv_dir}/bin/{name}", dest=f"{binroot}/{name}"
             )
 
 
