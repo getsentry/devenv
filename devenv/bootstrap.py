@@ -119,7 +119,12 @@ When done, hit ENTER to continue.
                 exit=True,
             )
 
-        bootstrap_getsentry = not CI and not EXTERNAL_CONTRIBUTOR
+        bootstrap_getsentry = not EXTERNAL_CONTRIBUTOR
+
+        GITHUB_ACTION_REPOSITORY = os.getenv("GITHUB_ACTION_REPOSITORY", "")
+        if CI and GITHUB_ACTION_REPOSITORY == "getsentry/getsentry":
+            bootstrap_getsentry = True
+
         if bootstrap_getsentry and not os.path.exists(f"{coderoot}/getsentry"):
             proc.run(
                 (
