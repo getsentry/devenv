@@ -165,7 +165,7 @@ When done, hit ENTER to continue.
         proc.run(
             ("make", "bootstrap"),
             env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.venv/bin",
+            pathprepend=f"{coderoot}/sentry/.devenv/bin:{coderoot}/sentry/.venv/bin",
             cwd=f"{coderoot}/sentry",
         )
 
@@ -184,7 +184,7 @@ When done, hit ENTER to continue.
             proc.run(
                 ("make", "bootstrap"),
                 env={"VIRTUAL_ENV": f"{coderoot}/getsentry/.venv"},
-                pathprepend=f"{coderoot}/getsentry/.venv/bin",
+                pathprepend=f"{coderoot}/getsentry/.devenv/bin:{coderoot}/getsentry/.venv/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 
