@@ -88,7 +88,9 @@ parseopt() {  # argument (and environment-var) processing
   appname="sentry-devenv"
   # control install behavior
   SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
-  SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
+  # TODO: we need the release action to tag the release commit
+  # 1.4.0
+  SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-bdd30f96212769ddaec717192750730bb3350402}}"
   SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/$appname}"
   SNTY_DEVENV_CACHE="${SNTY_DEVENV_CACHE:-$XDG_CACHE_HOME/$appname}"
   SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_RELEASE:-20230726}"
