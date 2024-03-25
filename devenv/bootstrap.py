@@ -10,7 +10,6 @@ from typing import TypeAlias
 from devenv.constants import CI
 from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.constants import home
 from devenv.constants import homebrew_bin
 from devenv.constants import VOLTA_HOME
 from devenv.lib import brew
@@ -157,11 +156,6 @@ When done, hit ENTER to continue.
             cwd=f"{coderoot}/sentry",
         )
 
-        # HACK: devenv sync created the config files earlier, but make bootstrap will
-        #       fail because of an interactive prompt asking if user wants to clobber it...
-        #       i'll follow-up with fixing that in sentry
-        shutil.rmtree(f"{home}/.sentry")
-
         # make bootstrap should be ported over to devenv sync,
         # as it applies new migrations as well and so would need to ensure
         # the appropriate devservices are running
@@ -178,9 +172,6 @@ When done, hit ENTER to continue.
                 (sys.executable, "-P", "-m", "devenv", "sync"),
                 cwd=f"{coderoot}/getsentry",
             )
-
-            # HACK: see above
-            shutil.rmtree(f"{home}/.sentry")
 
             # we don't have permissions to clone getsentry which is a good thing
             # eventually we should move this bootstrap testing over to getsentry repo
