@@ -86,9 +86,11 @@ constants() {
 
 parseopt() {  # argument (and environment-var) processing
   appname="sentry-devenv"
-  # control install behavior
+
+  # used to control install behavior for CI
   SNTY_DEVENV_REPO="${SNTY_DEVENV_REPO:-https://github.com/getsentry/devenv.git}"
   SNTY_DEVENV_BRANCH="${1:-${SNTY_DEVENV_BRANCH:-main}}"
+
   SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/$appname}"
   SNTY_DEVENV_CACHE="${SNTY_DEVENV_CACHE:-$XDG_CACHE_HOME/$appname}"
   SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_RELEASE:-20230726}"
@@ -178,7 +180,13 @@ main() {
 
   show "$devenv_python" -m venv --clear "$devenv_venv"
 
-  show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+  if [[ "${CI:-}" ]]; then
+    show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+  else
+    show "$devenv_venv"/bin/pip install \
+      --index-url https://pypi.devinfra.sentry.io/simple \
+      sentry-devenv
+  fi
 
   rm -rf "$devenv_bin"
   mkdir -p "$devenv_bin"
