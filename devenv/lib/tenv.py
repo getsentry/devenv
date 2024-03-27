@@ -11,17 +11,21 @@ from devenv.lib import proc
 
 def _install(url: str, sha256: str, into: str) -> None:
     TENV_ROOT = f"{into}/tenv-root"
-    os.makedirs(TENV_ROOT, exist_ok=True)
+    os.makedirs(f"{TENV_ROOT}/bin", exist_ok=True)
+
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
         archive.unpack(archive_file, tmpd)
 
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
-        os.replace(f"{tmpd}/terraform", f"{TENV_ROOT}/terraform")
-        os.replace(f"{tmpd}/tf", f"{TENV_ROOT}/tf")
-        os.replace(f"{tmpd}/terragrunt", f"{TENV_ROOT}/terragrunt")
-        os.replace(f"{tmpd}/tenv", f"{TENV_ROOT}/tenv")
+        os.replace(f"{tmpd}/terraform", f"{TENV_ROOT}/bin/terraform")
+        os.replace(f"{tmpd}/tf", f"{TENV_ROOT}/bin/tf")
+        os.replace(f"{tmpd}/terragrunt", f"{TENV_ROOT}/bin/terragrunt")
+        os.replace(f"{tmpd}/tenv", f"{TENV_ROOT}/bin/tenv")
+
+        # those all need to go inside a bin instead of like, TENV_ROOT/terraform
+        # because tenv wants to mkdir that
 
     # These shims make sure we're executing with our custom TENV_ROOT,
     # otherwise there's potential for collision with ~/.tenv.
@@ -29,19 +33,19 @@ def _install(url: str, sha256: str, into: str) -> None:
     fs.write_script(
         f"{into}/tenv",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/tenv "$@"
+exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/tenv "$@"
 """,
     )
     fs.write_script(
         f"{into}/terraform",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/terraform "$@"
+exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terraform "$@"
 """,
     )
     fs.write_script(
         f"{into}/terragrunt",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/terragrunt "$@"
+exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terragrunt "$@"
 """,
     )
 
