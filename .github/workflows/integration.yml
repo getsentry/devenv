@@ -48,6 +48,6 @@ jobs:
           coderoot = ${coderoot}
           EOF
 
-          reporoot = "${coderoot}/repo"
+          reporoot="${coderoot}/repo"
           cd "$reporoot"
           CI_DEVENV_INTEGRATION_FAKE_REPOROOT="$reporoot" devenv sync
