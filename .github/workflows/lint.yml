@@ -1,0 +1,22 @@
+name: lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+  run:
+    # the default default is:
+    #      bash --noprofile --norc -eo pipefail {0}
+    shell: bash --noprofile --norc -eo pipefail -ux {0}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - uses: pre-commit/action@v3.0.0

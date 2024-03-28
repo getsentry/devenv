@@ -1,0 +1,23 @@
+name: build
+on:
+  push:
+    branches: [main, release/**]
+
+jobs:
+  dist:
+    name: Create Distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: "Prepare Artifacts"
+        run: |
+          pip install build
+          python -m build
+      - uses: actions/upload-artifact@v3.1.3
+        with:
+          name: ${{ github.sha }}
+          path: dist/*
