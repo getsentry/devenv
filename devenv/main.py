@@ -125,8 +125,12 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     # the remaining tools are repo-specific
     reporoot = gitroot()
-    repo = reporoot.split("/")[-1]
 
+    fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
+    if fake_reporoot:
+        reporoot = fake_reporoot
+
+    repo = reporoot.split("/")[-1]
     context = {"repo": repo, "reporoot": reporoot}
 
     if args.command == "doctor":

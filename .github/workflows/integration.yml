@@ -1,0 +1,53 @@
+# bootstrap is integration coverage for sentry which is kind of a special case
+# this is integration testing for a more generic repo
+
+name: integration
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+  run:
+    # enable xtrace by default
+    # use a login shell, to enable ~/.profile
+    # the default default is:
+    #      bash --noprofile --norc -eo pipefail {0}
+    shell: bash --login -eo pipefail -x {0}
+env:
+  SHELL: /bin/bash
+  PYTHONUNBUFFERED: "1"
+  DEBUG: "1"
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      SENTRY_BRANCH: master
+      SNTY_DEVENV_BRANCH:
+        "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
+    steps:
+      - uses: actions/checkout@v4
+      - name: install devenv
+        run: |
+          set -u
+          : should be able to be run from anywhere:
+          mv install-devenv.sh /tmp
+          cd /tmp
+          ./install-devenv.sh
+
+      - name: sync
+        run: |
+          coderoot="${PWD}/ci/integration"
+
+          mkdir -p ~/.config/sentry-devenv
+          cat <<EOF > ~/.config/sentry-devenv/config.ini
+          [devenv]
+          coderoot = ${coderoot}
+          EOF
+
+          reporoot="${coderoot}/repo"
+          cd "$reporoot"
+          CI_DEVENV_INTEGRATION_FAKE_REPOROOT="$reporoot" devenv sync
