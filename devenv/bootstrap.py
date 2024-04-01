@@ -23,20 +23,9 @@ ExitCode: TypeAlias = "str | int | None"
 def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "repo",
-        type=str,
-        nargs="?",
-        default="sentry",
-        choices=("sentry", "getsentry"),
+        "repo", type=str, nargs="?", default="sentry", choices=("sentry", "ops")
     )
     args = parser.parse_args(argv)
-
-    if args.repo == "getsentry":
-        # Setting up sentry means we're setting up both repos.
-        args.repo = "sentry"
-
-    if args.repo not in {"sentry"}:
-        return f"repo {args.repo} not supported yet!"
 
     if not CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -90,7 +79,40 @@ When done, hit ENTER to continue.
 
     os.makedirs(coderoot, exist_ok=True)
 
-    if args.repo == "sentry":
+    if args.repo == "ops":
+        if not os.path.exists(f"{coderoot}/ops"):
+            proc.run(
+                (
+                    "git",
+                    "-C",
+                    coderoot,
+                    "clone",
+                    "--filter=blob:none",
+                    "git@github.com:getsentry/ops",
+                ),
+                exit=True,
+            )
+        if not os.path.exists(f"{coderoot}/terraform-modules"):
+            proc.run(
+                (
+                    "git",
+                    "-C",
+                    coderoot,
+                    "clone",
+                    "--filter=blob:none",
+                    "git@github.com:getsentry/terraform-modules",
+                ),
+                exit=True,
+            )
+        proc.run(("devenv", "sync"), cwd=f"{coderoot}/ops")
+        print(
+            f"""
+    All done! Please close this terminal window and start a fresh one.
+
+    ops repo is at: {coderoot}/ops
+    """
+        )
+    elif args.repo == "sentry":
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
@@ -179,12 +201,13 @@ When done, hit ENTER to continue.
                 cwd=f"{coderoot}/getsentry",
             )
 
-    print(
-        f"""
-All done! Please close this terminal window and start a fresh one.
+        print(
+            f"""
+    All done! Please close this terminal window and start a fresh one.
 
-Sentry has been set up in {coderoot}/sentry. cd into it and you should
-be able to run `sentry devserver`.
-"""
-    )
+    Sentry has been set up in {coderoot}/sentry. cd into it and you should
+    be able to run `sentry devserver`.
+    """
+        )
+
     return 0
