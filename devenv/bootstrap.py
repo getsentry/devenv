@@ -87,9 +87,6 @@ When done, hit ENTER to continue.
                     "-C",
                     coderoot,
                     "clone",
-                    # TODO: temp
-                    "--single-branch",
-                    "--branch=devenv-poc",
                     "--filter=blob:none",
                     "git@github.com:getsentry/ops",
                 ),
@@ -116,8 +113,6 @@ When done, hit ENTER to continue.
     """
         )
     elif args.repo == "sentry":
-        volta.install()
-
         if not os.path.exists(f"{coderoot}/sentry"):
             # git@ clones forces the use of cloning through SSH which is what we want,
             # though CI must clone open source repos via https (no git authentication)
