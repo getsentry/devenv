@@ -26,7 +26,7 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: master
+      SENTRY_BRANCH: devenv-repo-local-bins
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
