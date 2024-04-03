@@ -1,6 +1,11 @@
 ## devenv
 
-the next generation sentry devenv management tool
+managing dev environments since '24
+
+`devenv` is an extensible execution framework and library for authoring
+a simple set of high level commands - bootstrap, sync, doctor, nuke - that
+manage a repository's dev environment.
+
 
 ## install
 
@@ -10,43 +15,67 @@ Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-
 bash install-devenv.sh
 ```
 
-**If you are setting up a new laptop, run `devenv bootstrap` after installing.**
+## user guide
 
+`devenv bootstrap [repository name]`
+
+This is intended for initial setup. `sentry` will set up both sentry and getsentry.
+Repositories are cloned to a "coderoot" directory which is specified in the [global configuration](#configuration).
+
+`devenv sync`
+
+When you're inside a repository, this will bring the dev environment up to date,
+or create it if it doesn't exist.
+It runs `[reporoot]/devenv/sync.py`.
+
+`devenv doctor`
+
+When you're inside a repository, this diagnoses and tries to fix common issues.
+Checks and fixes are defined in `[reporoot]/devenv/checks`.
+
+`devenv nuke|uninstall` (wip)
+
+When you're inside a repository, this completely removes the dev environment.
 
 
 ## technical overview
 
-`devenv` is a command-line interface to a set of environment management commands
-that can be custom implemented for a particular repository.
+devenv itself lives in `~/.local/share/sentry-devenv`. Inside:
+- `bin` contains devenv itself and `direnv`
+  - this is the only PATH entry needed for devenv
+- a private python and virtualenv used exclusively by `devenv`
 
-- `sync` brings the dev environment up-to-date
-  - example: in sentry, `sync` updates python+js dependencies, and runs migrations
-- `doctor` diagnoses and fixes common issues
-  - TODO: more on this later, we're working on this at the moment
-  - you can write these doctor "checks" using `devenv` facilities, and they're executed within devenv's environment
-  - example to be available at `sentry/devenv/checks/....py`
-- `exec` (coming soon) execs a command inside of `devenv`'s execution context, useful if things don't work locally
+As much as possible, a repo's dev environment is self-contained within `[reporoot]/.devenv`.
 
-Dependencies like `colima` and `volta` are hermetically installed and used within `devenv`'s execution.
-This lets us dictate how they get installed, and it doesn't affect the rest of the system.
+We're relying on `direnv` (which bootstrap will install, globally) to add `[reporoot]/.devenv/bin` to PATH.
+Therefore a minimum viable `[reporoot]/.envrc` might look like:
 
-`devenv` also:
-- helps new engineers `devenv bootstrap` their new macbooks nearly effortlessly
+```bash
+if [ -f "${PWD}/.env" ]; then
+    dotenv
+fi
 
+PATH_add "${HOME}/.local/share/sentry-devenv/bin"
 
-### per-repository configuration
+if ! command -v devenv >/dev/null; then
+    echo "install devenv: https://github.com/getsentry/devenv#install"
+    return 1
+fi
 
-`REPOROOT/devenv/config.ini`
+PATH_add "${PWD}/.devenv/bin"
+```
 
-an example: if the right `[python]` block is specified (see sentry's),
-we support downloading those prebuilt pythons for a repo's virtualenv
+### configuration
+
+global configuration is at `~/.config/sentry-devenv/config.ini`.
+
+repository configuration is at `[reporoot]/devenv/config.ini`.
 
 
 ## develop
 
-Purpose: enable `gh act` to work quickly on localhost
+We use `tox`. The easiest way to run devenv locally is just using the tox venv's executable:
 
-To that end:
-
-1. build a docker image with python pre-installed at the expected location
-2. the python interpreter machine-architecture should match the host machine
+```
+~/code/sentry $  ~/code/devenv/.tox/py311/bin/devenv sync
+```
