@@ -22,11 +22,11 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: devenv-remove-ensure-venv
+      SENTRY_BRANCH: devenv-sync-passthru-make
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install
         run: |
           set -u

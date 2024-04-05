@@ -175,16 +175,6 @@ When done, hit ENTER to continue.
             cwd=f"{coderoot}/sentry",
         )
 
-        # make bootstrap should be ported over to devenv sync,
-        # as it applies new migrations as well and so would need to ensure
-        # the appropriate devservices are running
-        proc.run(
-            ("make", "bootstrap"),
-            env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.devenv/bin:{coderoot}/sentry/.venv/bin",
-            cwd=f"{coderoot}/sentry",
-        )
-
         if bootstrap_getsentry:
             # this'll create the virtualenv if it doesn't exist
             proc.run(
