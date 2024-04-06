@@ -76,8 +76,13 @@ def uninstall(binroot: str, volta_home: str) -> None:
 
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
         fp = f"{binroot}/{executable}"
-        if os.path.exists(fp):
+        try:
             os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
 
 
 def install(reporoot: Optional[str] = "") -> None:
@@ -95,6 +100,8 @@ def install(reporoot: Optional[str] = "") -> None:
         and shutil.which("node", path=f"{VOLTA_HOME}/bin")
         == f"{VOLTA_HOME}/bin/node"
         and os.path.exists(f"{binroot}/node")
+        # <= 1.6.0 had symlinks, now we have VOLTA_HOME shims
+        and not os.path.islink(f"{binroot}/node")
     ):
         return
 
