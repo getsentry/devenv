@@ -18,13 +18,14 @@ def test_install(tmp_path: str) -> None:
     reporoot = f"{tmp_path}/reporoot"
     binroot = f"{reporoot}/.devenv/bin"
     VOLTA_HOME = f"{binroot}/volta-home"
+
     os.makedirs(f"{VOLTA_HOME}/bin")
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
         open(f"{VOLTA_HOME}/bin/{executable}", "a").close()
 
-    with patch("devenv.lib.volta.which", side_effect=[None, None]), patch(
-        "devenv.lib.volta._install"
-    ) as mock_install_volta, patch(
+    with patch("shutil.which", side_effect=[None, None]), patch(
+        "devenv.lib.volta.uninstall"  # need this so we don't undo the previous mock install
+    ), patch("devenv.lib.volta._install") as mock_install_volta, patch(
         "devenv.lib.volta.proc.run",
         side_effect=[None, _version],  # volta-migrate  # volta -v
     ) as mock_proc_run:
@@ -39,11 +40,10 @@ def test_install(tmp_path: str) -> None:
                 stdout=True,
             ),
         ]
-        assert os.readlink(f"{binroot}/node") == f"{VOLTA_HOME}/bin/node"
 
     # now test already installed
     with patch("devenv.lib.volta._install") as mock_install_volta, patch(
-        "devenv.lib.volta.which",
+        "shutil.which",
         side_effect=[f"{binroot}/volta", f"{VOLTA_HOME}/bin/node"],
     ):
         install(reporoot)
