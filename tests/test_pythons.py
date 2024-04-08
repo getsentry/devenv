@@ -11,4 +11,4 @@ def test_get() -> None:
         "devenv.lib.archive.unpack"
     ), patch("os.path.exists", side_effect=[False, True]):
         path = pythons.get("3.12.0", "foo", "bar")
-        assert path == f"{root}/pythons/3.12.0/python3"
+        assert path == f"{root}/pythons/3.12.0/python/bin/python3"
