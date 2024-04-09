@@ -42,9 +42,14 @@ def uninstall(binroot: str) -> None:
     for d in (f"{binroot}/google-cloud-sdk",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for f in (f"{binroot}/gcloud", f"{binroot}/gsutil"):
-        if os.path.exists(f):
-            os.remove(f)
+    for fp in (f"{binroot}/gcloud", f"{binroot}/gsutil"):
+        try:
+            os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:

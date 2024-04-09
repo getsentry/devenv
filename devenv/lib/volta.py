@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
-from shutil import which
+import shutil
 from typing import Optional
 
 from devenv.constants import homebrew_bin
@@ -52,7 +52,7 @@ def download_and_unpack_archive(name: str, unpack_into: str) -> None:
     archive.unpack(archive_file, unpack_into)
 
 
-def install_volta(unpack_into: str) -> None:
+def _install(unpack_into: str) -> None:
     name = determine_platform(unpack_into)
     if name is None:
         return
@@ -71,6 +71,20 @@ def populate_volta_home_with_shims(unpack_into: str, volta_home: str) -> None:
     assert version == _version, (version, _version)
 
 
+def uninstall(binroot: str, volta_home: str) -> None:
+    shutil.rmtree(volta_home, ignore_errors=True)
+
+    for executable in ("node", "npm", "npx", "yarn", "pnpm"):
+        fp = f"{binroot}/{executable}"
+        try:
+            os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
+
+
 def install(reporoot: Optional[str] = "") -> None:
     if reporoot:
         binroot = fs.ensure_binroot(reporoot)
@@ -82,19 +96,30 @@ def install(reporoot: Optional[str] = "") -> None:
         VOLTA_HOME = f"{root}/volta"
 
     if (
-        which("volta", path=binroot) == f"{binroot}/volta"
-        and which("node", path=f"{VOLTA_HOME}/bin") == f"{VOLTA_HOME}/bin/node"
+        shutil.which("volta", path=binroot) == f"{binroot}/volta"
+        and shutil.which("node", path=f"{VOLTA_HOME}/bin")
+        == f"{VOLTA_HOME}/bin/node"
         and os.path.exists(f"{binroot}/node")
-        and os.readlink(f"{binroot}/node") == f"{VOLTA_HOME}/bin/node"
+        # <= 1.6.0 had symlinks, now we have VOLTA_HOME shims
+        and not os.path.islink(f"{binroot}/node")
     ):
         return
 
-    # TODO(josh): uninstall
-    install_volta(binroot)
+    print(f"installing volta {_version}...")
+    uninstall(binroot, VOLTA_HOME)
+    _install(binroot)
     populate_volta_home_with_shims(binroot, VOLTA_HOME)
 
     if not os.path.exists(f"{VOLTA_HOME}/bin/node"):
         raise SystemExit("Failed to install volta!")
 
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
-        os.symlink(f"{VOLTA_HOME}/bin/{executable}", f"{binroot}/{executable}")
+        # This forces these repo-local bins to use the repo-local
+        # volta home for full containment. Otherwise, the default
+        # is to use ~/.volta.
+        fs.write_script(
+            f"{binroot}/{executable}",
+            f"""#!/bin/sh
+    exec /usr/bin/env VOLTA_HOME={VOLTA_HOME} {VOLTA_HOME}/bin/{executable} "$@"
+""",
+        )

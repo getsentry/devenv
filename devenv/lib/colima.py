@@ -24,9 +24,14 @@ def uninstall(binroot: str) -> None:
     for d in (f"{home}/.lima",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for f in (f"{binroot}/colima",):
-        if os.path.exists(f):
-            os.remove(f)
+    for fp in (f"{binroot}/colima",):
+        try:
+            os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
 
 
 def install(

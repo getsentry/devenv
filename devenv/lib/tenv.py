@@ -54,13 +54,18 @@ def uninstall(binroot: str) -> None:
     for d in (f"{binroot}/tenv-root",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for f in (
+    for fp in (
         f"{binroot}/tenv",
         f"{binroot}/terraform",
         f"{binroot}/terragrunt",
     ):
-        if os.path.exists(f):
-            os.remove(f)
+        try:
+            os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
 
 
 def _version(binpath: str) -> str:

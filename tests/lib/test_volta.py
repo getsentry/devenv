@@ -6,10 +6,10 @@ from unittest.mock import patch
 
 import pytest
 
+from devenv.lib.volta import _install
 from devenv.lib.volta import _sha256
 from devenv.lib.volta import _version
 from devenv.lib.volta import install
-from devenv.lib.volta import install_volta
 from devenv.lib.volta import populate_volta_home_with_shims
 from devenv.lib.volta import UnexpectedPlatformError
 
@@ -18,13 +18,14 @@ def test_install(tmp_path: str) -> None:
     reporoot = f"{tmp_path}/reporoot"
     binroot = f"{reporoot}/.devenv/bin"
     VOLTA_HOME = f"{binroot}/volta-home"
+
     os.makedirs(f"{VOLTA_HOME}/bin")
     for executable in ("node", "npm", "npx", "yarn", "pnpm"):
         open(f"{VOLTA_HOME}/bin/{executable}", "a").close()
 
-    with patch("devenv.lib.volta.which", side_effect=[None, None]), patch(
-        "devenv.lib.volta.install_volta"
-    ) as mock_install_volta, patch(
+    with patch("shutil.which", side_effect=[None, None]), patch(
+        "devenv.lib.volta.uninstall"  # need this so we don't undo the previous mock install
+    ), patch("devenv.lib.volta._install") as mock_install_volta, patch(
         "devenv.lib.volta.proc.run",
         side_effect=[None, _version],  # volta-migrate  # volta -v
     ) as mock_proc_run:
@@ -39,11 +40,10 @@ def test_install(tmp_path: str) -> None:
                 stdout=True,
             ),
         ]
-        assert os.readlink(f"{binroot}/node") == f"{VOLTA_HOME}/bin/node"
 
     # now test already installed
-    with patch("devenv.lib.volta.install_volta") as mock_install_volta, patch(
-        "devenv.lib.volta.which",
+    with patch("devenv.lib.volta._install") as mock_install_volta, patch(
+        "shutil.which",
         side_effect=[f"{binroot}/volta", f"{VOLTA_HOME}/bin/node"],
     ):
         install(reporoot)
@@ -58,7 +58,7 @@ def test_install_volta_linux_x86_64() -> None:
     ) as mock_download, patch(
         "devenv.lib.volta.archive.unpack"
     ) as mock_unpack:
-        install_volta("/path/to/unpack")
+        _install("/path/to/unpack")
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
@@ -81,7 +81,7 @@ def test_install_volta_macos_x86_64() -> None:
     ) as mock_download, patch(
         "devenv.lib.volta.archive.unpack"
     ) as mock_unpack:
-        install_volta("/path/to/unpack")
+        _install("/path/to/unpack")
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
@@ -104,7 +104,7 @@ def test_install_volta_macos_arm64() -> None:
     ) as mock_download, patch(
         "devenv.lib.volta.archive.unpack"
     ) as mock_unpack:
-        install_volta("/path/to/unpack")
+        _install("/path/to/unpack")
         mock_system.assert_called_once()
         mock_machine.assert_called_once()
         mock_download.assert_called_once_with(
@@ -122,7 +122,7 @@ def test_install_volta_macos_arm64() -> None:
 def test_install_volta_unexpected_platform() -> None:
     with patch("platform.system", return_value="Unexpected"):
         with pytest.raises(UnexpectedPlatformError):
-            install_volta("/path/to/unpack")
+            _install("/path/to/unpack")
 
 
 def test_populate_volta_home_with_shims() -> None:
