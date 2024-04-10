@@ -104,7 +104,10 @@ When done, hit ENTER to continue.
                 ),
                 exit=True,
             )
-        proc.run(("devenv", "sync"), cwd=f"{coderoot}/ops")
+        proc.run(
+            (sys.executable, "-P", "-m", "devenv", "sync"),
+            cwd=f"{coderoot}/ops",
+        )
         print(
             f"""
     All done! Please close this terminal window and start a fresh one.
@@ -169,35 +172,14 @@ When done, hit ENTER to continue.
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
             )
 
-        # this'll create the virtualenv if it doesn't exist
         proc.run(
             (sys.executable, "-P", "-m", "devenv", "sync"),
             cwd=f"{coderoot}/sentry",
         )
 
-        # make bootstrap should be ported over to devenv sync,
-        # as it applies new migrations as well and so would need to ensure
-        # the appropriate devservices are running
-        proc.run(
-            ("make", "bootstrap"),
-            env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.devenv/bin:{coderoot}/sentry/.venv/bin",
-            cwd=f"{coderoot}/sentry",
-        )
-
         if bootstrap_getsentry:
-            # this'll create the virtualenv if it doesn't exist
             proc.run(
                 (sys.executable, "-P", "-m", "devenv", "sync"),
-                cwd=f"{coderoot}/getsentry",
-            )
-
-            # we don't have permissions to clone getsentry which is a good thing
-            # eventually we should move this bootstrap testing over to getsentry repo
-            proc.run(
-                ("make", "bootstrap"),
-                env={"VIRTUAL_ENV": f"{coderoot}/getsentry/.venv"},
-                pathprepend=f"{coderoot}/getsentry/.devenv/bin:{coderoot}/getsentry/.venv/bin",
                 cwd=f"{coderoot}/getsentry",
             )
 
