@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import concurrent.futures
+import subprocess
 from pathlib import Path
-from subprocess import CalledProcessError
-from subprocess import PIPE
-from subprocess import run as subprocess_run
 from typing import Literal
 from typing import overload
 
@@ -70,7 +69,7 @@ def run(
     cwd: Path | str | None = None,
     stdout: bool = False,
 ) -> str | None:
-    _stdout = PIPE if stdout else None
+    _stdout = subprocess.PIPE if stdout else None
     del stdout
 
     if env is None:
@@ -83,14 +82,14 @@ def run(
     if constants.DEBUG:
         xtrace(cmd)
     try:
-        proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
+        proc = subprocess.run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
             raise SystemExit(f"{e}") from None
         else:
             raise RuntimeError(f"{e}") from None
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
         if _stdout:
             detail += f"""
@@ -105,3 +104,52 @@ stdout:
         if _stdout:
             return proc.stdout.decode().strip()
         return None
+
+
+# : list[Callable[]]
+def _job(name, tasks):
+    # TODO: collect stdouts across all tasks
+    for task in tasks:
+        # we should lock stdout across all jobs for progress info
+        print(f"{name}: working")
+        task["stdout"] = True
+        task["stderr"] = subprocess.STDOUT  # TODO: why not upstream this
+        task["exit"] = False
+        try:
+            run(**task)
+        except RuntimeError as e:
+            print(e)
+            return
+        # if fail, we stop serial execution and print the entire stdout across all jobs
+
+
+def run_jobs(jobs):
+    # runs parallel, independent jobs which are serial tasks (commands)
+    # most users will be coming from sync.py in which case most
+    # tasks are gonna be more i/o
+
+    with concurrent.futures.ThreadPoolExecutor() as tpe:
+        # do we need to trap ^C here or does it get propagated to everything?
+        for job in jobs:
+            tpe.submit(_job, job[0], job[1])
+
+
+run_jobs(
+    (
+        (
+            "job1",
+            (
+                # kwargs for proc.run
+                {"cmd": ("echo", "$foo"), "env": {"foo": "bar"}},
+                {"cmd": ("echo", "$foo"), "env": {"foo": "baz"}},
+            ),
+        ),
+        (
+            "job2",
+            (
+                {"cmd": ("echo", "$foo"), "env": {"foo": "bar"}},
+                {"cmd": ("echo", "$foo"), "env": {"foo": "baz"}},
+            ),
+        ),
+    )
+)
