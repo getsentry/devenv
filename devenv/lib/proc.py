@@ -113,7 +113,7 @@ def _job(name, tasks):
         # we should lock stdout across all jobs for progress info
         print(f"{name}: working")
         task["stdout"] = True
-        task["stderr"] = subprocess.STDOUT  # TODO: why not upstream this
+        # task["stderr"] = subprocess.STDOUT  # TODO: why not upstream this
         task["exit"] = False
         try:
             run(**task)
@@ -130,26 +130,9 @@ def run_jobs(jobs):
 
     with concurrent.futures.ThreadPoolExecutor() as tpe:
         # do we need to trap ^C here or does it get propagated to everything?
-        for job in jobs:
+        futures = (
             tpe.submit(_job, job[0], job[1])
-
-
-run_jobs(
-    (
-        (
-            "job1",
-            (
-                # kwargs for proc.run
-                {"cmd": ("echo", "$foo"), "env": {"foo": "bar"}},
-                {"cmd": ("echo", "$foo"), "env": {"foo": "baz"}},
-            ),
-        ),
-        (
-            "job2",
-            (
-                {"cmd": ("echo", "$foo"), "env": {"foo": "bar"}},
-                {"cmd": ("echo", "$foo"), "env": {"foo": "baz"}},
-            ),
-        ),
-    )
-)
+            for job in jobs
+        )
+        for _ in concurrent.futures.as_completed(futures):
+            pass
