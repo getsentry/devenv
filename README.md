@@ -17,10 +17,18 @@ bash install-devenv.sh
 
 ## user guide
 
-`devenv bootstrap [repository name]`
+`devenv bootstrap`
 
-This is intended for initial setup. `sentry` will set up both sentry and getsentry.
+This is intended for initial setup. 
+
+
+`devenv fetch [repository name]`
+
+Any repository on github in the form of `[org]/[reponame]`
+
 Repositories are cloned to a "coderoot" directory which is specified in the [global configuration](#configuration).
+
+Note: `sentry` and `ops` are currently special names which perform more complicated installations (e.g., `sentry` will set up both sentry and getsentry)
 
 `devenv sync`
 

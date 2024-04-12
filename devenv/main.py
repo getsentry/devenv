@@ -10,6 +10,7 @@ from typing import TypeAlias
 
 from devenv import bootstrap
 from devenv import doctor
+from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import CI
@@ -81,10 +82,11 @@ def parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
     parser.add_argument(
         "command",
-        choices=("bootstrap", "doctor", "sync", "pin-gha"),
+        choices=("bootstrap", "fetch", "doctor", "sync", "pin-gha"),
         metavar="COMMAND",
         help=f"""\
 bootstrap - {bootstrap.help}
+fetch     - {fetch.help}
 doctor    - {doctor.help}
 sync      - {sync.help}
 pin-gha   - {pin_gha.help}
@@ -114,6 +116,9 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     if args.command == "bootstrap":
         return bootstrap.main(coderoot, remainder)
+
+    if args.command == "fetch":
+        return fetch.main(coderoot, remainder)
 
     if not args.nocoderoot and not os.getcwd().startswith(coderoot):
         print(
