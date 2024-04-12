@@ -17,7 +17,7 @@ ExitCode: TypeAlias = "str | int | None"
 
 
 def _fetch(
-    coderoot: str, repo: str, noauth: bool = False, sync: bool = True
+    coderoot: str, repo: str, auth: bool = True, sync: bool = True
 ) -> None:
     org, slug = repo.split("/")
 
@@ -30,15 +30,15 @@ def _fetch(
     print(f"fetching {repo} into {codepath}")
 
     additional_args = (
-        (
+        (f"git@github.com:{repo}",)
+        if auth
+        else (
             "--depth",
             "1",
             "--single-branch",
             f"--branch={os.environ['SENTRY_BRANCH']}",
             f"https://github.com/{repo}",
         )
-        if noauth
-        else (f"git@github.com:{repo}",)
     )
 
     proc.run(
@@ -74,11 +74,9 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     """
         )
     elif args.repo == "sentry":
-        _fetch(coderoot, "getsentry/sentry", noauth=CI is not None, sync=False)
-
-        bootstrap_getsentry = not CI and not EXTERNAL_CONTRIBUTOR
-        if bootstrap_getsentry:
-            _fetch(coderoot, "getsentry/getsentry", sync=False)
+        # git@ clones forces the use of cloning through SSH which is what we want,
+        # though CI must clone open source repos via https (no git authentication)
+        _fetch(coderoot, "getsentry/sentry", auth=CI is None, sync=False)
 
         print("Installing sentry's brew dependencies...")
         if CI:
@@ -99,11 +97,8 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
             cwd=f"{coderoot}/sentry",
         )
 
-        if bootstrap_getsentry:
-            proc.run(
-                (sys.executable, "-P", "-m", "devenv", "sync"),
-                cwd=f"{coderoot}/getsentry",
-            )
+        if not CI and not EXTERNAL_CONTRIBUTOR:
+            _fetch(coderoot, "getsentry/getsentry")
 
         print(
             f"""
