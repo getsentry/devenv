@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import configparser
 import os
 from collections.abc import Sequence
-from typing import cast
-from typing import Optional
 from typing import TypeAlias
 
 from devenv import bootstrap
@@ -13,63 +10,12 @@ from devenv import doctor
 from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
-from devenv.constants import CI
 from devenv.constants import home
+from devenv.context import Context
+from devenv.lib.config import get_config
 from devenv.lib.fs import gitroot
 
 ExitCode: TypeAlias = "str | int | None"
-
-# comments are used as input prompts for initial config
-Config: TypeAlias = "dict[str, dict[str, str | None]]"
-DEFAULT_CONFIG = dict(
-    devenv={
-        "# please enter the root directory you want to work in": None,
-        "coderoot": "~/code",
-    }
-)
-
-
-def initialize_config(config_path: str, defaults: Config) -> None:
-    if os.path.exists(config_path):
-        # todo: query for any config options not in  the existing config file
-        return
-
-    config = configparser.ConfigParser(allow_no_value=True)
-    config.read_dict(defaults)
-
-    if not CI:
-        for section, values in config.items():
-            for var, _val in values.items():
-                if section == "devenv" and var == "coderoot":
-                    # this is a special case used to make the transition from existing
-                    # dev environments easier as we can guess the desired coderoot if
-                    # devenv is run inside of a git repo
-                    try:
-                        reporoot = gitroot()
-                    except RuntimeError:
-                        pass
-                    else:
-                        coderoot = os.path.abspath(f"{reporoot}/..")
-                        print(f"\nWe autodetected a coderoot: {coderoot}")
-                        config.set(section, var, coderoot)
-                        continue
-
-                # typshed doesn't account for `allow_no_value`
-                val = cast(Optional[str], _val)
-                if val is None:
-                    print(var.strip("# "), end="")
-                else:
-                    try:
-                        val = input(f" [{val}]: ") or val
-                    except EOFError:
-                        # noninterative, use the defaults
-                        print()
-                    config.set(section, var, val)
-    print("Thank you. Saving answers.")
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    with open(config_path, "w") as f:
-        config.write(f)
-    print(f"If you made a mistake, you can edit {config_path}.")
 
 
 class CustomHelpFormat(
@@ -82,7 +28,7 @@ def parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
     parser.add_argument(
         "command",
-        choices=("bootstrap", "fetch", "doctor", "sync", "pin-gha"),
+        choices=("bootstrap", "fetch", "doctor", "sync", "pin-gha", "whereami"),
         metavar="COMMAND",
         help=f"""\
 bootstrap - {bootstrap.help}
@@ -101,48 +47,65 @@ pin-gha   - {pin_gha.help}
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
+    # determine current repo, if applicable
+    fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
+    if fake_reporoot:
+        current_root = fake_reporoot
+    else:
+        try:
+            current_root = gitroot()
+        except RuntimeError:
+            current_root = None
+
+    current_repo = current_root.split("/")[-1] if current_root else None
+
+    # Guessing temporary code root based on current location
+    code_root = (
+        os.path.abspath(f"{current_root}/..") if current_root else os.getcwd()
+    )
+
+    # context for subcommands
+    context: Context = {"config_path": config_path, "code_root": code_root}
+
+    if current_repo is not None:
+        context["repo_name"] = current_repo
+
+    if current_root is not None:
+        context["repo_root"] = current_root
+
     args, remainder = parser().parse_known_args(argv[1:])
+
+    # Bootstrap runs before configuration loading -- because it's a bootstrap
+    if args.command == "bootstrap":
+        return bootstrap.main(context, remainder)
+
+    config = get_config(context["config_path"])
+
+    code_root = context["code_root"] = os.path.expanduser(
+        config["devenv"]["coderoot"]
+    )
 
     # generic/standalone tools that do not care about devenv configuration
     if args.command == "pin-gha":
-        return pin_gha.main(remainder)
-
-    initialize_config(config_path, DEFAULT_CONFIG)
-    config = configparser.ConfigParser(allow_no_value=True)
-    config.read(config_path)
-
-    coderoot = os.path.expanduser(config["devenv"]["coderoot"])
-    os.makedirs(coderoot, exist_ok=True)
-
-    if args.command == "bootstrap":
-        return bootstrap.main(coderoot, remainder)
+        return pin_gha.main(context, remainder)
 
     if args.command == "fetch":
-        return fetch.main(coderoot, remainder)
+        return fetch.main(context, remainder)
 
-    if not args.nocoderoot and not os.getcwd().startswith(coderoot):
+    if not args.nocoderoot and not os.getcwd().startswith(code_root):
         print(
-            f"You aren't in your code root ({coderoot})!\n"
+            f"You aren't in your code root ({code_root})!\n"
             "To ignore, use devenv --nocoderoot [COMMAND]\n"
             f"To change your code root, you can edit {config_path}.\n"
         )
         return 1
 
-    # the remaining tools are repo-specific
-    reporoot = gitroot()
-
-    fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
-    if fake_reporoot:
-        reporoot = fake_reporoot
-
-    repo = reporoot.split("/")[-1]
-    context = {"repo": repo, "reporoot": reporoot}
-
     if args.command == "doctor":
         return doctor.main(context, remainder)
     if args.command == "sync":
         return sync.main(context, remainder)
-
+    if args.command == "whereami":
+        print(context)
     return 1
 
 

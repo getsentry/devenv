@@ -13,6 +13,7 @@ from types import ModuleType
 from typing import Dict
 from typing import List
 
+from devenv.context import Context
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
@@ -74,7 +75,7 @@ class Check:
         super().__init__()
 
 
-def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
+def load_checks(context: Context, match_tags: set[str]) -> List[Check]:
     """
     Load all checks from the checks directory.
     Optionally filter by tags.
@@ -82,7 +83,7 @@ def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
     """
     checks: list[Check] = []
     for module_finder, module_name, _ in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
+        (f'{context["repo_root"]}/devenv/checks',)
     ):
         module_spec = module_finder.find_spec(module_name, None)
 
@@ -158,7 +159,7 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
         return False, f"Fix threw a runtime exception: {e}"
 
 
-def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
+def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
         "--tag",
@@ -173,7 +174,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     match_tags: set[str] = set(args.tag if args.tag else ())
 
-    repo = context["repo"]
+    repo = context["repo_name"]
     if repo not in {"sentry", "getsentry", "devenv"}:
         print(f"repo {repo} not supported yet!")
         return 1

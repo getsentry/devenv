@@ -6,6 +6,8 @@ import subprocess
 from collections.abc import Sequence
 from functools import lru_cache
 
+from devenv.context import Context
+
 help = "Pins github actions."
 
 
@@ -37,7 +39,7 @@ def extract_repo(action: str) -> str:
     return f"{parts[0]}/{parts[1]}"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "files", nargs="+", type=str, help="path to github actions file"
