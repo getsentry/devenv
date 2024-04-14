@@ -4,28 +4,35 @@ import importlib.util
 import os
 from collections.abc import Sequence
 
-from devenv.context import Context
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import require_repo
 
-help = "Resyncs the environment."
 
-
+@require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
-    repo_root = context["repo_root"]
+    repo = context["repo"]
+    assert repo is not None
 
-    if not os.path.exists(f"{repo_root}/devenv/sync.py"):
-        print(f"{repo_root}/devenv/sync.py not found!")
+    if not os.path.exists(f"{repo.config_path}/sync.py"):
+        print(f"{repo.config_path}/sync.py not found!")
         return 1
 
     spec = importlib.util.spec_from_file_location(
-        "sync", f"{repo_root}/devenv/sync.py"
+        "sync", f"{repo.config_path}/sync.py"
     )
+
     module = importlib.util.module_from_spec(spec)  # type: ignore
     spec.loader.exec_module(module)  # type: ignore
 
     context_compat = {
-        **context,
-        "reporoot": context.get("repo_root"),
-        "repo": context.get("repo_name"),
+        "reporoot": repo.path,
+        "repo": repo.name,
         "coderoot": context.get("code_root"),
     }
     return module.main(context_compat)  # type: ignore
+
+
+module_info = DevModuleInfo(
+    action=main, name=__name__, command="sync", help="Resyncs the environment."
+)

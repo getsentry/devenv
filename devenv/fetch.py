@@ -4,28 +4,22 @@ import argparse
 import os
 import sys
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import homebrew_bin
-from devenv.context import Context
 from devenv.lib import proc
-
-help = "Fetches a respository"
-
-ExitCode: TypeAlias = "str | int | None"
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
 
 def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
+    parser = argparse.ArgumentParser()
+
     parser.add_argument(
-        "repo",
-        type=str,
-        nargs="?",
-        default="sentry",
-        help="the repository to fetch e.g., getsentry/sentry",
+        "repo", type=str, help="the repository to fetch e.g., getsentry/sentry"
     )
 
     args = parser.parse_args(argv)
@@ -128,3 +122,8 @@ def fetch(
 
     if sync:
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
+
+
+module_info = DevModuleInfo(
+    action=main, name=__name__, command="fetch", help="Fetches a respository"
+)

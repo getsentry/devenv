@@ -4,11 +4,9 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.context import Context
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
@@ -16,13 +14,13 @@ from devenv.lib import proc
 from devenv.lib.config import Config
 from devenv.lib.config import DEFAULT_CONFIG
 from devenv.lib.config import initialize_config
-
-help = "Bootstraps the development environment."
-ExitCode: TypeAlias = "str | int | None"
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
 
 def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
+    parser = argparse.ArgumentParser()
     parser.parse_args(argv)
 
     default_config: Config = {**DEFAULT_CONFIG}
@@ -91,3 +89,11 @@ e.g., devenv fetch sentry or devenv fetch ops
     )
 
     return 0
+
+
+module_info = DevModuleInfo(
+    action=main,
+    name=__name__,
+    command="bootstrap",
+    help="Bootstraps the development environment.",
+)

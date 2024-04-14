@@ -5,32 +5,19 @@ import os
 import pytest
 
 from devenv import doctor
-from devenv.context import Context
+from devenv.lib.context import Context
+from devenv.lib.repository import Repository
 
-_default_context: Context = {
-    "code_root": "",
-    "repo_root": "",
-    "repo_name": "",
-    "config_path": "",
-}
+_default_context: Context = {"code_root": "", "config_path": "", "repo": None}
 
 
 def test_load_checks_no_checks() -> None:
-    assert (
-        doctor.load_checks(
-            {**_default_context, "repo_root": "not a real path"}, set()
-        )
-        == []
-    )
+    assert doctor.load_checks(Repository("not a real repository"), set()) == []
 
 
 def test_load_checks_test_checks(capsys: pytest.CaptureFixture[str]) -> None:
     loaded_checks = doctor.load_checks(
-        {
-            **_default_context,
-            "repo_root": os.path.join(os.path.dirname(__file__)),
-        },
-        set(),
+        Repository(os.path.join(os.path.dirname(__file__))), set()
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 5
@@ -40,6 +27,7 @@ def test_load_checks_test_checks(capsys: pytest.CaptureFixture[str]) -> None:
     assert "broken check" in loaded_check_names
     assert "broken fix" in loaded_check_names
     captured = capsys.readouterr()
+
     assert (
         captured.out
         == """⚠️ Skipping bad_check: `check(...)` should return a tuple of (bool, str)
@@ -52,11 +40,7 @@ def test_load_checks_test_checks(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_load_checks_only_passing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            **_default_context,
-            "repo_root": os.path.join(os.path.dirname(__file__)),
-        },
-        {"pass"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"pass"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 1
@@ -65,11 +49,7 @@ def test_load_checks_only_passing_tag() -> None:
 
 def test_load_checks_only_failing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            **_default_context,
-            "repo_root": os.path.join(os.path.dirname(__file__)),
-        },
-        {"fail"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"fail"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 2
@@ -79,11 +59,7 @@ def test_load_checks_only_failing_tag() -> None:
 
 def test_load_checks_passing_and_failing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            **_default_context,
-            "repo_root": os.path.join(os.path.dirname(__file__)),
-        },
-        {"pass", "fail"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"pass", "fail"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 0
@@ -91,11 +67,7 @@ def test_load_checks_passing_and_failing_tag() -> None:
 
 def test_load_checks_test_tag() -> None:
     loaded_checks = doctor.load_checks(
-        {
-            **_default_context,
-            "repo_root": os.path.join(os.path.dirname(__file__)),
-        },
-        {"test"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"test"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 5

@@ -6,9 +6,8 @@ import subprocess
 from collections.abc import Sequence
 from functools import lru_cache
 
-from devenv.context import Context
-
-help = "Pins github actions."
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
 
 
 @lru_cache(maxsize=None)
@@ -69,3 +68,8 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
             f.writelines(newlines)
 
     return 0
+
+
+module_info = DevModuleInfo(
+    action=main, name=__name__, command="pin_gha", help="Pins github actions."
+)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 from collections.abc import Sequence
-from typing import TypeAlias
+from typing import cast
 
 from devenv import bootstrap
 from devenv import doctor
@@ -11,39 +11,11 @@ from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import home
-from devenv.context import Context
-from devenv.lib.config import get_config
+from devenv.lib.config import read_config
+from devenv.lib.context import Context
 from devenv.lib.fs import gitroot
-
-ExitCode: TypeAlias = "str | int | None"
-
-
-class CustomHelpFormat(
-    argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
-):
-    pass
-
-
-def parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
-    parser.add_argument(
-        "command",
-        choices=("bootstrap", "fetch", "doctor", "sync", "pin-gha", "whereami"),
-        metavar="COMMAND",
-        help=f"""\
-bootstrap - {bootstrap.help}
-fetch     - {fetch.help}
-doctor    - {doctor.help}
-sync      - {sync.help}
-pin-gha   - {pin_gha.help}
-""",
-    )
-    parser.add_argument(
-        "--nocoderoot",
-        action="store_true",
-        help="Do not require being in coderoot.",
-    )
-    return parser
+from devenv.lib.modules import ExitCode
+from devenv.lib.repository import Repository
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
@@ -57,61 +29,52 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
         except RuntimeError:
             current_root = None
 
-    current_repo = current_root.split("/")[-1] if current_root else None
+    # This may or may not exist
+    config = read_config(config_path)
 
-    # Guessing temporary code root based on current location
-    code_root = (
-        os.path.abspath(f"{current_root}/..") if current_root else os.getcwd()
+    # Guessing temporary code root
+    code_root = config.get("devenv", "coderoot", fallback=None) or (
+        os.path.abspath(f"{current_root}/..")
+        if current_root
+        else os.path.expanduser("~/code")
     )
+
+    modinfo_list = [
+        (module.__name__, module.module_info)
+        for module in [bootstrap, fetch, doctor, pin_gha, sync]
+        if hasattr(module, "module_info")
+    ]
+
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers(
+        title=argparse.SUPPRESS, metavar="command", dest="module", required=True
+    )
+
+    for name, info in modinfo_list:
+        # Argparse stuff
+        child = subparser.add_parser(info.command, help=info.help)
+        child.add_argument(
+            "--xixax",
+            dest="_module_exec",
+            default=info.action,
+            required=False,
+            help=argparse.SUPPRESS,
+        )
+
+    args, remainder = parser.parse_known_args(argv[1:])
 
     # context for subcommands
-    context: Context = {"config_path": config_path, "code_root": code_root}
+    context: Context = {
+        "config_path": config_path,
+        "code_root": code_root,
+        "repo": Repository(current_root) if current_root else None,
+    }
 
-    if current_repo is not None:
-        context["repo_name"] = current_repo
-
-    if current_root is not None:
-        context["repo_root"] = current_root
-
-    args, remainder = parser().parse_known_args(argv[1:])
-
-    # Bootstrap runs before configuration loading -- because it's a bootstrap
-    if args.command == "bootstrap":
-        return bootstrap.main(context, remainder)
-
-    config = get_config(context["config_path"])
-
-    code_root = context["code_root"] = os.path.expanduser(
-        config["devenv"]["coderoot"]
-    )
-
-    # generic/standalone tools that do not care about devenv configuration
-    if args.command == "pin-gha":
-        return pin_gha.main(context, remainder)
-
-    if args.command == "fetch":
-        return fetch.main(context, remainder)
-
-    if not args.nocoderoot and not os.getcwd().startswith(code_root):
-        print(
-            f"You aren't in your code root ({code_root})!\n"
-            "To ignore, use devenv --nocoderoot [COMMAND]\n"
-            f"To change your code root, you can edit {config_path}.\n"
-        )
-        return 1
-
-    if args.command == "doctor":
-        return doctor.main(context, remainder)
-    if args.command == "sync":
-        return sync.main(context, remainder)
-    if args.command == "whereami":
-        print(context)
-    return 1
+    return cast(ExitCode, args._module_exec(context, remainder))
 
 
 def main() -> ExitCode:
     import sys
-
     import sentry_sdk
 
     sentry_sdk.init(
