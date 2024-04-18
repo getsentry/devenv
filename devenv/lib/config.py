@@ -8,10 +8,18 @@ from devenv.constants import MACHINE
 
 
 @functools.lru_cache(maxsize=None)
-def get_repo(reporoot: str) -> configparser.ConfigParser:
+def get_config(path: str) -> configparser.ConfigParser:
+    """Reads a configuration file from disk, with caching"""
     config = configparser.ConfigParser()
-    config.read(f"{reporoot}/devenv/config.ini")
+    config.read(path)
     return config
+
+
+def get_repo(reporoot: str) -> configparser.ConfigParser:
+    """Deprecated"""
+    from devenv.lib.repository import Repository
+
+    return Repository(reporoot).config()
 
 
 def get_python(reporoot: str, python_version: str) -> tuple[str, str]:

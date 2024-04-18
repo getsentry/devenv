@@ -14,6 +14,7 @@ EOF
 
 : PATH: "$PATH"
 
+cd "$HOME"
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
 devenv bootstrap
