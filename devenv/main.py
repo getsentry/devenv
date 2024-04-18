@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 from collections.abc import Sequence
-from typing import TypeAlias
+from typing import cast
 
 from devenv import bootstrap
 from devenv import doctor
@@ -12,47 +12,13 @@ from devenv import pin_gha
 from devenv import sync
 from devenv.constants import home
 from devenv.lib.config import read_config
+from devenv.lib.context import Context
 from devenv.lib.fs import gitroot
-
-ExitCode: TypeAlias = "str | int | None"
-Config: TypeAlias = "dict[str, dict[str, str | None]]"
-
-
-class CustomHelpFormat(
-    argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
-):
-    pass
-
-
-def parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(formatter_class=CustomHelpFormat)
-    parser.add_argument(
-        "command",
-        choices=("bootstrap", "fetch", "doctor", "sync", "pin-gha"),
-        metavar="COMMAND",
-        help=f"""\
-bootstrap - {bootstrap.help}
-fetch     - {fetch.help}
-doctor    - {doctor.help}
-sync      - {sync.help}
-pin-gha   - {pin_gha.help}
-""",
-    )
-    parser.add_argument(
-        "--nocoderoot",
-        action="store_true",
-        help="Do not require being in coderoot.",
-    )
-    return parser
+from devenv.lib.modules import ExitCode
+from devenv.lib.repository import Repository
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
-    args, remainder = parser().parse_known_args(argv[1:])
-
-    # generic/standalone tools that do not care about devenv configuration
-    if args.command == "pin-gha":
-        return pin_gha.main(remainder)
-
     # determine current repo, if applicable
     fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
     if fake_reporoot:
@@ -67,47 +33,48 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     config = read_config(config_path)
 
     # Guessing temporary code root
-    coderoot = config.get("devenv", "coderoot", fallback=None) or (
+    code_root = config.get("devenv", "coderoot", fallback=None) or (
         os.path.abspath(f"{current_root}/..")
         if current_root
         else os.path.expanduser("~/code")
     )
 
-    if args.command == "bootstrap":
-        return bootstrap.main(config_path, coderoot, remainder)
+    modinfo_list = [
+        (module.__name__, module.module_info)
+        for module in [bootstrap, fetch, doctor, pin_gha, sync]
+        if hasattr(module, "module_info")
+    ]
 
-    if args.command == "fetch":
-        return fetch.main(coderoot, remainder)
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers(
+        title=argparse.SUPPRESS, metavar="command", dest="module", required=True
+    )
 
-    if not args.nocoderoot and not os.getcwd().startswith(coderoot):
-        print(
-            f"You aren't in your code root ({coderoot})!\n"
-            "To ignore, use devenv --nocoderoot [COMMAND]\n"
-            f"To change your code root, you can edit {config_path}.\n"
+    for name, info in modinfo_list:
+        # Argparse stuff
+        child = subparser.add_parser(info.command, help=info.help)
+        child.add_argument(
+            "--xixax",
+            dest="_module_exec",
+            default=info.action,
+            required=False,
+            help=argparse.SUPPRESS,
         )
-        return 1
 
-    # the remaining tools are repo-specific
-    reporoot = gitroot()
+    args, remainder = parser.parse_known_args(argv[1:])
 
-    fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
-    if fake_reporoot:
-        reporoot = fake_reporoot
+    # context for subcommands
+    context: Context = {
+        "config_path": config_path,
+        "code_root": code_root,
+        "repo": Repository(current_root) if current_root else None,
+    }
 
-    repo = reporoot.split("/")[-1]
-    context = {"repo": repo, "reporoot": reporoot}
-
-    if args.command == "doctor":
-        return doctor.main(context, remainder)
-    if args.command == "sync":
-        return sync.main(context, remainder)
-
-    return 1
+    return cast(ExitCode, args._module_exec(context, remainder))
 
 
 def main() -> ExitCode:
     import sys
-
     import sentry_sdk
 
     sentry_sdk.init(
