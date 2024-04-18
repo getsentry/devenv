@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from devenv.lib import config
 from devenv.lib import venv
+from devenv.lib.repository import Repository
 
 mock_config = """
 [venv.sentry-kube]
@@ -34,24 +35,25 @@ linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504c
 
 
 def test_get_ensure(tmp_path: pathlib.Path) -> None:
-    reporoot = f"{tmp_path}/ops"
-    os.makedirs(f"{reporoot}/devenv")
-    with open(f"{reporoot}/devenv/config.ini", "w") as f:
+    repo = Repository(f"{tmp_path}/ops")
+
+    os.makedirs(f"{repo.config_path}")
+    with open(f"{repo.config_path}/config.ini", "w") as f:
         f.write(mock_config)
 
     venv_dir, python_version, requirements, editable_paths, bins = venv.get(
-        reporoot, "sentry-kube"
+        repo.path, "sentry-kube"
     )
 
     assert (venv_dir, python_version, requirements, editable_paths, bins) == (
-        f"{reporoot}/.venv-sentry-kube",
+        f"{repo.path}/.venv-sentry-kube",
         "3.11.6",
-        f"{reporoot}/k8s/cli/requirements.txt",
-        (f"{reporoot}/k8s/cli", f"{reporoot}/k8s/cli/libsentrykube"),
+        f"{repo.path}/k8s/cli/requirements.txt",
+        (f"{repo.path}/k8s/cli", f"{repo.path}/k8s/cli/libsentrykube"),
         ("pre-commit", "pyupgrade", "sentry-kube", "sentry-kube-pop"),
     )
 
-    url, sha256 = config.get_python(reporoot, python_version)
+    url, sha256 = config.get_python(repo.path, python_version)
 
     with patch("devenv.lib.venv.proc.run") as mock_run, patch(
         "devenv.lib.venv.pythons.get", return_value="python"
