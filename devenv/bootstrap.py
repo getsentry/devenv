@@ -4,7 +4,6 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import EXTERNAL_CONTRIBUTOR
@@ -13,22 +12,32 @@ from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
 from devenv.lib.config import Config
-from devenv.lib.config import DEFAULT_CONFIG
 from devenv.lib.config import initialize_config
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
-help = "Bootstraps the development environment."
-ExitCode: TypeAlias = "str | int | None"
 
+def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-d",
+        "--default-config",
+        action="append",
+        help="Provide a default config value. e.g., -s coderoot:path/to/root",
+    )
 
-def main(
-    config_path: str, coderoot: str, argv: Sequence[str] | None = None
-) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
-    parser.parse_args(argv)
+    args = parser.parse_args(argv)
 
-    default_config: Config = {**DEFAULT_CONFIG}
-    default_config["devenv"].update({"coderoot": coderoot})
-    initialize_config(config_path, default_config)
+    configs = {
+        k: v for k, v in [i.split(":") for i in args.default_config or []]
+    }
+
+    if "coderoot" not in configs and "code_root" in context:
+        configs["coderoot"] = context["code_root"]
+
+    default_config: Config = {"devenv": configs}
+    initialize_config(context["config_path"], default_config)
 
     if not CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -80,7 +89,7 @@ When done, hit ENTER to continue.
     brew.install()
     direnv.install()
 
-    os.makedirs(coderoot, exist_ok=True)
+    os.makedirs(context["code_root"], exist_ok=True)
 
     print(
         """
@@ -92,3 +101,11 @@ e.g., devenv fetch sentry or devenv fetch ops
     )
 
     return 0
+
+
+module_info = DevModuleInfo(
+    action=main,
+    name=__name__,
+    command="bootstrap",
+    help="Bootstraps the development environment.",
+)
