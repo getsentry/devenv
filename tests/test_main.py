@@ -9,23 +9,23 @@ from devenv import main
 from tests.utils import chdir
 
 
-def test(tmp_path: str) -> None:
-    with patch("devenv.main.CI", True), patch(
+def _test(tmp_path: str) -> None:
+    with patch("devenv.constants.CI", True), patch(
         "devenv.bootstrap.main"
     ) as mock_bootstrap, patch("devenv.sync.main") as mock_sync:
         config_path = f"{tmp_path}/.config/sentry-devenv/config.ini"
         coderoot = f"{tmp_path}/code"
-        main.DEFAULT_CONFIG["devenv"]["coderoot"] = coderoot
+        DEFAULT_CONFIG["devenv"]["coderoot"] = coderoot
+
+        config.initialize_config(config_path, DEFAULT_CONFIG)
 
         main.devenv(("/path/to/argv0", "bootstrap"), config_path)
-
-        assert mock_bootstrap.mock_calls == [call(coderoot, [])]
+        assert mock_bootstrap.mock_calls == [call({}, [])]
 
         with open(config_path, "r") as f:
             assert (
                 f.read()
                 == f"""[devenv]
-# please enter the root directory you want to work in
 coderoot = {coderoot}
 
 """

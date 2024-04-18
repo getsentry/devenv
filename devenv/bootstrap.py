@@ -4,7 +4,6 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import EXTERNAL_CONTRIBUTOR
@@ -12,14 +11,20 @@ from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
+from devenv.lib.config import Config
+from devenv.lib.config import DEFAULT_CONFIG
+from devenv.lib.config import initialize_config
 
 help = "Bootstraps the development environment."
 ExitCode: TypeAlias = "str | int | None"
 
-
 def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     parser = argparse.ArgumentParser(description=help)
     parser.parse_args(argv)
+
+    default_config: Config = {**DEFAULT_CONFIG}
+    default_config["devenv"].update({"coderoot": context["code_root"]})
+    initialize_config(context["config_path"], default_config)
 
     if not CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
