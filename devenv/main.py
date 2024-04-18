@@ -3,8 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 from collections.abc import Sequence
-from typing import cast
-from typing import Optional
 from typing import TypeAlias
 
 from devenv import bootstrap
@@ -15,8 +13,11 @@ from devenv import sync
 from devenv.constants import home
 from devenv.lib.config import read_config
 from devenv.lib.fs import gitroot
+
 ExitCode: TypeAlias = "str | int | None"
 Config: TypeAlias = "dict[str, dict[str, str | None]]"
+
+
 class CustomHelpFormat(
     argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter
 ):
@@ -52,7 +53,6 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     if args.command == "pin-gha":
         return pin_gha.main(remainder)
 
-
     # determine current repo, if applicable
     fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
     if fake_reporoot:
@@ -67,14 +67,14 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     config = read_config(config_path)
 
     # Guessing temporary code root
-    code_root = config.get("devenv", "coderoot", fallback=None) or (
+    coderoot = config.get("devenv", "coderoot", fallback=None) or (
         os.path.abspath(f"{current_root}/..")
         if current_root
         else os.path.expanduser("~/code")
     )
 
     if args.command == "bootstrap":
-        return bootstrap.main(coderoot, remainder)
+        return bootstrap.main(config_path, coderoot, remainder)
 
     if args.command == "fetch":
         return fetch.main(coderoot, remainder)

@@ -17,7 +17,7 @@ class ConfigOpt:
     name: str
     prompt: str
     formatter: Callable[[str], str] | None = None
-    default: Callable[[], str] | None = None
+    default: Callable[[], str] = lambda: ""
 
 
 def _path_formatter(path: str) -> str:
@@ -55,7 +55,11 @@ def initialize_config(config_path: str, defaults: Config) -> None:
             opts = CONFIG_OPTS.get(var)
 
             val: str = config.get(
-                section, var, fallback=opts.default() if _val is None else _val
+                section,
+                var,
+                fallback=(opts.default() if opts else "")
+                if _val is None
+                else _val,
             )
 
             if not CI:

@@ -6,6 +6,8 @@ from unittest.mock import call
 from unittest.mock import patch
 
 from devenv import main
+from devenv.lib import config
+from devenv.lib.config import DEFAULT_CONFIG
 from tests.utils import chdir
 
 
