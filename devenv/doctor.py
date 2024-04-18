@@ -13,6 +13,7 @@ from types import ModuleType
 from typing import Dict
 from typing import List
 
+from devenv.lib.repository import Repository
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
@@ -74,15 +75,16 @@ class Check:
         super().__init__()
 
 
-def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
+def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
     """
     Load all checks from the checks directory.
     Optionally filter by tags.
     If a check doesn't have the required attributes, skip it.
     """
     checks: list[Check] = []
+
     for module_finder, module_name, _ in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
+        (f"{repo.config_path}/checks",)
     ):
         module_spec = module_finder.find_spec(module_name, None)
 
@@ -178,7 +180,7 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
         print(f"repo {repo} not supported yet!")
         return 1
 
-    checks = load_checks(context, match_tags)
+    checks = load_checks(Repository(repo), match_tags)
 
     if not checks:
         print(f"No checks found for tags: {args.tag}")
