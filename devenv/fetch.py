@@ -4,39 +4,36 @@ import argparse
 import os
 import sys
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
 from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import homebrew_bin
 from devenv.lib import proc
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
-help = "Fetches a respository"
-ExitCode: TypeAlias = "str | int | None"
 
+def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
+    parser = argparse.ArgumentParser()
 
-def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
     parser.add_argument(
-        "repo",
-        type=str,
-        nargs="?",
-        default="sentry",
-        help="the repository to fetch e.g., getsentry/sentry",
+        "repo", type=str, help="the repository to fetch e.g., getsentry/sentry"
     )
 
     args = parser.parse_args(argv)
+    code_root = context["code_root"]
 
     if args.repo in ["ops", "getsentry/ops"]:
-        fetch(coderoot, "getsentry/ops")
-        fetch(coderoot, "getsentry/terraform-modules", sync=False)
+        fetch(code_root, "getsentry/ops")
+        fetch(code_root, "getsentry/terraform-modules", sync=False)
 
         print(
             f"""
     All done! Please close this terminal window and start a fresh one.
 
-    ops repo is at: {coderoot}/ops
+    ops repo is at: {code_root}/ops
     """
         )
     elif args.repo in [
@@ -47,7 +44,7 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
     ]:
         # git@ clones forces the use of cloning through SSH which is what we want,
         # though CI must clone open source repos via https (no git authentication)
-        fetch(coderoot, "getsentry/sentry", auth=CI is None, sync=False)
+        fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
 
         print("Installing sentry's brew dependencies...")
         if CI:
@@ -60,28 +57,28 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
                 proc.run(("brew", "install", "docker", "qemu"))
         else:
             proc.run(
-                (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
+                (f"{homebrew_bin}/brew", "bundle"), cwd=f"{code_root}/sentry"
             )
 
         proc.run(
             (sys.executable, "-P", "-m", "devenv", "sync"),
-            cwd=f"{coderoot}/sentry",
+            cwd=f"{code_root}/sentry",
         )
 
         if not CI and not EXTERNAL_CONTRIBUTOR:
-            fetch(coderoot, "getsentry/getsentry")
+            fetch(code_root, "getsentry/getsentry")
 
         print(
             f"""
     All done! Please close this terminal window and start a fresh one.
 
-    Sentry has been set up in {coderoot}/sentry. cd into it and you should
+    Sentry has been set up in {code_root}/sentry. cd into it and you should
     be able to run `sentry devserver`.
     """
         )
 
     else:
-        fetch(coderoot, args.repo)
+        fetch(code_root, args.repo)
 
     return 0
 
@@ -125,3 +122,8 @@ def fetch(
 
     if sync:
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
+
+
+module_info = DevModuleInfo(
+    action=main, name=__name__, command="fetch", help="Fetches a respository"
+)
