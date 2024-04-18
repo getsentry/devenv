@@ -3,22 +3,36 @@ from __future__ import annotations
 import importlib.util
 import os
 from collections.abc import Sequence
-from typing import Dict
+
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import require_repo
 
 
-help = "Resyncs the environment."
+@require_repo
+def main(context: Context, argv: Sequence[str] | None = None) -> int:
+    repo = context["repo"]
+    assert repo is not None
 
-
-def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
-    reporoot = context["reporoot"]
-
-    if not os.path.exists(f"{reporoot}/devenv/sync.py"):
-        print(f"{reporoot}/devenv/sync.py not found!")
+    if not os.path.exists(f"{repo.config_path}/sync.py"):
+        print(f"{repo.config_path}/sync.py not found!")
         return 1
 
     spec = importlib.util.spec_from_file_location(
-        "sync", f"{reporoot}/devenv/sync.py"
+        "sync", f"{repo.config_path}/sync.py"
     )
+
     module = importlib.util.module_from_spec(spec)  # type: ignore
     spec.loader.exec_module(module)  # type: ignore
-    return module.main(context)  # type: ignore
+
+    context_compat = {
+        "reporoot": repo.path,
+        "repo": repo.name,
+        "coderoot": context.get("code_root"),
+    }
+    return module.main(context_compat)  # type: ignore
+
+
+module_info = DevModuleInfo(
+    action=main, name=__name__, command="sync", help="Resyncs the environment."
+)
