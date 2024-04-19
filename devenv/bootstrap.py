@@ -24,13 +24,13 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "-d",
         "--default-config",
         action="append",
-        help="Provide a default config value. e.g., -s coderoot:path/to/root",
+        help="Provide a default config value. e.g., -d coderoot:path/to/root",
     )
 
     args = parser.parse_args(argv)
 
     configs = {
-        k: v for k, v in [i.split(":") for i in args.default_config or []]
+        k: v for k, v in [i.split(":", 1) for i in args.default_config or []]
     }
 
     if "coderoot" not in configs and "code_root" in context:
