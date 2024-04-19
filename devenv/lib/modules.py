@@ -24,8 +24,7 @@ def require(var: str, message: str) -> Callable[[Action], Action]:
     def outer(main: Action) -> Action:
         def inner(context: Context, args: Sequence[str] | None) -> ExitCode:
             if context.get(var) is None:
-                print(message)
-                return 1
+                raise SystemExit(message)
             return main(context, args)
 
         return inner
