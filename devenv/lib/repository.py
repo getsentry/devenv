@@ -8,10 +8,6 @@ from devenv.lib.fs import ensure_binroot
 
 
 class Repository:
-    path: str
-    name: str
-    config_path: str
-
     def __init__(self, root: str) -> None:
         self.path = root
         self.name = os.path.basename(root)
