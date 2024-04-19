@@ -33,8 +33,6 @@ CONFIG_OPTS = {
     )
 }
 
-DEFAULT_CONFIG: Config = {"devenv": {"coderoot": "~/code"}}
-
 Config: TypeAlias = "dict[str, dict[str, str | None]]"
 
 
