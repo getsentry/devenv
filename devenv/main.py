@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 from collections.abc import Sequence
-from typing import cast
 
 from devenv import bootstrap
 from devenv import doctor
@@ -14,6 +13,7 @@ from devenv.constants import home
 from devenv.lib.config import read_config
 from devenv.lib.context import Context
 from devenv.lib.fs import gitroot
+from devenv.lib.modules import DevModuleInfo
 from devenv.lib.modules import ExitCode
 from devenv.lib.repository import Repository
 
@@ -39,27 +39,25 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
         else os.path.expanduser("~/code")
     )
 
-    modinfo_list = [
-        (module.__name__, module.module_info)
+    modinfo_list: Sequence[DevModuleInfo] = [
+        module.module_info
         for module in [bootstrap, fetch, doctor, pin_gha, sync]
         if hasattr(module, "module_info")
     ]
 
+    # TODO: Search for modules in work repo
+
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(
-        title=argparse.SUPPRESS, metavar="command", dest="module", required=True
+        title=argparse.SUPPRESS,
+        metavar="command",
+        dest="command",
+        required=True,
     )
 
-    for name, info in modinfo_list:
+    for info in modinfo_list:
         # Argparse stuff
-        child = subparser.add_parser(info.command, help=info.help)
-        child.add_argument(
-            "--xixax",
-            dest="_module_exec",
-            default=info.action,
-            required=False,
-            help=argparse.SUPPRESS,
-        )
+        subparser.add_parser(info.command, help=info.help)
 
     args, remainder = parser.parse_known_args(argv[1:])
 
@@ -70,7 +68,10 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
         "repo": Repository(current_root) if current_root else None,
     }
 
-    return cast(ExitCode, args._module_exec(context, remainder))
+    command_actions = {info.command: info.action for info in modinfo_list}
+    action = command_actions.get(args.command)
+    assert action is not None
+    return action(context, remainder)
 
 
 def main() -> ExitCode:
