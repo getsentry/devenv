@@ -14,7 +14,7 @@ class Repository:
 
     def __init__(self, root: str) -> None:
         self.path = root
-        self.name = root.split("/")[-1]
+        self.name = os.path.basename(root)
 
         # .devenv may exist but not be config_path because .devenv/bin is hard-coded, so we check for config.ini
         if os.path.exists(f"{root}/.devenv/config.ini"):
@@ -27,9 +27,6 @@ class Repository:
             self.config_path = f"{root}/.devenv"
 
     def __repr__(self) -> str:
-        return self.config_path
-
-    def __str__(self) -> str:
         return f"Repository: {self.name}"
 
     def ensure_binroot(self) -> None:

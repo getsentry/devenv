@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from typing import TypeAlias
 from typing import TypedDict
 
 from devenv.lib.repository import Repository
 
-Path: TypeAlias = str
-
 
 class Context(TypedDict):
-    config_path: Path
-    code_root: Path
+    config_path: str
+    code_root: str
     repo: Repository | None
