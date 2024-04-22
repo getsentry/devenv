@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import os
 import sys
 from collections.abc import Sequence
@@ -11,18 +10,16 @@ from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import homebrew_bin
 from devenv.lib import proc
 from devenv.lib.context import Context
-from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import argument
+from devenv.lib.modules import command
 from devenv.lib.modules import ExitCode
+from devenv.lib.modules import ModuleDef
 
 
+@command("fetch", "Fetches a respository")
+@argument("repo the repository to fetch e.g., getsentry/sentry")
 def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "repo", type=str, help="the repository to fetch e.g., getsentry/sentry"
-    )
-
-    args = parser.parse_args(argv)
+    args = context["args"]
     code_root = context["code_root"]
 
     if args.repo in ["ops", "getsentry/ops"]:
@@ -84,11 +81,11 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
 
 def fetch(
-    coderoot: str, repo: str, auth: bool = True, sync: bool = True
+    code_root: str, repo: str, auth: bool = True, sync: bool = True
 ) -> None:
     org, slug = repo.split("/")
 
-    codepath = f"{coderoot}/{slug}"
+    codepath = f"{code_root}/{slug}"
 
     if os.path.exists(codepath):
         print(f"{codepath} already exists")
@@ -112,7 +109,7 @@ def fetch(
         (
             "git",
             "-C",
-            coderoot,
+            code_root,
             "clone",
             "--filter=blob:none",
             *additional_args,
@@ -124,6 +121,12 @@ def fetch(
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
 
 
-module_info = DevModuleInfo(
-    action=main, name=__name__, command="fetch", help="Fetches a respository"
-)
+#
+# module_info = DevModuleInfo(
+#     name=__name__,
+#     command=CommandInfo("fetch", main, "Fetches a respository", []),
+#     subcommands=[],
+# )
+
+
+module_info = ModuleDef(module_name=__name__, name="fetch", help="fetch")

@@ -5,10 +5,12 @@ import os
 from collections.abc import Sequence
 
 from devenv.lib.context import Context
-from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import command
+from devenv.lib.modules import ModuleDef
 from devenv.lib.modules import require_repo
 
 
+@command("sync", "Resyncs the environment.")
 @require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     repo = context["repo"]
@@ -33,6 +35,4 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     return module.main(context_compat)  # type: ignore
 
 
-module_info = DevModuleInfo(
-    action=main, name=__name__, command="sync", help="Resyncs the environment."
-)
+module_info = ModuleDef(module_name=__name__, name="sync", help="sync")

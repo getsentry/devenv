@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from devenv import doctor
+from devenv.commands import doctor
 from tests.doctor.devenv.checks import broken_check
 from tests.doctor.devenv.checks import failing_check
 from tests.doctor.devenv.checks import failing_check_with_msg

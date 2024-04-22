@@ -7,7 +7,8 @@ from collections.abc import Sequence
 from functools import lru_cache
 
 from devenv.lib.context import Context
-from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import command
+from devenv.lib.modules import ModuleDef
 
 
 @lru_cache(maxsize=None)
@@ -38,6 +39,7 @@ def extract_repo(action: str) -> str:
     return f"{parts[0]}/{parts[1]}"
 
 
+@command("pin-gha", "Pins github actions.")
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -70,6 +72,4 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-module_info = DevModuleInfo(
-    action=main, name=__name__, command="pin_gha", help="Pins github actions."
-)
+module_info = ModuleDef(module_name=__name__, name="pin_gha", help="Pins GHA")

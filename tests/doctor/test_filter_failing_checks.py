@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from devenv import doctor
+from devenv.commands import doctor
 from tests.doctor.devenv.checks import failing_check
 from tests.doctor.devenv.checks import passing_check
 

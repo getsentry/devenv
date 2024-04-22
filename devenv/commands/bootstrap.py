@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import argparse
 import os
 import shutil
 from collections.abc import Sequence
+from typing import cast
 
 from devenv.constants import CI
 from devenv.constants import EXTERNAL_CONTRIBUTOR
@@ -14,25 +14,33 @@ from devenv.lib import proc
 from devenv.lib.config import Config
 from devenv.lib.config import initialize_config
 from devenv.lib.context import Context
-from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import argument
+from devenv.lib.modules import command
 from devenv.lib.modules import ExitCode
+from devenv.lib.modules import ModuleDef
+from devenv.lib.modules import ParserFn
 
 
-def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d",
-        "--default-config",
-        action="append",
-        help="Provide a default config value. e.g., -d coderoot:path/to/root",
+@command("bootstrap", "Bootstraps the development environment.")
+@argument(
+    cast(
+        ParserFn,
+        lambda x: x.add_argument(
+            "-d",
+            "--default-config",
+            metavar="config:value",
+            required=False,
+            action="append",
+            help="Provide a default config value. e.g., -d coderoot:path/to/root",
+        ),
     )
-
-    args = parser.parse_args(argv)
+)
+def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
+    args = context["args"]
 
     configs = {
         k: v for k, v in [i.split(":", 1) for i in args.default_config or []]
     }
-
     if "coderoot" not in configs and "code_root" in context:
         configs["coderoot"] = context["code_root"]
 
@@ -103,9 +111,8 @@ e.g., devenv fetch sentry or devenv fetch ops
     return 0
 
 
-module_info = DevModuleInfo(
-    action=main,
-    name=__name__,
-    command="bootstrap",
+module_info = ModuleDef(
+    module_name=__name__,
+    name="bootstrap",
     help="Bootstraps the development environment.",
 )
