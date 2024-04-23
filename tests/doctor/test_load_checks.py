@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from devenv import doctor
+from devenv.commands import doctor
 from devenv.lib.repository import Repository
 
 

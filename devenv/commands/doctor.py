@@ -14,7 +14,8 @@ from typing import Dict
 from typing import List
 
 from devenv.lib.context import Context
-from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import command
+from devenv.lib.modules import ModuleDef
 from devenv.lib.modules import require_repo
 from devenv.lib.repository import Repository
 from devenv.lib_check.types import checker
@@ -161,6 +162,7 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
         return False, f"Fix threw a runtime exception: {e}"
 
 
+@command("doctor", "Diagnose common issues, and optionally try to fix them.")
 @require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
@@ -232,9 +234,8 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     return 1
 
 
-module_info = DevModuleInfo(
-    action=main,
-    name=__name__,
-    command="doctor",
-    help="Diagnose common issues, and optionally try to fix them.",
+module_info = ModuleDef(
+    module_name=__name__,
+    name="doctor",
+    help="Diagnose common issues, and optionally try to fix them",
 )
