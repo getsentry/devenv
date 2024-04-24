@@ -60,13 +60,9 @@ def initialize_config(config_path: str, defaults: Config) -> None:
                 else _val,
             )
 
-            if not CI:
+            if not CI and opts:
                 try:
-                    if opts:
-                        print(opts.prompt)
-                    else:
-                        print(f"{var}?")
-
+                    print(opts.prompt)
                     val = input(f" [{val}]: ") or val
                 except EOFError:
                     # noninterative, use the defaults

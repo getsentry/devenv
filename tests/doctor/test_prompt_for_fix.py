@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from devenv import doctor
+from devenv.commands import doctor
 from tests.doctor.devenv.checks import passing_check
 
 
