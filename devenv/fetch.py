@@ -108,17 +108,7 @@ def fetch(
         )
     )
 
-    proc.run(
-        (
-            "git",
-            "-C",
-            coderoot,
-            "clone",
-            "--filter=blob:none",
-            *additional_args,
-        ),
-        exit=True,
-    )
+    proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
 
     if sync:
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
