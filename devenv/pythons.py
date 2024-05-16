@@ -1,37 +1,28 @@
 from __future__ import annotations
 
 import os
-import shutil
-import subprocess
+import sys
 
 from devenv.constants import CI
 from devenv.constants import root
 from devenv.lib import archive
 
 
-def _check_version(exe: str, version: str) -> bool:
-    """Returns true if the executable at the given path is a python interpreter
-    with a semver-compatible version."""
+# Forces download of the python interpreter even if the system interpreter is
+# compatible with the requested version. By default, devenv uses system python
+# on CI.
+FORCE_PY = os.getenv("SENTRY_FORCE_PY", "").lower() in ("1", "true")
 
-    try:
-        line = (
-            subprocess.check_output([exe, "--version"], text=True)
-            .strip()
-            .lower()
-        )
-    except subprocess.CalledProcessError:
-        return False
 
-    if not line.startswith("python "):
-        return False
+def _is_sys_compatible(version: str) -> bool:
+    """Returns ``True`` if the current python interpreter is semver-compatible
+    with the given version."""
 
-    actual = line[7:].split(".")
-    expected = version.split(".")
+    expected = tuple(int(i) for i in version.split("."))
 
     return (
-        len(actual) > 2
-        and actual[:2] == expected[:2]
-        and actual[2] >= expected[2]
+        sys.version_info[:2] == expected[:2]
+        and sys.version_info[2] >= expected[2]
     )
 
 
@@ -41,10 +32,8 @@ def get(python_version: str, url: str, sha256: str) -> str:
     if os.path.exists(f"{unpack_into}/python/bin/python3"):
         return f"{unpack_into}/python/bin/python3"
 
-    if CI:
-        system_py = shutil.which("python3")
-        if system_py is not None and _check_version(system_py, python_version):
-            return system_py
+    if CI and not FORCE_PY and _is_sys_compatible(python_version):
+        return sys.executable
 
     archive_file = archive.download(url, sha256)
     archive.unpack(archive_file, unpack_into)
