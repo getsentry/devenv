@@ -131,3 +131,10 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
+
+    with open(f"{venv}/.gitignore", "w") as f:
+        f.write(
+            """*
+# automatically written by devenv
+"""
+        )
