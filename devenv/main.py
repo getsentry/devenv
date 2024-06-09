@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
+import sys
 from collections.abc import Sequence
 
 from devenv import bootstrap
@@ -75,40 +77,60 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
 
 def main() -> ExitCode:
-    import os
-    import sys
-
+    # this is also used to see if we're the child process
     script_logfile = os.environ.get("SCRIPT")
 
-    if not script_logfile:
-        import tempfile
+    if script_logfile:
+        return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
 
-        _, fp  = tempfile.mkstemp()
-        # script runs the subcommand with a tty, and tees the output to a file
-        # available on macos + linux
-        # the -F is important since otherwise some output isn't flushed by the time
-        # we send a sentry event, as this is a reexec wrapper and not a shell script
-        # this way we can very easily capture all output from devenv and send it
-        # to sentry as an attachment if an error occurs
-        cmd = ("/usr/bin/script", "-qeF", fp, *sys.argv)
-        os.execv(cmd[0], cmd)
+    import tempfile
 
+    _, fp = tempfile.mkstemp()
+    # script (macos/linux) runs the subcommand with a tty, and tees the output to a file.
+    # this way we can very easily capture all output from devenv and send it
+    # to sentry as an attachment if an error occurs.
+    cmd = ("/usr/bin/script", "-qe", fp, *sys.argv)
+
+    # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
+    # is that script must exit (so that the complete log file is committed to disk)
+    # before sentry sends the event.
+    rc = subprocess.call(cmd)
+
+    if rc == 0:
+        return rc
+
+    # we're just using sentry-sdk to send the contents of an attachment
+    # i'd love to be able to set it up in the child and retrieve the event id
+    # then upload the attachment to that event id in the parent process
     import sentry_sdk
+    from sentry_sdk.scope import Scope
+    import getpass
 
     sentry_sdk.init(
         # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
         dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
-        # enable performance monitoring
-        enable_tracing=True,
+        # disable performance monitoring
+        enable_tracing=False,
     )
 
-    with sentry_sdk.configure_scope() as scope:
-        scope.add_attachment(path=script_logfile)
+    scope = Scope.get_current_scope()
 
-    # the only way this is going to work is for script to exit, then send the event
-    # i guess i could do that in python land still, just with subprocess
+    # would really like to be able to set filename to the python exception title
+    # because seeing KeyboardInterrupt vs CalledProcessError is more helpful than
+    # "tmp29387ldf", but see above comment on event id
+    scope.add_attachment(path=fp)
 
-    return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
+    client = Scope.get_client()
+
+    user = getpass.getuser()
+    computer = client.options.get("server_name", "unknown")
+
+    # events are grouped under user@computer
+    scope.fingerprint = [f"{user}@{computer}"]
+
+    sentry_sdk.capture_message(f"{user}@{computer}")
+
+    return rc
 
 
 if __name__ == "__main__":
