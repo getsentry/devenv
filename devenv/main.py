@@ -75,7 +75,24 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
 
 def main() -> ExitCode:
+    import os
     import sys
+
+    script_logfile = os.environ.get("SCRIPT")
+
+    if not script_logfile:
+        import tempfile
+
+        _, fp  = tempfile.mkstemp()
+        # script runs the subcommand with a tty, and tees the output to a file
+        # available on macos + linux
+        # the -F is important since otherwise some output isn't flushed by the time
+        # we send a sentry event, as this is a reexec wrapper and not a shell script
+        # this way we can very easily capture all output from devenv and send it
+        # to sentry as an attachment if an error occurs
+        cmd = ("/usr/bin/script", "-qeF", fp, *sys.argv)
+        os.execv(cmd[0], cmd)
+
     import sentry_sdk
 
     sentry_sdk.init(
@@ -84,6 +101,12 @@ def main() -> ExitCode:
         # enable performance monitoring
         enable_tracing=True,
     )
+
+    with sentry_sdk.configure_scope() as scope:
+        scope.add_attachment(path=script_logfile)
+
+    # the only way this is going to work is for script to exit, then send the event
+    # i guess i could do that in python land still, just with subprocess
 
     return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
 
