@@ -93,15 +93,17 @@ def main() -> ExitCode:
 
     # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
     # is that script must exit (so that the complete log file is committed to disk)
-    # before sentry sends the event.
+    # before sentry sends the event...
     rc = subprocess.call(cmd)
 
     if rc == 0:
         return rc
 
-    # we're just using sentry-sdk to send the contents of an attachment
-    # i'd love to be able to set it up in the child and retrieve the event id
-    # then upload the attachment to that event id in the parent process
+    # i'd love to be able to send a full event in the child then
+    # upload the attachment to that event id in the parent, but unfortunately there's
+    # no easy way to add an attachment to an existing event,
+    # so we have to give up getting a python stacktrace,
+    # and can only use sentry-sdk to send an attachment.
     import sentry_sdk
     from sentry_sdk.scope import Scope
     import getpass
@@ -117,7 +119,7 @@ def main() -> ExitCode:
 
     # would really like to be able to set filename to the python exception title
     # because seeing KeyboardInterrupt vs CalledProcessError is more helpful than
-    # "tmp29387ldf", but see above comment on event id
+    # "tmp29387ldf", but see above comment
     scope.add_attachment(path=fp)
 
     client = Scope.get_client()
