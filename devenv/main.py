@@ -77,15 +77,38 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
 
 def main() -> ExitCode:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
+        dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
+        # disable performance monitoring
+        enable_tracing=False,
+    )
+
     # this is also used to see if we're the child process
     script_logfile = os.environ.get("SCRIPT")
 
     if script_logfile:
-        return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
+        rc = 0
+        try:
+            rc = devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
+        except Exception as e:
+            # TODO: remove all raise SystemExits
+            event_id = sentry_sdk.capture_exception(e)
+
+            # the parent needs to know about this event_id it can
+            # upload the attachment
+            # fifo f"{script_logfile}.fifo"
+
+        return rc
 
     import tempfile
 
     _, fp = tempfile.mkstemp()
+    fifo_fp = f"{fp}.fifo"
+    os.mkfifo(fifo_fp)
+
     # script (macos/linux) runs the subcommand with a tty, and tees the output to a file.
     # this way we can very easily capture all output from devenv and send it
     # to sentry as an attachment if an error occurs.
@@ -99,19 +122,13 @@ def main() -> ExitCode:
     if rc == 0:
         return rc
 
-    # we're just using sentry-sdk to send the contents of an attachment
-    # i'd love to be able to set it up in the child and retrieve the event id
-    # then upload the attachment to that event id in the parent process
-    import sentry_sdk
+    # read fifo_fp to get event id
+
+    # wait a minute its not possible to upload an attachment to an existing event id
+
     from sentry_sdk.scope import Scope
     import getpass
 
-    sentry_sdk.init(
-        # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
-        dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
-        # disable performance monitoring
-        enable_tracing=False,
-    )
 
     scope = Scope.get_current_scope()
 
