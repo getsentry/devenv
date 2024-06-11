@@ -10,6 +10,7 @@ SYSTEM = platform.system().lower()
 MACHINE = platform.machine()
 DARWIN = SYSTEM == "darwin"
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
+LINUX = SYSTEM == "linux"
 SHELL_UNSET = "(SHELL unset)"
 DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))
 EXTERNAL_CONTRIBUTOR = os.getenv("SENTRY_EXTERNAL_CONTRIBUTOR", "")
@@ -33,6 +34,9 @@ homebrew_bin = f"{homebrew_repo}/bin"
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"
+if LINUX:
+    homebrew_repo = "/home/linuxbrew/.linuxbrew"
+    homebrew_bin = f"{homebrew_repo}/bin"
 
 # compatibility with devenv <= 1.4.0
 # (used in sentry sync.py)
