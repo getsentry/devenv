@@ -130,7 +130,7 @@ def fetch(
             "--depth",
             "1",
             "--single-branch",
-            f"--branch={os.environ['SENTRY_BRANCH']}",
+            f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
             f"https://github.com/{repo}",
         )
     )
