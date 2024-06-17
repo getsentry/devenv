@@ -36,8 +36,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "getsentry/sentry",
         "getsentry/getsentry",
     ]:
-        # git@ clones forces the use of cloning through SSH which is what we want,
-        # though CI must clone open source repos via https (no git authentication)
         fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
 
         print("Installing sentry's brew dependencies...")
@@ -54,10 +52,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{code_root}/sentry"
             )
 
-        proc.run(
-            (sys.executable, "-P", "-m", "devenv", "sync"),
-            cwd=f"{code_root}/sentry",
-        )
+        fetch(code_root, "getsentry/sentry", auth=CI is None, sync=True)
 
         if not CI and not EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
@@ -72,21 +67,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "repo": repo.name,
         "coderoot": context.get("code_root"),
     }
-
-    if not os.path.exists(f"{repo.config_path}/sync.py"):
-        print(f"{repo.config_path}/sync.py not found!")
-        return 1
-
-    spec = importlib.util.spec_from_file_location(
-        "sync", f"{repo.config_path}/sync.py"
-    )
-
-    module = importlib.util.module_from_spec(spec)  # type: ignore
-    spec.loader.exec_module(module)  # type: ignore
-
-    rc = module.main(context_compat)
-    if rc != 0:
-        return 1
 
     # optional post-bootstrap, meant for recommended but not required defaults
     if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
@@ -125,6 +105,8 @@ def fetch(
     print(f"fetching {repo} into {codepath}")
 
     additional_args = (
+        # git@ clones forces the use of cloning through SSH which is what we want,
+        # though CI must clone open source repos via https (no git authentication)
         (f"git@github.com:{repo}",)
         if auth
         else (
