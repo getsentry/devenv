@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import sys
 from collections.abc import Sequence
@@ -28,14 +29,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     if args.repo in ["ops", "getsentry/ops"]:
         fetch(code_root, "getsentry/ops")
         fetch(code_root, "getsentry/terraform-modules", sync=False)
-
-        print(
-            f"""
-    All done! Please close this terminal window and start a fresh one.
-
-    ops repo is at: {code_root}/ops
-    """
-        )
     elif args.repo in [
         "sentry",
         "getsentry",
@@ -67,19 +60,48 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
         if not CI and not EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
-
-        print(
-            f"""
-    All done! Please close this terminal window and start a fresh one.
-
-    Sentry has been set up in {code_root}/sentry. cd into it and you should
-    be able to run `sentry devserver`.
-    """
-        )
-
     else:
         fetch(code_root, args.repo)
 
+    repo = context["repo"]
+    assert repo is not None
+
+    # optional post-bootstrap, meant for recommended but not required defaults
+    if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
+        spec = importlib.util.spec_from_file_location(
+            "post_bootstrap", f"{repo.config_path}/post_bootstrap.py"
+        )
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+
+    if not os.path.exists(f"{repo.config_path}/sync.py"):
+        print(f"{repo.config_path}/sync.py not found!")
+        return 1
+
+    spec = importlib.util.spec_from_file_location(
+        "sync", f"{repo.config_path}/sync.py"
+    )
+
+    module = importlib.util.module_from_spec(spec)  # type: ignore
+    spec.loader.exec_module(module)  # type: ignore
+
+    context_compat = {
+        "reporoot": repo.path,
+        "repo": repo.name,
+        "coderoot": context.get("code_root"),
+    }
+
+    rc = module.main(context_compat)
+    if rc != 0:
+        return 1
+
+    print(
+        f"""
+{repo.name} has been set up in {repo.path}!
+
+Please close this terminal window and start a fresh one.
+    """
+    )
     return 0
 
 
