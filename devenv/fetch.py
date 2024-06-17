@@ -66,13 +66,24 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     repo = context["repo"]
     assert repo is not None
 
+    context_compat = {
+        "reporoot": repo.path,
+        "repo": repo.name,
+        "coderoot": context.get("code_root"),
+    }
+
     # optional post-bootstrap, meant for recommended but not required defaults
     if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
         spec = importlib.util.spec_from_file_location(
             "post_bootstrap", f"{repo.config_path}/post_bootstrap.py"
         )
+
         module = importlib.util.module_from_spec(spec)  # type: ignore
         spec.loader.exec_module(module)  # type: ignore
+
+        rc = module.main(context_compat)
+        if rc != 0:
+            return 1
 
     if not os.path.exists(f"{repo.config_path}/sync.py"):
         print(f"{repo.config_path}/sync.py not found!")
@@ -84,12 +95,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     module = importlib.util.module_from_spec(spec)  # type: ignore
     spec.loader.exec_module(module)  # type: ignore
-
-    context_compat = {
-        "reporoot": repo.path,
-        "repo": repo.name,
-        "coderoot": context.get("code_root"),
-    }
 
     rc = module.main(context_compat)
     if rc != 0:
@@ -137,5 +142,5 @@ def fetch(
 
 
 module_info = DevModuleInfo(
-    action=main, name=__name__, command="fetch", help="Fetches a respository"
+    action=main, name=__name__, command="fetch", help="Fetches a repository"
 )
