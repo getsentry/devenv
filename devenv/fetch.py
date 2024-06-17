@@ -25,7 +25,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     args = parser.parse_args(argv)
     code_root = context["code_root"]
-    os.makedirs(context["code_root"], exist_ok=True)
+    os.makedirs(code_root, exist_ok=True)
 
     if args.repo in ["ops", "getsentry/ops"]:
         fetch(code_root, "getsentry/ops")
@@ -73,19 +73,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "coderoot": context.get("code_root"),
     }
 
-    # optional post-bootstrap, meant for recommended but not required defaults
-    if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
-        spec = importlib.util.spec_from_file_location(
-            "post_bootstrap", f"{repo.config_path}/post_bootstrap.py"
-        )
-
-        module = importlib.util.module_from_spec(spec)  # type: ignore
-        spec.loader.exec_module(module)  # type: ignore
-
-        rc = module.main(context_compat)
-        if rc != 0:
-            return 1
-
     if not os.path.exists(f"{repo.config_path}/sync.py"):
         print(f"{repo.config_path}/sync.py not found!")
         return 1
@@ -100,6 +87,19 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     rc = module.main(context_compat)
     if rc != 0:
         return 1
+
+    # optional post-bootstrap, meant for recommended but not required defaults
+    if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
+        spec = importlib.util.spec_from_file_location(
+            "post_bootstrap", f"{repo.config_path}/post_bootstrap.py"
+        )
+
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+
+        rc = module.main(context_compat)
+        if rc != 0:
+            return 1
 
     print(
         f"""
