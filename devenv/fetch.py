@@ -25,6 +25,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     args = parser.parse_args(argv)
     code_root = context["code_root"]
+    os.makedirs(context["code_root"], exist_ok=True)
 
     if args.repo in ["ops", "getsentry/ops"]:
         fetch(code_root, "getsentry/ops")
