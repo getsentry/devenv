@@ -102,13 +102,17 @@ def main() -> ExitCode:
     )
 
     scope = Scope.get_current_scope()
-    parent_transaction = scope.start_transaction()
+    root_transaction = scope.start_transaction()
 
     # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
     # is that script must exit (so that the complete log file is committed to disk)
     # before sentry sends the event...
-    with scope.start_span():
-        rc = subprocess.call(cmd)
+    span = root_transaction.start_child()
+    rc = subprocess.call(cmd)
+    # breakpoint()
+    span.finish()
+
+    # hmm at this point root_transaction doesn't have anything in self._span_recorder...
 
     if rc == 0:
         return rc
@@ -128,7 +132,7 @@ def main() -> ExitCode:
     # events are grouped under user@computer
     scope.fingerprint = [f"{user}@{computer}"]
 
-    parent_transaction.finish()
+    root_transaction.finish()
 
     return rc
 
