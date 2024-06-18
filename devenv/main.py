@@ -97,8 +97,7 @@ def main() -> ExitCode:
     sentry_sdk.init(
         # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
         dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
-        # disable performance monitoring
-        enable_tracing=False,
+        enable_tracing=True,
     )
 
     scope = Scope.get_current_scope()
@@ -107,32 +106,46 @@ def main() -> ExitCode:
     # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
     # is that script must exit (so that the complete log file is committed to disk)
     # before sentry sends the event...
-    span = root_transaction.start_child()
-    rc = subprocess.call(cmd)
-    # breakpoint()
-    span.finish()
-
-    # hmm at this point root_transaction doesn't have anything in self._span_recorder...
+    with root_transaction.start_child():
+        rc = subprocess.call(cmd)
 
     if rc == 0:
         return rc
 
-    import getpass
+    #import getpass
 
     # would really like to be able to set filename to the python exception title
     # because seeing KeyboardInterrupt vs CalledProcessError is more helpful than
     # "tmp29387ldf", but see above comment
-    scope.add_attachment(path=fp)
+    #scope.add_attachment(path=fp)
+    #print(fp)
 
-    client = Scope.get_client()
+#    client = Scope.get_client()
 
-    user = getpass.getuser()
-    computer = client.options.get("server_name", "unknown")
+    #user = getpass.getuser()
+#    computer = client.options.get("server_name", "unknown")
 
     # events are grouped under user@computer
-    scope.fingerprint = [f"{user}@{computer}"]
+    #scope.fingerprint = [f"{user}@test"]
 
-    root_transaction.finish()
+    breakpoint()
+    event_id = root_transaction.finish()
+
+    # trace
+    # https://sentry.sentry.io/performance/trace/d86e9d23141f41e2b335fc219e82d3e0
+
+    # event id feb696d0c83a44a1a73c69f31f10635e
+    # cant find this anywhere though
+    # this page doesnt load
+    # https://sentry.sentry.io/issues/5504551756/events/feb696d0c83a44a1a73c69f31f10635e/?project=5723503
+
+    # https://sentry.sentry.io/traces/?project=5723503&query=project%3Asentry-dev-env&statsPeriod=24h
+    # trace overview
+
+    # so i dont think an issue is being created, despite an event being created
+
+    print("trace id: ", root_transaction.trace_id)
+    print(event_id)
 
     return rc
 
