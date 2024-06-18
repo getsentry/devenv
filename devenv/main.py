@@ -91,22 +91,8 @@ def main() -> ExitCode:
     # to sentry as an attachment if an error occurs.
     cmd = ("/usr/bin/script", "-qe", fp, *sys.argv)
 
-    # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
-    # is that script must exit (so that the complete log file is committed to disk)
-    # before sentry sends the event...
-    rc = subprocess.call(cmd)
-
-    if rc == 0:
-        return rc
-
-    # i'd love to be able to send a full event in the child then
-    # upload the attachment to that event id in the parent, but unfortunately there's
-    # no easy way to add an attachment to an existing event,
-    # so we have to give up getting a python stacktrace,
-    # and can only use sentry-sdk to send an attachment.
     import sentry_sdk
     from sentry_sdk.scope import Scope
-    import getpass
 
     sentry_sdk.init(
         # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
@@ -116,6 +102,18 @@ def main() -> ExitCode:
     )
 
     scope = Scope.get_current_scope()
+    parent_transaction = scope.start_transaction()
+
+    # the reason we're subprocessing instead of os.execv(cmd[0], cmd)
+    # is that script must exit (so that the complete log file is committed to disk)
+    # before sentry sends the event...
+    with scope.start_span():
+        rc = subprocess.call(cmd)
+
+    if rc == 0:
+        return rc
+
+    import getpass
 
     # would really like to be able to set filename to the python exception title
     # because seeing KeyboardInterrupt vs CalledProcessError is more helpful than
@@ -130,7 +128,7 @@ def main() -> ExitCode:
     # events are grouped under user@computer
     scope.fingerprint = [f"{user}@{computer}"]
 
-    sentry_sdk.capture_message(f"{user}@{computer}")
+    parent_transaction.finish()
 
     return rc
 
