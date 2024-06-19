@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import sys
 from collections.abc import Sequence
@@ -28,22 +29,12 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     if args.repo in ["ops", "getsentry/ops"]:
         fetch(code_root, "getsentry/ops")
         fetch(code_root, "getsentry/terraform-modules", sync=False)
-
-        print(
-            f"""
-    All done! Please close this terminal window and start a fresh one.
-
-    ops repo is at: {code_root}/ops
-    """
-        )
     elif args.repo in [
         "sentry",
         "getsentry",
         "getsentry/sentry",
         "getsentry/getsentry",
     ]:
-        # git@ clones forces the use of cloning through SSH which is what we want,
-        # though CI must clone open source repos via https (no git authentication)
         fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
 
         print("Installing sentry's brew dependencies...")
@@ -70,13 +61,13 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
         print(
             f"""
+
     All done! Please close this terminal window and start a fresh one.
+    Sentry has been set up in {code_root}/sentry.
+    cd into it and you should be able to run `sentry devserver`.
 
-    Sentry has been set up in {code_root}/sentry. cd into it and you should
-    be able to run `sentry devserver`.
-    """
+"""
         )
-
     else:
         fetch(code_root, args.repo)
 
@@ -88,32 +79,52 @@ def fetch(
 ) -> None:
     org, slug = repo.split("/")
 
-    codepath = f"{coderoot}/{slug}"
+    reporoot = f"{coderoot}/{slug}"
 
-    if os.path.exists(codepath):
-        print(f"{codepath} already exists")
+    if os.path.exists(reporoot):
+        print(f"{reporoot} already exists")
         return
 
-    print(f"fetching {repo} into {codepath}")
+    print(f"fetching {repo} into {reporoot}")
 
     additional_args = (
+        # git@ clones forces the use of cloning through SSH which is what we want,
+        # though CI must clone open source repos via https (no git authentication)
         (f"git@github.com:{repo}",)
         if auth
         else (
             "--depth",
             "1",
             "--single-branch",
-            f"--branch={os.environ['SENTRY_BRANCH']}",
+            f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
             f"https://github.com/{repo}",
         )
     )
 
     proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
 
+    context_post_fetch = {
+        "reporoot": reporoot,
+        "repo": slug,
+        "coderoot": coderoot,
+    }
+
+    # optional post-fetch, meant for recommended but not required defaults
+    fp = f"{reporoot}/devenv/post_fetch.py"
+    if os.path.exists(fp):
+        spec = importlib.util.spec_from_file_location("post_fetch", fp)
+
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+
+        rc = module.main(context_post_fetch)
+        if rc != 0:
+            print(f"warning! failed running {fp} (code {rc})")
+
     if sync:
-        proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
+        proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=reporoot)
 
 
 module_info = DevModuleInfo(
-    action=main, name=__name__, command="fetch", help="Fetches a respository"
+    action=main, name=__name__, command="fetch", help="Fetches a repository"
 )
