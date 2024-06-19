@@ -59,34 +59,12 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     else:
         fetch(code_root, args.repo)
 
-    repo = context["repo"]
-    assert repo is not None
-
-    context_compat = {
-        "reporoot": repo.path,
-        "repo": repo.name,
-        "coderoot": context.get("code_root"),
-    }
-
-    # optional post-bootstrap, meant for recommended but not required defaults
-    if os.path.exists(f"{repo.config_path}/post_bootstrap.py"):
-        spec = importlib.util.spec_from_file_location(
-            "post_bootstrap", f"{repo.config_path}/post_bootstrap.py"
-        )
-
-        module = importlib.util.module_from_spec(spec)  # type: ignore
-        spec.loader.exec_module(module)  # type: ignore
-
-        rc = module.main(context_compat)
-        if rc != 0:
-            return 1
-
     print(
-        f"""
-{repo.name} has been set up in {repo.path}!
+        """
 
 Please close this terminal window and start a fresh one.
-    """
+
+"""
     )
     return 0
 
@@ -96,13 +74,13 @@ def fetch(
 ) -> None:
     org, slug = repo.split("/")
 
-    codepath = f"{coderoot}/{slug}"
+    reporoot = f"{coderoot}/{slug}"
 
-    if os.path.exists(codepath):
-        print(f"{codepath} already exists")
+    if os.path.exists(reporoot):
+        print(f"{reporoot} already exists")
         return
 
-    print(f"fetching {repo} into {codepath}")
+    print(f"fetching {repo} into {reporoot}")
 
     additional_args = (
         # git@ clones forces the use of cloning through SSH which is what we want,
@@ -120,8 +98,26 @@ def fetch(
 
     proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
 
+    context_post_fetch = {
+        "reporoot": reporoot,
+        "repo": slug,
+        "coderoot": coderoot,
+    }
+
+    # optional post-fetch, meant for recommended but not required defaults
+    fp = f"{reporoot}/devenv/post_fetch.py"
+    if os.path.exists(fp):
+        spec = importlib.util.spec_from_file_location("post_fetch", fp)
+
+        module = importlib.util.module_from_spec(spec)  # type: ignore
+        spec.loader.exec_module(module)  # type: ignore
+
+        rc = module.main(context_post_fetch)
+        if rc != 0:
+            print(f"warning! failed running {fp} (code {rc})")
+
     if sync:
-        proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=codepath)
+        proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=reporoot)
 
 
 module_info = DevModuleInfo(
