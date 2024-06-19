@@ -24,7 +24,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     )
 
     args = parser.parse_args(argv)
-    print(context)
     code_root = context["code_root"]
     os.makedirs(code_root, exist_ok=True)
 
@@ -60,7 +59,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     else:
         fetch(code_root, args.repo)
 
-    print(context)
     repo = context["repo"]
     assert repo is not None
 
