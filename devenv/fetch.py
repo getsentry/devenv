@@ -25,7 +25,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     args = parser.parse_args(argv)
     code_root = context["code_root"]
-    os.makedirs(code_root, exist_ok=True)
 
     if args.repo in ["ops", "getsentry/ops"]:
         fetch(code_root, "getsentry/ops")
@@ -52,20 +51,26 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
                 (f"{homebrew_bin}/brew", "bundle"), cwd=f"{code_root}/sentry"
             )
 
-        fetch(code_root, "getsentry/sentry", auth=CI is None, sync=True)
+        proc.run(
+            (sys.executable, "-P", "-m", "devenv", "sync"),
+            cwd=f"{code_root}/sentry",
+        )
 
         if not CI and not EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
+
+        print(
+            f"""
+
+    All done! Please close this terminal window and start a fresh one.
+    Sentry has been set up in {code_root}/sentry.
+    cd into it and you should be able to run `sentry devserver`.
+
+"""
+        )
     else:
         fetch(code_root, args.repo)
 
-    print(
-        """
-
-Please close this terminal window and start a fresh one.
-
-"""
-    )
     return 0
 
 
