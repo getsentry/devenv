@@ -21,10 +21,12 @@ export DEVENV_FETCH_BRANCH=devenv-sync-setup-git
 devenv bootstrap
 devenv fetch sentry
 
-# temp
+# check that sentry's post_fetch ran
+cd "$HOME/code/sentry"
+
+# tmep
 cat .git/config
-# assert that sentry's post_boostrap ran
+
 grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
 
-cd "$HOME/code/sentry"
 direnv allow
