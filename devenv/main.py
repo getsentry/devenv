@@ -64,6 +64,10 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
         # Argparse stuff
         subparser.add_parser(info.command, help=info.help)
 
+    if len(argv) == 1:
+        parser.print_help()
+        return 0
+
     args, remainder = parser.parse_known_args(argv[1:])
 
     # context for subcommands
