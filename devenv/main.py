@@ -10,6 +10,7 @@ from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import home
+from devenv.constants import version
 from devenv.lib.config import read_config
 from devenv.lib.context import Context
 from devenv.lib.fs import gitroot
@@ -19,6 +20,10 @@ from devenv.lib.repository import Repository
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
+    if len(argv) > 1 and argv[1] in ("version", "--version"):
+        print(f"devenv {version}")
+        return 0
+
     # determine current repo, if applicable
     fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
     if fake_reporoot:
