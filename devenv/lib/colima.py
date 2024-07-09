@@ -44,6 +44,10 @@ def install(
         binroot = f"{root}/bin"
         os.makedirs(binroot, exist_ok=True)
 
+    version = "0.6.9"
+    url = "https://github.com/abiosoft/colima/releases/download/v0.6.9/colima-Darwin-x86_64"
+    sha256 = "cd6f8cdef745df15ccce215c97e7b00f696e45c4c611dbeb36968da10c5df55a"
+
     if shutil.which("colima", path=binroot) == f"{binroot}/colima":
         stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]
