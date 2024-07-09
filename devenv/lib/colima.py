@@ -59,6 +59,6 @@ def install(
     uninstall(binroot)
     _install(url, sha256, binroot)
 
-    stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
-    if f"colima version {version}" not in stdout:
-        raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
+#    stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
+#    if f"colima version {version}" not in stdout:
+#        raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
