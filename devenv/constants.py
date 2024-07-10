@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import importlib.metadata
 import os
 import platform
 import pwd
 import typing
+
+version = importlib.metadata.version("sentry_devenv")
 
 CI = os.getenv("CI")
 SYSTEM = platform.system().lower()

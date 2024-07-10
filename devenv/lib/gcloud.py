@@ -58,6 +58,8 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     if (
         shutil.which("gcloud", path=binroot) == f"{binroot}/gcloud"
         and shutil.which("gsutil", path=binroot) == f"{binroot}/gsutil"
+        and shutil.which("gke-gcloud-auth-plugin", path=binroot)
+        == f"{binroot}/gke-gcloud-auth-plugin"
     ):
         with open(f"{binroot}/google-cloud-sdk/VERSION", "r") as f:
             installed_version = f.read().strip()
@@ -78,6 +80,11 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
             "--verbosity=error",
             "gke-gcloud-auth-plugin",
         )
+    )
+
+    fs.ensure_symlink(
+        f"{binroot}/google-cloud-sdk/bin/gke-gcloud-auth-plugin",
+        f"{binroot}/gke-gcloud-auth-plugin",
     )
 
     stdout = proc.run((f"{binroot}/gcloud", "--version"), stdout=True)

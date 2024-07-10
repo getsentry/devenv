@@ -10,6 +10,8 @@ from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import home
+from devenv.constants import user
+from devenv.constants import version
 from devenv.lib.config import read_config
 from devenv.lib.context import Context
 from devenv.lib.fs import gitroot
@@ -48,6 +50,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     # TODO: Search for modules in work repo
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version=version)
     subparser = parser.add_subparsers(
         title=argparse.SUPPRESS,
         metavar="command",
@@ -58,6 +61,10 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     for info in modinfo_list:
         # Argparse stuff
         subparser.add_parser(info.command, help=info.help)
+
+    if len(argv) == 1:
+        parser.print_help()
+        return 0
 
     args, remainder = parser.parse_known_args(argv[1:])
 
@@ -75,6 +82,9 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
 
 def main() -> ExitCode:
+    if user == "root":
+        raise SystemExit("You shouldn't be running devenv as root.")
+
     import sys
     import sentry_sdk
 
