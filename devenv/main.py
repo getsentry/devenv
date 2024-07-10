@@ -21,10 +21,6 @@ from devenv.lib.repository import Repository
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
-    if len(argv) > 1 and argv[1] in ("version", "--version"):
-        print(f"devenv {version}")
-        return 0
-
     # determine current repo, if applicable
     fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
     if fake_reporoot:
@@ -54,6 +50,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     # TODO: Search for modules in work repo
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version=version)
     subparser = parser.add_subparsers(
         title=argparse.SUPPRESS,
         metavar="command",
