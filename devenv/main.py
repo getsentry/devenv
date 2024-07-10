@@ -10,6 +10,7 @@ from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
 from devenv.constants import home
+from devenv.constants import user
 from devenv.constants import version
 from devenv.lib.config import read_config
 from devenv.lib.context import Context
@@ -84,6 +85,9 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
 
 def main() -> ExitCode:
+    if user == "root":
+        raise SystemExit("You shouldn't be running devenv as root.")
+
     import sys
     import sentry_sdk
 
