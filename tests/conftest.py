@@ -8,3 +8,4 @@ import pytest
 def pytest_configure(config: pytest.Config) -> None:
     os.environ["CI"] = "1"
     os.environ["SHELL"] = "/bin/bash"
+    os.environ["SENTRY_FORCE_PY"] = "1"

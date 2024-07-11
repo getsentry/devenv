@@ -13,10 +13,12 @@ from types import ModuleType
 from typing import Dict
 from typing import List
 
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import require_repo
+from devenv.lib.repository import Repository
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
-
-help = "Diagnose common issues, and optionally try to fix them."
 
 
 class Check:
@@ -74,15 +76,16 @@ class Check:
         super().__init__()
 
 
-def load_checks(context: Dict[str, str], match_tags: set[str]) -> List[Check]:
+def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
     """
     Load all checks from the checks directory.
     Optionally filter by tags.
     If a check doesn't have the required attributes, skip it.
     """
     checks: list[Check] = []
+
     for module_finder, module_name, _ in walk_packages(
-        (f'{context["reporoot"]}/devenv/checks',)
+        (f"{repo.config_path}/checks",)
     ):
         module_spec = module_finder.find_spec(module_name, None)
 
@@ -158,8 +161,9 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
         return False, f"Fix threw a runtime exception: {e}"
 
 
-def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=help)
+@require_repo
+def main(context: Context, argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--tag",
         type=str,
@@ -171,14 +175,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    match_tags: set[str] = set(args.tag if args.tag else ())
-
     repo = context["repo"]
-    if repo not in {"sentry", "getsentry", "devenv"}:
-        print(f"repo {repo} not supported yet!")
-        return 1
+    assert repo is not None
 
-    checks = load_checks(context, match_tags)
+    match_tags: set[str] = set(args.tag if args.tag else ())
+    checks = load_checks(repo, match_tags)
 
     if not checks:
         print(f"No checks found for tags: {args.tag}")
@@ -229,3 +230,11 @@ def main(context: Dict[str, str], argv: Sequence[str] | None = None) -> int:
 
     print("\nSorry I couldn't fix it... ask for help in #discuss-dev-infra.")
     return 1
+
+
+module_info = DevModuleInfo(
+    action=main,
+    name=__name__,
+    command="doctor",
+    help="Diagnose common issues, and optionally try to fix them.",
+)

@@ -3,29 +3,41 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
-import sys
 from collections.abc import Sequence
-from typing import TypeAlias
 
 from devenv.constants import CI
-from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.constants import homebrew_bin
 from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
+from devenv.lib.config import Config
+from devenv.lib.config import initialize_config
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
-help = "Bootstraps the development environment."
-ExitCode: TypeAlias = "str | int | None"
 
-
-def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
+def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
+    parser = argparse.ArgumentParser()
     parser.add_argument(
-        "repo", type=str, nargs="?", default="sentry", choices=("sentry", "ops")
+        "-d",
+        "--default-config",
+        action="append",
+        help="Provide a default config value. e.g., -d coderoot:path/to/root",
     )
+
     args = parser.parse_args(argv)
+
+    configs = {
+        k: v for k, v in [i.split(":", 1) for i in args.default_config or []]
+    }
+
+    if "coderoot" not in configs and "code_root" in context:
+        configs["coderoot"] = context["code_root"]
+
+    default_config: Config = {"devenv": configs}
+    initialize_config(context["config_path"], default_config)
 
     if not CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
@@ -77,119 +89,23 @@ When done, hit ENTER to continue.
     brew.install()
     direnv.install()
 
-    os.makedirs(coderoot, exist_ok=True)
+    os.makedirs(context["code_root"], exist_ok=True)
 
-    if args.repo == "ops":
-        if not os.path.exists(f"{coderoot}/ops"):
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    "--filter=blob:none",
-                    "git@github.com:getsentry/ops",
-                ),
-                exit=True,
-            )
-        if not os.path.exists(f"{coderoot}/terraform-modules"):
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    "--filter=blob:none",
-                    "git@github.com:getsentry/terraform-modules",
-                ),
-                exit=True,
-            )
-        proc.run(
-            (sys.executable, "-P", "-m", "devenv", "sync"),
-            cwd=f"{coderoot}/ops",
-        )
-        print(
-            f"""
-    All done! Please close this terminal window and start a fresh one.
+    print(
+        """
+All done! Please close this terminal window and start a fresh one.
 
-    ops repo is at: {coderoot}/ops
-    """
-        )
-    elif args.repo == "sentry":
-        if not os.path.exists(f"{coderoot}/sentry"):
-            # git@ clones forces the use of cloning through SSH which is what we want,
-            # though CI must clone open source repos via https (no git authentication)
-            additional_flags = (
-                (
-                    "--depth",
-                    "1",
-                    "--single-branch",
-                    f"--branch={os.environ['SENTRY_BRANCH']}",
-                    "https://github.com/getsentry/sentry",
-                )
-                if CI
-                else ("git@github.com:getsentry/sentry",)
-            )
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    # Download all reachable commits and trees while fetching blobs on-demand
-                    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
-                    "--filter=blob:none",
-                    *additional_flags,
-                ),
-                exit=True,
-            )
-
-        bootstrap_getsentry = not CI and not EXTERNAL_CONTRIBUTOR
-        if bootstrap_getsentry and not os.path.exists(f"{coderoot}/getsentry"):
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    "--filter=blob:none",
-                    "git@github.com:getsentry/getsentry",
-                ),
-                exit=True,
-            )
-
-        print("Installing sentry's brew dependencies...")
-        if CI:
-            if DARWIN:
-                # Installing everything from brew takes too much time,
-                # and chromedriver cask flakes occasionally. Really all we need to
-                # set up the devenv is colima and docker-cli.
-                # This is also required for arm64 macOS GHA runners.
-                # We manage colima, so just need to install docker + qemu here.
-                proc.run(("brew", "install", "docker", "qemu"))
-        else:
-            proc.run(
-                (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
-            )
-
-        proc.run(
-            (sys.executable, "-P", "-m", "devenv", "sync"),
-            cwd=f"{coderoot}/sentry",
-        )
-
-        if bootstrap_getsentry:
-            proc.run(
-                (sys.executable, "-P", "-m", "devenv", "sync"),
-                cwd=f"{coderoot}/getsentry",
-            )
-
-        print(
-            f"""
-    All done! Please close this terminal window and start a fresh one.
-
-    Sentry has been set up in {coderoot}/sentry. cd into it and you should
-    be able to run `sentry devserver`.
-    """
-        )
+Afterward, start working on your project using the devenv fetch command
+e.g., devenv fetch sentry or devenv fetch ops
+"""
+    )
 
     return 0
+
+
+module_info = DevModuleInfo(
+    action=main,
+    name=__name__,
+    command="bootstrap",
+    help="Bootstraps the development environment.",
+)
