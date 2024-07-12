@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Literal
@@ -108,19 +109,31 @@ stdout:
 
 # : list[Callable[]]
 def _job(name, tasks):
-    # TODO: collect stdouts across all tasks
+    job_out = []
+    i = 0
+    j = len(tasks)
+
     for task in tasks:
-        # we should lock stdout across all jobs for progress info
-        print(f"{name}: working")
+        i += 1
+        print(f"start job {name} task {i}")
         task["stdout"] = True
-        # task["stderr"] = subprocess.STDOUT  # TODO: why not upstream this
         task["exit"] = False
+        task_cmd_pretty = shlex.join(task['cmd'])
         try:
-            run(**task)
+            task_log = run(**task)
         except RuntimeError as e:
-            print(e)
+            i = 0
+            for prev_task_cmd_pretty, prev_task_log in job_out:
+                i += 1
+                print(f"""
+job {name} task ({i}/{j}) `{prev_task_cmd_pretty}`:
+
+{prev_task_log}
+""")
+            print(f"job {name} task ({len(job_out)+1}/{j}) `{task_cmd_pretty}` failed: {e}")
             return
-        # if fail, we stop serial execution and print the entire stdout across all jobs
+        job_out.append((task_cmd_pretty, task_log))
+        print(f"done job {name} task {i}")
 
 
 def run_jobs(jobs):
