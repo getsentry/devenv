@@ -12,6 +12,12 @@ from __future__ import annotations
 import concurrent.futures
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import Enum
+
+
+JobStatus = Enum(
+    "JobStatus", ("SUCCESS", "FAIL", "RUNNING", "PENDING")
+)
 
 
 @dataclass
@@ -20,6 +26,7 @@ class Job:
 
     name: str
     tasks: list  # not sure how to type Task here
+    status: JobStatus = JobStatus.PENDING
 
 
 @dataclass
@@ -33,6 +40,9 @@ class Task:
     log: str = ""
     logfile: str = ""
 
+    def __repr__(self):
+        return self.name
+
 # a task is responsible for collecting its stdout/err and saving it
 
 import queue
@@ -41,10 +51,12 @@ q = queue.SimpleQueue()
 
 
 def _run_job(job, tpe):
+    job.status = JobStatus.RUNNING
+
     for task in job.tasks:
         print(f"job {job.name} schedules task {task.name}")
         task_future = tpe.submit(task.func)
-        success = True
+        task_success = True
         try:
             task_future.result(timeout=task.timeout)
             # TODO: save output to log. We'll probably wrap
@@ -53,15 +65,18 @@ def _run_job(job, tpe):
         except Exception:
             # we ask that task functions should raise an Exception
             # to denote a failure, and print output that's useful
-            success = False
+            task_success = False
+
+        if not task_success:
+            job.status = JobStatus.FAIL
+            return job
 
         # spawn any jobs only if the task finishes successfully
-        if success:
-            for task_spawned_job in task.spawn_jobs:
-                print(f"task {task.name} schedules {task_spawned_job.name}")
-                q.put(tpe.submit(_run_job, task_spawned_job, tpe))
+        for task_spawned_job in task.spawn_jobs:
+            print(f"task {task.name} schedules {task_spawned_job.name}")
+            q.put(tpe.submit(_run_job, task_spawned_job, tpe))
 
-    # TODO status structure (task 2/4 success, running, success, fail)
+    job.status = JobStatus.SUCCESS
     return job
 
 
@@ -78,7 +93,7 @@ def run_jobs(jobs, tpe):
             all_jobs.append(q.get())
 
         for f in concurrent.futures.as_completed(all_jobs):
-            print(f, f.result())
+            print(f.result())
             # todo, print complete status including futures that except
 
         # at this point there is a possibility that tasks had spawned more jobs
