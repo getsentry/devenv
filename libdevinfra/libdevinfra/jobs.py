@@ -15,13 +15,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-JobStatus = Enum(
-    "JobStatus", ("SUCCESS", "FAIL", "RUNNING", "PENDING")
-)
+JobStatus = Enum("JobStatus", ("SUCCESS", "FAIL", "RUNNING", "PENDING"))
 
-TaskStatus = Enum(
-    "TaskStatus", ("SUCCESS", "FAIL", "RUNNING", "PENDING")
-)
+TaskStatus = Enum("TaskStatus", ("SUCCESS", "FAIL", "RUNNING", "PENDING"))
 
 
 @dataclass
@@ -38,6 +34,10 @@ class Task:
     """foo"""
 
     name: str
+    # A task's func should capture relevant output and return it
+    # as a str, which will be saved to task.log.
+    # To denote a failure, a task should raise an Exception
+    # containing said relevant output.
     func: Callable
     timeout: int = None
     spawn_jobs: tuple[Job] = ()
@@ -47,7 +47,6 @@ class Task:
     def __repr__(self):
         return self.name
 
-# a task is responsible for collecting its stdout/err and saving it
 
 import queue
 
@@ -65,14 +64,11 @@ def _run_job(job, tpe):
         task_future = tpe.submit(task.func)
         task.status = TaskStatus.RUNNING
         try:
-            # we ask that task functions capture their output and
-            # return it in a str
             task.log = task_future.result(timeout=task.timeout)
             # TODO: Task timed out
             task.status = TaskStatus.SUCCESS
-        except Exception:
-            # we ask that task functions should raise an Exception
-            # to denote a failure, and print output that's useful
+        except Exception as e:
+            task.log = f"{e}"
             task.status = TaskStatus.FAIL
 
         if task.status != TaskStatus.SUCCESS:
@@ -105,7 +101,9 @@ def run_jobs(jobs, tpe):
             if job.status == JobStatus.FAIL:
                 print(f"job {job.name} failed!!!")
                 for task in job.tasks:
-                    print(f"job {job.name} task {task.name} status {task.status}, log:\n{task.log}\n")
+                    print(
+                        f"job {job.name} task {task.name} status {task.status}, log:\n{task.log}\n"
+                    )
             elif job.status == JobStatus.SUCCESS:
                 print(f"job {job.name} succeeded")
             else:

@@ -3,17 +3,23 @@ from __future__ import annotations
 import concurrent.futures
 import functools
 
+from devenv.lib.proc import run
 from libdevinfra.jobs import Job
 from libdevinfra.jobs import run_jobs
 from libdevinfra.jobs import Task
 
 
 def task(s):
-    output = s
+    output = run(("echo", s), stdout=True)
     return output
 
+
 def task_fail():
-    raise Exception("lol")
+    output = "fine\n"
+    if True:
+        output += "some kinda error\n"
+        raise Exception(output)
+    return output
 
 
 # define everything first then fill in references to spawn_jobs later
