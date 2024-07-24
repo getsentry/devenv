@@ -107,11 +107,12 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
         case ColimaStatus.UP:
             if not restart:
                 return ColimaStatus.UP
+            proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
         case ColimaStatus.DOWN:
             pass
         case ColimaStatus.UNHEALTHY:
             print("colima seems to be unhealthy, stopping it")
-            proc.run(("colima", "stop"))
+            proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
 
     cpus = os.cpu_count()
     if cpus is None:
