@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from enum import Enum
 import os
 import shutil
+import platform
 import tempfile
 from typing import Optional
 
@@ -10,6 +12,11 @@ from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
+
+
+ColimaStatus = Enum(
+    "ColimaStatus", ("UP", "DOWN", "UNHEALTHY")
+)
 
 
 def _install(url: str, sha256: str, into: str) -> None:
@@ -58,3 +65,76 @@ def install(
     stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
         raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
+
+
+def check(reporoot: str) -> ColimaStatus:
+    if not os.getenv("CI"):
+        macos_version = platform.mac_ver()[0]
+        macos_major_version = int(macos_version.split(".")[0])
+        if macos_major_version < 14:
+            raise SystemExit(
+                f"macos >= 14 is required to use colima, found {macos_version}"
+            )
+
+    if not shutil.which("docker"):
+        raise SystemExit(
+            "docker executable not found, you might want to run devenv sync"
+        )
+
+    colima = f"{reporoot}/.devenv/bin/colima"
+    if not os.path.isfile(colima):
+        raise SystemExit(
+            f"colima not found at {colima}, you might want to run devenv sync"
+        )
+
+    if not os.path.exists(f"{home}/.colima/default/docker.sock")
+        return ColimaStatus.DOWN
+
+    # if colima's up, we should be able to communicate with that docker socket
+    docker --context=colima version
+
+    # TODO: need more rigorous healthchecks for https://github.com/abiosoft/colima/issues/949
+
+
+def start(reporoot: str) -> None:
+    status = check(reporoot)
+
+    match status:
+        case ColimaStatus.UP:
+            return
+        case ColimaStatus.DOWN:
+            pass
+        case ColimaStatus.UNHEALTHY:
+            pass  # TODO
+
+    cpus = os.cpu_count()
+    if cpus is None:
+        raise SystemExit("failed to determine cpu count")
+
+    # SC_PAGE_SIZE is POSIX 2008
+    # SC_PHYS_PAGES is a linux addition but also supported by more recent MacOS versions
+    SC_PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
+    SC_PHYS_PAGES = os.sysconf("SC_PHYS_PAGES")
+    if SC_PAGE_SIZE == -1 or SC_PHYS_PAGES == -1:
+        raise SystemExit("failed to determine memsize_bytes")
+    memsize_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+
+    args = ["--cpu", f"{cpus//2}", "--memory", f"{memsize_bytes//(2*1024**3)}"]
+    if platform.machine() == "arm64":
+        args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
+
+    proc.run(
+        (
+            # we share the "default" machine across repositories
+            colima,
+            "start",
+            "--verbose",
+            # ideally we keep ~ ro and reporoot rw, but currently the "default" vm
+            # is shared across repositories, so for ease of use we'll let home rw
+            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
+            *args,
+        ),
+        pathprepend=f"{reporoot}/.devenv/bin",
+    )
+
+    proc.run(("docker", "context", "use", "colima"))
