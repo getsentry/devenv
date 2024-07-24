@@ -16,7 +16,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     repo_path = context["repo"].path  # type: ignore
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("start",))
+    parser.add_argument(
+        "command", choices=("start", "restart", "check", "stop")
+    )
 
     args = parser.parse_args(argv)
 

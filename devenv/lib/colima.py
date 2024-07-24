@@ -92,7 +92,7 @@ def check(reporoot: str) -> ColimaStatus:
     # if colima's up, we should be able to communicate with that docker socket
     # at the most basic level
     try:
-        proc.run((docker, "--context=colima", "version"))
+        proc.run((docker, "--context=colima", "version"), stdout=True)
         # TODO: need more rigorous healthchecks for unhealthiness
         # for https://github.com/abiosoft/colima/issues/949
         return ColimaStatus.UP
@@ -155,6 +155,6 @@ def restart(reporoot: str) -> ColimaStatus:
 
 
 def stop(reporoot: str) -> ColimaStatus:
-    proc.run(("colima", "stop"))
+    proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
     status = check(reporoot)
     return status
