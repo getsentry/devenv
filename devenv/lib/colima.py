@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from enum import Enum
 import os
-import shutil
 import platform
+import shutil
 import tempfile
+from enum import Enum
 from typing import Optional
 
 from devenv.constants import home
@@ -14,9 +14,7 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 
-ColimaStatus = Enum(
-    "ColimaStatus", ("UP", "DOWN", "UNHEALTHY")
-)
+ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
 
 
 def _install(url: str, sha256: str, into: str) -> None:
@@ -76,7 +74,8 @@ def check(reporoot: str) -> ColimaStatus:
                 f"macos >= 14 is required to use colima, found {macos_version}"
             )
 
-    if not shutil.which("docker"):
+    docker = shutil.which("docker")
+    if not docker:
         raise SystemExit(
             "docker executable not found, you might want to run devenv sync"
         )
@@ -87,25 +86,32 @@ def check(reporoot: str) -> ColimaStatus:
             f"colima not found at {colima}, you might want to run devenv sync"
         )
 
-    if not os.path.exists(f"{home}/.colima/default/docker.sock")
+    if not os.path.exists(f"{home}/.colima/default/docker.sock"):
         return ColimaStatus.DOWN
 
     # if colima's up, we should be able to communicate with that docker socket
-    docker --context=colima version
+    # at the most basic level
+    try:
+        proc.run((docker, "--context=colima", "version"))
+        # TODO: need more rigorous healthchecks for unhealthiness
+        # for https://github.com/abiosoft/colima/issues/949
+        return ColimaStatus.UP
+    except RuntimeError:
+        return ColimaStatus.UNHEALTHY
 
-    # TODO: need more rigorous healthchecks for https://github.com/abiosoft/colima/issues/949
 
-
-def start(reporoot: str) -> None:
+def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     status = check(reporoot)
 
     match status:
         case ColimaStatus.UP:
-            return
+            if not restart:
+                return ColimaStatus.UP
         case ColimaStatus.DOWN:
             pass
         case ColimaStatus.UNHEALTHY:
-            pass  # TODO
+            print("colima seems to be unhealthy, stopping it")
+            proc.run(("colima", "stop"))
 
     cpus = os.cpu_count()
     if cpus is None:
@@ -126,7 +132,7 @@ def start(reporoot: str) -> None:
     proc.run(
         (
             # we share the "default" machine across repositories
-            colima,
+            "colima",
             "start",
             "--verbose",
             # ideally we keep ~ ro and reporoot rw, but currently the "default" vm
@@ -138,3 +144,17 @@ def start(reporoot: str) -> None:
     )
 
     proc.run(("docker", "context", "use", "colima"))
+
+    status = check(reporoot)
+    return status
+
+
+def restart(reporoot: str) -> ColimaStatus:
+    status = start(reporoot, restart=True)
+    return status
+
+
+def stop(reporoot: str) -> ColimaStatus:
+    proc.run(("colima", "stop"))
+    status = check(reporoot)
+    return status

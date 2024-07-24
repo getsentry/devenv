@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import os
-import platform
-import shutil
 from collections.abc import Sequence
 
-from devenv.constants import home
-from devenv.lib import proc
 from devenv.lib import colima
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -18,7 +13,7 @@ module_help = "Colima convenience commands."
 
 @require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
-    repo_path = context["repo"].path
+    repo_path = context["repo"].path  # type: ignore
 
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("start",))
@@ -27,14 +22,30 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 
     match args.command:
         case "start":
-            colima.start(repo_path)
+            status = colima.start(repo_path)
+            if status == colima.ColimaStatus.UNHEALTHY:
+                # TODO: retry at least once once
+                # we have better unhealthy check
+                # for https://github.com/abiosoft/colima/issues/949
+                pass
+            if status != colima.ColimaStatus.UP:
+                return 1
+        case "restart":
+            status = colima.restart(repo_path)
+            if status != colima.ColimaStatus.UP:
+                return 1
+        case "check":
+            status = colima.check(repo_path)
+            if status != colima.ColimaStatus.UP:
+                return 1
+        case "stop":
+            status = colima.stop(repo_path)
+            if status != colima.ColimaStatus.DOWN:
+                return 1
 
     return 0
 
 
 module_info = DevModuleInfo(
-    action=main,
-    name=__name__,
-    command="colima",
-    help=module_help,
+    action=main, name=__name__, command="colima", help=module_help
 )
