@@ -10,6 +10,7 @@ from typing import Optional
 from devenv.constants import home
 from devenv.constants import root
 from devenv.lib import archive
+from devenv.lib import docker
 from devenv.lib import fs
 from devenv.lib import proc
 
@@ -74,8 +75,8 @@ def check(reporoot: str) -> ColimaStatus:
                 f"macos >= 14 is required to use colima, found {macos_version}"
             )
 
-    docker = shutil.which("docker")
-    if not docker:
+    docker_executable = shutil.which("docker")
+    if not docker_executable:
         raise SystemExit(
             "docker executable not found, you might want to run devenv sync"
         )
@@ -92,12 +93,17 @@ def check(reporoot: str) -> ColimaStatus:
     # if colima's up, we should be able to communicate with that docker socket
     # at the most basic level
     try:
-        proc.run((docker, "--context=colima", "version"), stdout=True)
-        # TODO: need more rigorous healthchecks for unhealthiness
-        # for https://github.com/abiosoft/colima/issues/949
-        return ColimaStatus.UP
+        proc.run(
+            (docker_executable, "--context=colima", "version"), stdout=True
+        )
     except RuntimeError:
         return ColimaStatus.UNHEALTHY
+
+    # https://github.com/abiosoft/colima/issues/949
+    if not docker.check_docker_to_host_connectivity():
+        return ColimaStatus.UNHEALTHY
+
+    return ColimaStatus.UP
 
 
 def start(reporoot: str, restart: bool = False) -> ColimaStatus:

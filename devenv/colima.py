@@ -26,10 +26,11 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         case "start":
             status = colima.start(repo_path)
             if status == colima.ColimaStatus.UNHEALTHY:
-                # TODO: retry at least once once
-                # we have better unhealthy check
-                # for https://github.com/abiosoft/colima/issues/949
-                pass
+                # https://github.com/abiosoft/colima/issues/949
+                print("colima seems unhealthy, we'll try restarting once")
+                status = colima.restart(repo_path)
+                if status != colima.ColimaStatus.UP:
+                    return 1
             if status != colima.ColimaStatus.UP:
                 return 1
         case "restart":
