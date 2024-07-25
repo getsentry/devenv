@@ -8,6 +8,7 @@ from threading import Thread
 def _accept_and_close(sock: socket.socket) -> None:
     sock.listen()
     conn, addr = sock.accept()
+    print(conn.recv(8))
     conn.close()
 
 
@@ -37,7 +38,7 @@ def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
         # (so the thread doesn't indefinitely hang)
         with socket.socket() as s:
             s.connect(("127.0.0.1", port))
-            s.send(b"hi")
+            s.send(b"die")
         return False
 
     listener.join()
