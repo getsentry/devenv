@@ -39,7 +39,11 @@ def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
         with socket.socket() as s:
             s.connect(("127.0.0.1", port))
             s.send(b"die")
+
+        listener.join()
+        print("listener joined")
         return False
 
+    print("listener joined")
     listener.join()
     return True
