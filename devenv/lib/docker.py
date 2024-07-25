@@ -13,7 +13,7 @@ def _accept_and_close(sock: socket.socket) -> None:
 
 def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
     sock = socket.socket()
-    sock.bind(("", 0))
+    sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
 
     listener = Thread(target=_accept_and_close, args=(sock,))
