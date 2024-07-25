@@ -108,6 +108,7 @@ def check(reporoot: str) -> ColimaStatus:
 
 def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     status = check(reporoot)
+    print("lib start rc", status)
 
     if status == ColimaStatus.UP:
         if not restart:

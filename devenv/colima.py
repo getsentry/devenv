@@ -24,6 +24,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 
     if args.command == "start":
         status = colima.start(repo_path)
+        print("cli start rc", status)
         if status == colima.ColimaStatus.UNHEALTHY:
             # https://github.com/abiosoft/colima/issues/949
             print("colima seems unhealthy, we'll try restarting once")
