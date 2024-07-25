@@ -28,17 +28,16 @@ def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
             "busybox:1.36.1-musl",
             "/bin/sh",
             "-c",
-            f"/bin/echo hi | /bin/nc -w {timeout} host.docker.internal 6968",
+            f"/bin/echo hi | /bin/nc -w {timeout} host.docker.internal {port}",
         )
     )
 
     if rc != 0:
         # easiest way to terminate the socket server
         # (so the thread doesn't indefinitely hang)
-        s = socket.socket()
-        s.connect(("127.0.0.1", port))
-        s.send(b"hi")
-        s.close()
+        with socket.socket() as s:
+            s.connect(("127.0.0.1", port))
+            s.send(b"hi")
         return False
 
     listener.join()

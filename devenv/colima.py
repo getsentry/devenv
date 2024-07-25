@@ -22,29 +22,28 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    match args.command:
-        case "start":
-            status = colima.start(repo_path)
-            if status == colima.ColimaStatus.UNHEALTHY:
-                # https://github.com/abiosoft/colima/issues/949
-                print("colima seems unhealthy, we'll try restarting once")
-                status = colima.restart(repo_path)
-                if status != colima.ColimaStatus.UP:
-                    return 1
-            if status != colima.ColimaStatus.UP:
-                return 1
-        case "restart":
+    if args.command == "start":
+        status = colima.start(repo_path)
+        if status == colima.ColimaStatus.UNHEALTHY:
+            # https://github.com/abiosoft/colima/issues/949
+            print("colima seems unhealthy, we'll try restarting once")
             status = colima.restart(repo_path)
             if status != colima.ColimaStatus.UP:
                 return 1
-        case "check":
-            status = colima.check(repo_path)
-            if status != colima.ColimaStatus.UP:
-                return 1
-        case "stop":
-            status = colima.stop(repo_path)
-            if status != colima.ColimaStatus.DOWN:
-                return 1
+        if status != colima.ColimaStatus.UP:
+            return 1
+    elif args.command == "restart":
+        status = colima.restart(repo_path)
+        if status != colima.ColimaStatus.UP:
+            return 1
+    elif args.command == "check":
+        status = colima.check(repo_path)
+        if status != colima.ColimaStatus.UP:
+            return 1
+    elif args.command == "stop":
+        status = colima.stop(repo_path)
+        if status != colima.ColimaStatus.DOWN:
+            return 1
 
     return 0
 
