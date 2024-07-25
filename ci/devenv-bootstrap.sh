@@ -17,7 +17,7 @@ EOF
 cd "$HOME"
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
-export DEVENV_FETCH_BRANCH=devenv-sync-setup-git
+export DEVENV_FETCH_BRANCH=feat-robust-start-colima
 devenv bootstrap
 devenv fetch sentry
 
