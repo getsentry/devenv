@@ -101,7 +101,6 @@ def check(reporoot: str) -> ColimaStatus:
 
     # https://github.com/abiosoft/colima/issues/949
     healthy = docker.check_docker_to_host_connectivity()
-    print("healthy", healthy)
     if not healthy:
         return ColimaStatus.UNHEALTHY
 
@@ -153,7 +152,6 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
 
     proc.run(("docker", "context", "use", "colima"))
 
-    print("post start check begins")
     status = check(reporoot)
     return status
 
