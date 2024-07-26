@@ -5,6 +5,7 @@ import os
 from collections.abc import Sequence
 
 from devenv import bootstrap
+from devenv import colima
 from devenv import doctor
 from devenv import fetch
 from devenv import pin_gha
@@ -43,7 +44,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     modinfo_list: Sequence[DevModuleInfo] = [
         module.module_info
-        for module in [bootstrap, fetch, doctor, pin_gha, sync]
+        for module in [bootstrap, fetch, colima, doctor, pin_gha, sync]
         if hasattr(module, "module_info")
     ]
 
