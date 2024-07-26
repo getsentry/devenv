@@ -18,24 +18,24 @@ env:
   DEBUG: "1"
 
 jobs:
-   bootstrap:
-     runs-on: ubuntu-22.04
-     timeout-minutes: 60
-     env:
-       SENTRY_BRANCH: master
-       SNTY_DEVENV_BRANCH:
-         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
-     steps:
-       - uses: actions/checkout@v3
-       - name: install
-         run: |
-           set -u
-           : should be able to be run from anywhere:
-           repo=$PWD
-           mv install-devenv.sh /tmp
-           cd /tmp
-           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
-       - name: bootstrap sentry
+  bootstrap:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    env:
+      SENTRY_BRANCH: master
+      SNTY_DEVENV_BRANCH:
+        "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
+    steps:
+      - uses: actions/checkout@v3
+      - name: install
+        run: |
+          set -u
+          : should be able to be run from anywhere:
+          repo=$PWD
+          mv install-devenv.sh /tmp
+          cd /tmp
+          ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
+      - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh
 
   # macos-14 doesn't support the virtualization needed for colima... yet
