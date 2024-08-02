@@ -20,7 +20,7 @@ def atomic_replace(src: str, dest: str) -> None:
     os.replace(src, dest)
 
 
-def download(url: str, sha256: str, dest: str = "") -> str:
+def download(url: str, sha256: str, dest: str = "", retries: int = 3) -> str:
     if not dest:
         cache_root = f"{home}/.cache/sentry-devenv"
         dest = f"{cache_root}/{sha256}"
@@ -30,6 +30,7 @@ def download(url: str, sha256: str, dest: str = "") -> str:
         try:
             resp = urllib.request.urlopen(url)
         except HTTPError as e:
+            # TODO retries
             raise RuntimeError(f"Error getting {url}: {e}")
 
         dest_dir = os.path.dirname(dest)
@@ -45,6 +46,7 @@ def download(url: str, sha256: str, dest: str = "") -> str:
                 buf = tmpf.read(4096)
 
             if not secrets.compare_digest(checksum.hexdigest(), sha256):
+                # TODO retries
                 raise RuntimeError(
                     f"checksum mismatch for {url}:\n"
                     f"- got: {checksum.hexdigest()}\n"
@@ -56,7 +58,36 @@ def download(url: str, sha256: str, dest: str = "") -> str:
     return dest
 
 
-def unpack(path: str, into: str) -> None:
+# Sequence[tarfile.TarInfo]
+def strip_components(members, n: int, new_prefix: str):
+    for member in members:
+        i = -1
+        while n:
+            n -= 1
+            i = member.path.find("/")
+            if i == -1:
+                continue
+            if i == 0:
+                i = member.path[1:].find("/") + 1
+            member.path = member.path[i + 1 :]
+
+        if new_prefix:
+            member.path = f"{new_prefix}/{member.path}"
+
+        yield member
+
+
+def unpack(
+    path: str,
+    into: str,
+    strip_components_n: int = 0,
+    strip_components_new_prefix: str = "",
+) -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        tarf.extractall(into)
+        tarf.extractall(
+            into,
+            members=strip_components(
+                tarf, strip_components_n, strip_components_new_prefix
+            ),
+        )

@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import os
+import shutil
+import tempfile
+
+from devenv.lib import archive
+from devenv.lib import fs
+from devenv.lib import proc
+
+
+_shims = ("node", "npm", "npx", "yarn", "pnpm")
+
+
+def _install(url: str, sha256: str, into: str) -> None:
+    os.makedirs(into, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=into) as tmpd:
+        archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
+        top_level_dir = "node"
+        archive.unpack(
+            archive_file,
+            tmpd,
+            strip_components_n=1,
+            strip_components_new_prefix=top_level_dir,
+        )
+
+        # the archive was atomically placed into tmpd so
+        # these are on the same fs and can be atomically moved too
+        os.replace(f"{tmpd}/{top_level_dir}", f"{into}/{top_level_dir}")
+
+
+def uninstall(binroot: str) -> None:
+    shutil.rmtree(f"{binroot}/node-env", ignore_errors=True)
+
+    for shim in (*_shims, "yarn"):
+        fp = f"{binroot}/{shim}"
+        try:
+            os.remove(fp)
+        except FileNotFoundError:
+            # it's better to do this than to guard with
+            # os.path.exists(fp) because if it's an invalid or circular
+            # symlink the result'll be False!
+            pass
+
+
+def installed(binroot: str) -> bool:
+    if shutil.which("node", path=binroot) == f"{binroot}/node":
+        return True
+        # TODO version check
+    #            installed_version = f.read().strip()
+    #        if version == installed_version:
+    #             return
+    #    print(f"installed gcloud {installed_version} is outdated!")
+    return False
+
+
+def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
+
+    if installed(binroot):
+        return
+
+    print(f"installing node {version}...")
+    uninstall(binroot)
+    _install(url, sha256, binroot)
+
+    for shim in _shims:
+        # not sure if cd is needed yet
+        fs.write_script(
+            f"{binroot}/{shim}",
+            f"""#!/bin/sh
+exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/{shim} "$@"
+""",
+        )
+
+    if not installed(binroot):
+        raise SystemExit(f"failed to install node {version}!")
+
+
+def installed_yarn(binroot: str) -> bool:
+    if shutil.which("yarn", path=binroot) == f"{binroot}/yarn":
+        # todo version check
+        return True
+    return False
+
+
+def install_yarn(version: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
+
+    if not installed(binroot):
+        raise SystemExit("node isn't installed")
+
+    print(f"installing yarn {version}...")
+
+    # do we need to uninstall if different yarn version?
+    proc.run(f"{binroot}/npm", "install", "-g", f"yarn@{version}")
+
+    fs.write_script(
+        f"{binroot}/yarn",
+        f"""#!/bin/sh
+exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/yarn "$@"
+""",
+    )
+
+    if not installed_yarn(binroot):
+        raise SystemExit(f"failed to install yarn {version}!")
