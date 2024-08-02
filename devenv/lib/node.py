@@ -29,8 +29,6 @@ def _install(url: str, sha256: str, into: str) -> None:
         os.replace(f"{tmpd}/{top_level_dir}", f"{into}/{top_level_dir}")
 
 
-
-
 def uninstall(binroot: str) -> None:
     shutil.rmtree(f"{binroot}/node-env", ignore_errors=True)
 
@@ -46,7 +44,11 @@ def uninstall(binroot: str) -> None:
 
 
 def installed(version: str, binroot: str) -> bool:
-    if shutil.which("node", path=binroot) != f"{binroot}/node":
+    if shutil.which(
+        "node", path=binroot
+    ) != f"{binroot}/node" or not os.path.exists(
+        f"{binroot}/node-env/bin/node"
+    ):
         return False
 
     with open(f"{binroot}/node", "r") as f:
@@ -88,7 +90,11 @@ exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/{shim
 
 
 def installed_yarn(version: str, binroot: str) -> bool:
-    if shutil.which("yarn", path=binroot) != f"{binroot}/yarn":
+    if shutil.which(
+        "yarn", path=binroot
+    ) != f"{binroot}/yarn" or not os.path.exists(
+        f"{binroot}/node-env/bin/yarn"
+    ):
         return False
 
     with open(f"{binroot}/yarn", "r") as f:
@@ -112,6 +118,8 @@ def install_yarn(version: str, reporoot: str) -> None:
     if installed_yarn(version, binroot):
         return
 
+    # not explicitly uninstalling here, following steps
+    # will pave over it
     print(f"installing yarn {version}...")
 
     # do we need to uninstall if different yarn version?
