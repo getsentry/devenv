@@ -62,13 +62,13 @@ def download(url: str, sha256: str, dest: str = "", retries: int = 3) -> str:
 def strip_components(members, n: int, new_prefix: str):
     for member in members:
         i = -1
-        while n:
-            n -= 1
+        for _ in range(n):
             i = member.path.find("/")
             if i == -1:
-                continue
-            if i == 0:
+                pass
+            elif i == 0:
                 i = member.path[1:].find("/") + 1
+
             member.path = member.path[i + 1 :]
 
         if new_prefix:

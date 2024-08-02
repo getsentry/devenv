@@ -16,7 +16,7 @@ def _install(url: str, sha256: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
-        top_level_dir = "node"
+        top_level_dir = "node-env"
         archive.unpack(
             archive_file,
             tmpd,
@@ -27,6 +27,8 @@ def _install(url: str, sha256: str, into: str) -> None:
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
         os.replace(f"{tmpd}/{top_level_dir}", f"{into}/{top_level_dir}")
+
+
 
 
 def uninstall(binroot: str) -> None:
@@ -43,21 +45,28 @@ def uninstall(binroot: str) -> None:
             pass
 
 
-def installed(binroot: str) -> bool:
+def installed(version: str, binroot: str) -> bool:
     if shutil.which("node", path=binroot) == f"{binroot}/node":
-        return True
+        with open(f"{binroot}/node", "r") as f:
+            sample = f.read(64)
+            print(sample)
+            if "VOLTA_HOME" in sample:
+                # detection for volta node which is deprecated
+                return False
+
         # TODO version check
     #            installed_version = f.read().strip()
     #        if version == installed_version:
     #             return
     #    print(f"installed gcloud {installed_version} is outdated!")
+        return True
     return False
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
-    if installed(binroot):
+    if installed(version, binroot):
         return
 
     print(f"installing node {version}...")
@@ -73,27 +82,33 @@ exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/{shim
 """,
         )
 
-    if not installed(binroot):
+    if not installed(version, binroot):
         raise SystemExit(f"failed to install node {version}!")
 
 
-def installed_yarn(binroot: str) -> bool:
+def installed_yarn(version: str, binroot: str) -> bool:
     if shutil.which("yarn", path=binroot) == f"{binroot}/yarn":
+        with open(f"{binroot}/yarn", "r") as f:
+            sample = f.read(64)
+            print(sample)
+            if "VOLTA_HOME" in sample:
+                # detection for volta yarn which is deprecated
+                return False
+
         # todo version check
-        return True
     return False
 
 
 def install_yarn(version: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
-    if not installed(binroot):
-        raise SystemExit("node isn't installed")
+    if installed_yarn(version, binroot):
+        return
 
     print(f"installing yarn {version}...")
 
     # do we need to uninstall if different yarn version?
-    proc.run(f"{binroot}/npm", "install", "-g", f"yarn@{version}")
+    proc.run((f"{binroot}/npm", "install", "-g", f"yarn@{version}"))
 
     fs.write_script(
         f"{binroot}/yarn",
@@ -102,5 +117,5 @@ exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/yarn 
 """,
     )
 
-    if not installed_yarn(binroot):
+    if not installed_yarn(version, binroot):
         raise SystemExit(f"failed to install yarn {version}!")
