@@ -46,20 +46,21 @@ def uninstall(binroot: str) -> None:
 
 
 def installed(version: str, binroot: str) -> bool:
-    if shutil.which("node", path=binroot) == f"{binroot}/node":
-        with open(f"{binroot}/node", "r") as f:
-            sample = f.read(64)
-            print(sample)
-            if "VOLTA_HOME" in sample:
-                # detection for volta node which is deprecated
-                return False
+    if shutil.which("node", path=binroot) != f"{binroot}/node":
+        return False
 
-        # TODO version check
-    #            installed_version = f.read().strip()
-    #        if version == installed_version:
-    #             return
-    #    print(f"installed gcloud {installed_version} is outdated!")
+    with open(f"{binroot}/node", "r") as f:
+        sample = f.read(64)
+        if "VOLTA_HOME" in sample:
+            # detection for volta node which is deprecated
+            return False
+
+    stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
+    installed_version = stdout.strip()
+    if version == installed_version:
         return True
+
+    print(f"installed node {installed_version} is outdated!")
     return False
 
 
@@ -87,15 +88,21 @@ exec /usr/bin/env PATH={binroot}/node-env/bin:$PATH {binroot}/node-env/bin/{shim
 
 
 def installed_yarn(version: str, binroot: str) -> bool:
-    if shutil.which("yarn", path=binroot) == f"{binroot}/yarn":
-        with open(f"{binroot}/yarn", "r") as f:
-            sample = f.read(64)
-            print(sample)
-            if "VOLTA_HOME" in sample:
-                # detection for volta yarn which is deprecated
-                return False
+    if shutil.which("yarn", path=binroot) != f"{binroot}/yarn":
+        return False
 
-        # todo version check
+    with open(f"{binroot}/yarn", "r") as f:
+        sample = f.read(64)
+        if "VOLTA_HOME" in sample:
+            # detection for volta yarn which is deprecated
+            return False
+
+    stdout = proc.run((f"{binroot}/yarn", "--version"), stdout=True)
+    installed_version = stdout.strip()
+    if version == installed_version:
+        return True
+
+    print(f"installed yarn {installed_version} is outdated!")
     return False
 
 

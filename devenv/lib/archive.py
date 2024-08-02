@@ -9,6 +9,8 @@ import tempfile
 import urllib.request
 from urllib.error import HTTPError
 
+from typing import Sequence, Iterator
+
 from devenv.constants import home
 
 
@@ -58,8 +60,7 @@ def download(url: str, sha256: str, dest: str = "", retries: int = 3) -> str:
     return dest
 
 
-# Sequence[tarfile.TarInfo]
-def strip_components(members, n: int, new_prefix: str):
+def strip_components(members: Sequence[tarfile.TarInfo], n: int, new_prefix: str) -> Iterator[tarfile.TarInfo]:
     for member in members:
         i = -1
         for _ in range(n):
@@ -85,9 +86,10 @@ def unpack(
 ) -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
+        members = strip_components(
+            tarf.getmembers(), strip_components_n, strip_components_new_prefix
+        )
         tarf.extractall(
             into,
-            members=strip_components(
-                tarf, strip_components_n, strip_components_new_prefix
-            ),
+            members=members,
         )
