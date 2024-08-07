@@ -72,7 +72,7 @@ def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
             if i == 0:
                 continue
 
-        member.path = member.path[i + 1:]
+        member.path = member.path[i + 1 :]
 
         if new_prefix:
             member.path = f"{new_prefix}/{member.path}"
@@ -88,5 +88,4 @@ def unpack(
     with tarfile.open(name=path, mode="r:*") as tarf:
         if perform_strip1:
             strip1(tarf.getmembers(), strip1_new_prefix)
-        breakpoint()
         tarf.extractall(into)

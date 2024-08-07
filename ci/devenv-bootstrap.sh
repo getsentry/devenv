@@ -27,3 +27,8 @@ cd "$HOME/code/sentry"
 grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
 
 direnv allow
+
+command -v node
+command -v yarn
+node --version
+yarn --version

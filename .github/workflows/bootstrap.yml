@@ -26,7 +26,7 @@ jobs:
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install
         run: |
           set -u
@@ -50,7 +50,7 @@ jobs:
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: remove homebrew
         run: |
           sudo rm -rf \
