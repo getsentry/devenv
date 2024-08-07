@@ -54,7 +54,7 @@ def installed(version: str, binroot: str) -> bool:
     with open(f"{binroot}/node", "r") as f:
         sample = f.read(64)
         if "VOLTA_HOME" in sample:
-            # detection for volta node which is deprecated
+            print("volta-based node detected")
             return False
 
     stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
@@ -77,7 +77,6 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     _install(url, sha256, binroot)
 
     for shim in _shims:
-        # not sure if cd is needed yet
         fs.write_script(
             f"{binroot}/{shim}",
             f"""#!/bin/sh
@@ -100,7 +99,7 @@ def installed_yarn(version: str, binroot: str) -> bool:
     with open(f"{binroot}/yarn", "r") as f:
         sample = f.read(64)
         if "VOLTA_HOME" in sample:
-            # detection for volta yarn which is deprecated
+            print("volta-based yarn detected")
             return False
 
     stdout = proc.run((f"{binroot}/yarn", "--version"), stdout=True)
@@ -122,7 +121,6 @@ def install_yarn(version: str, reporoot: str) -> None:
     # will pave over it
     print(f"installing yarn {version}...")
 
-    # do we need to uninstall if different yarn version?
     proc.run((f"{binroot}/npm", "install", "-g", f"yarn@{version}"))
 
     fs.write_script(
