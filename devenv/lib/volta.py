@@ -86,6 +86,17 @@ def uninstall(binroot: str, volta_home: str) -> None:
 
 
 def install(reporoot: Optional[str] = "") -> None:
+    print(
+        """
+
+****************************************************************
+DEPRECATION NOTICE: devenv.lib.node is superseding volta, please
+use that for your node+yarn needs!
+****************************************************************
+
+"""
+    )
+
     if reporoot:
         binroot = fs.ensure_binroot(reporoot)
         VOLTA_HOME = f"{binroot}/volta-home"
