@@ -61,5 +61,3 @@ linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima
 linux_arm64_sha256 = 6ecba675e90d154f22e20200fa5684f20ad1495b73c0462f1bd7da4e9d0beaf8
 version = v0.6.6
 EOF
-
-bash --login ci/devenv-post-bootstrap.sh
