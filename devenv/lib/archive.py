@@ -7,9 +7,8 @@ import shutil
 import tarfile
 import tempfile
 import urllib.request
+from collections.abc import Sequence
 from urllib.error import HTTPError
-
-from typing import Sequence, Iterator
 
 from devenv.constants import home
 
@@ -60,36 +59,34 @@ def download(url: str, sha256: str, dest: str = "", retries: int = 3) -> str:
     return dest
 
 
-def strip_components(members: Sequence[tarfile.TarInfo], n: int, new_prefix: str) -> Iterator[tarfile.TarInfo]:
+# mutates members!
+# strips the leading component (/ is always stripped and doesn't count)
+# and optionally replaces with a new prefix
+def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
     for member in members:
-        i = -1
-        for _ in range(n):
-            i = member.path.find("/")
-            if i == -1:
-                pass
-            elif i == 0:
-                i = member.path[1:].find("/") + 1
+        i = member.path.find("/")
+        if i == -1:
+            continue
+        elif i == 0:
+            i = member.path[1:].find("/") + 1
+            if i == 0:
+                continue
 
-            member.path = member.path[i + 1 :]
+        member.path = member.path[i + 1:]
 
         if new_prefix:
             member.path = f"{new_prefix}/{member.path}"
-
-        yield member
 
 
 def unpack(
     path: str,
     into: str,
-    strip_components_n: int = 0,
-    strip_components_new_prefix: str = "",
+    perform_strip1: bool = False,
+    strip1_new_prefix: str = "",
 ) -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        members = strip_components(
-            tarf.getmembers(), strip_components_n, strip_components_new_prefix
-        )
-        tarf.extractall(
-            into,
-            members=members,
-        )
+        if perform_strip1:
+            strip1(tarf.getmembers(), strip1_new_prefix)
+        breakpoint()
+        tarf.extractall(into)

@@ -20,8 +20,8 @@ def _install(url: str, sha256: str, into: str) -> None:
         archive.unpack(
             archive_file,
             tmpd,
-            strip_components_n=1,
-            strip_components_new_prefix=top_level_dir,
+            perform_strip1=True,
+            strip1_new_prefix=top_level_dir,
         )
 
         # the archive was atomically placed into tmpd so
