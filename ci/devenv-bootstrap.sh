@@ -26,9 +26,9 @@ cd "$HOME/code/sentry"
 # check that sentry's post_fetch ran
 grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
 
-direnv allow
+#direnv allow
 
-command -v node
-command -v yarn
-node --version
-yarn --version
+#command -v node
+#command -v yarn
+#node --version
+#yarn --version
