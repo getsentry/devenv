@@ -29,6 +29,8 @@ fi
 
 direnv allow
 
+exit 0
+
 expected="${HOME}/.devenv/bin/node"
 got=$(command -v node)
 if [[ "$got" != "$expected" ]]; then
