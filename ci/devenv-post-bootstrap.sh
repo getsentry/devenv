@@ -17,9 +17,6 @@ cd "$HOME/code/sentry"
 # check that sentry's post_fetch ran
 grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
 
-#  ~/.local/share/sentry-devenv/bin/ nedes to be on path...
-# we need to execute this via login shell
-
 expected="${HOME}/.local/share/sentry-devenv/bin/direnv"
 got=$(command -v direnv)
 if [[ "$got" != "$expected" ]]; then
@@ -27,18 +24,18 @@ if [[ "$got" != "$expected" ]]; then
     exit 1
 fi
 
-direnv allow
+# XXX: direnv allow does nothing in GHA, i tmate'd in and
+# strace'd it but nothing was immediately obvious
+export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
 
-exit 0
-
-expected="${HOME}/.devenv/bin/node"
+expected="${HOME}/code/sentry/.devenv/bin/node"
 got=$(command -v node)
 if [[ "$got" != "$expected" ]]; then
     echo "unexpected node location ${got}, expected ${expected}"
     exit 1
 fi
 
-expected="${HOME}/.devenv/bin/yarn"
+expected="${HOME}/code/sentry/.devenv/bin/yarn"
 got=$(command -v yarn)
 if [[ "$got" != "$expected" ]]; then
     echo "unexpected yarn location ${got}, expected ${expected}"
