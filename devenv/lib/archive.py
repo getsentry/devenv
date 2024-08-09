@@ -88,4 +88,4 @@ def unpack(
     with tarfile.open(name=path, mode="r:*") as tarf:
         if perform_strip1:
             strip1(tarf.getmembers(), strip1_new_prefix)
-        tarf.extractall(into)
+        tarf.extractall(into, filter="tar")
