@@ -24,8 +24,10 @@ if [[ "$got" != "$expected" ]]; then
     exit 1
 fi
 
-# XXX: direnv allow does nothing in GHA, i tmate'd in and
-# strace'd it but nothing was immediately obvious
+# XXX: direnv allow/reload weirdly just exits 0 in GHA after writing
+# the allow file, and using delve (gdb for go binaries) with action-tmate
+# is painful because you get logged out for no reason after a few minutes,
+# strace also doesn't reveal anything obvious
 export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
 
 expected="${HOME}/code/sentry/.devenv/bin/node"
