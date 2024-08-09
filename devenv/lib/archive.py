@@ -72,7 +72,7 @@ def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
             if i == 0:
                 continue
 
-        member.path = member.path[i + 1 :]
+        member.path = member.path[i + 1 :]  # noqa: E203
 
         if new_prefix:
             member.path = f"{new_prefix}/{member.path}"
