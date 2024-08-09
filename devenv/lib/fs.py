@@ -1,15 +1,25 @@
 from __future__ import annotations
 
 import os
+import subprocess
 
 from devenv.constants import home
 from devenv.constants import shell
 from devenv.lib import proc
 
 
+def zdotdir() -> str:
+    return subprocess.run(
+        [shell, "-c", "echo $ZDOTDIR"], text=True, capture_output=True
+    ).stdout.strip()
+
+
 def shellrc() -> str:
     if shell == "zsh":
-        return f"{home}/.zshrc"
+        dotdir = zdotdir()
+        if dotdir == "":
+            dotdir = home
+        return f"{dotdir}/.zshrc"
     if shell == "bash":
         return f"{home}/.bashrc"
     if shell == "fish":
