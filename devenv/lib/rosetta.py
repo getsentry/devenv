@@ -12,7 +12,8 @@ def ensure() -> None:
         return
 
     # this file doesn't exist if rosetta 2 isn't installed
-    if not os.path.exists("/usr/libexec/rosetta/oahd"):
+    # (alternatively: try arch -x86_64 ... and it should fail with "bad CPU type")
+    if not os.path.exists("/Library/Apple/usr/libexec/oah/libRosettaRuntime"):
         proc.run(
             ("softwareupdate", "--install-rosetta", "--agree-to-license"),
             exit=True,
