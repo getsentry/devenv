@@ -13,6 +13,7 @@ from devenv.lib import archive
 from devenv.lib import docker
 from devenv.lib import fs
 from devenv.lib import proc
+from devenv.lib import rosetta
 
 
 ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
@@ -119,6 +120,10 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     elif status == ColimaStatus.UNHEALTHY:
         print("colima seems to be unhealthy, stopping it")
         proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+
+    # colima start will only WARN if rosetta is unavailable and keep going without it,
+    # so we need to ensure it's installed and running ourselves
+    rosetta.ensure()
 
     cpus = os.cpu_count()
     if cpus is None:
