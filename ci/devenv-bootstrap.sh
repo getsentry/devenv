@@ -14,6 +14,9 @@ EOF
 
 : PATH: "$PATH"
 
+# doesn't functionally do anything, just exercises
+devenv update
+
 cd "$HOME"
 # note: colima will be used and is necessary for a docker runtime on
 #       macos GitHub runners
