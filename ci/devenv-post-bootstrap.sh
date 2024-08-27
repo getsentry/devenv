@@ -23,3 +23,12 @@ if [[ "$got" != "$expected" ]]; then
     echo "unexpected direnv location ${got}, expected ${expected}"
     exit 1
 fi
+
+# XXX: direnv allow/reload weirdly just exits 0 in GHA after writing
+# the allow file, and using delve (gdb for go binaries) with action-tmate
+# is painful because you get logged out for no reason after a few minutes,
+# strace also doesn't reveal anything obvious
+
+# so instead, just do here the essentials that sentry's .envrc does
+export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
+export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
