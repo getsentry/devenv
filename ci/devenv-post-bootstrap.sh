@@ -30,5 +30,5 @@ fi
 # strace also doesn't reveal anything obvious
 
 # so instead, just do here the essentials that sentry's .envrc does
-export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
+export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
 export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
