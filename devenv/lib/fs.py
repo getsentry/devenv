@@ -1,15 +1,31 @@
 from __future__ import annotations
 
 import os
+import subprocess
 
 from devenv.constants import home
 from devenv.constants import shell
 from devenv.lib import proc
 
 
+def zdotdir() -> str:
+    # Note that we can't simply check os.environ; the most common way of setting
+    # this value, via ~/.zshenv, results in a shell variable, not an env var.
+    return subprocess.run(
+        [shell, "-c", "echo $ZDOTDIR"], text=True, capture_output=True
+    ).stdout.strip()
+
+
 def shellrc() -> str:
     if shell == "zsh":
-        return f"{home}/.zshrc"
+        # The user's .zshrc may not be in ~/ if they set ZDOTDIR. See man zsh(1)
+        # for more details.
+        dotfile = f"{home}/.zshrc"
+        if not os.path.isfile(dotfile):
+            dotdir = zdotdir()
+            if dotdir != "":
+                dotfile = f"{dotdir}/.zshrc"
+        return dotfile
     if shell == "bash":
         return f"{home}/.bashrc"
     if shell == "fish":

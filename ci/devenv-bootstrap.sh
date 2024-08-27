@@ -21,7 +21,7 @@ export DEVENV_FETCH_BRANCH=master
 devenv bootstrap
 devenv fetch sentry
 
-# overwrite sentry's devenv config so we don't break
+# overwrite sentry's devenv config so we don't break when upstream config is updated
 cat <<EOF > "$HOME/code/sentry/devenv/config.ini"
 [venv.sentry]
 python = 3.11.8

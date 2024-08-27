@@ -28,7 +28,10 @@ fi
 # the allow file, and using delve (gdb for go binaries) with action-tmate
 # is painful because you get logged out for no reason after a few minutes,
 # strace also doesn't reveal anything obvious
-export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
+
+# so instead, just do here the essentials that sentry's .envrc does
+export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
+export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
 
 expected="${HOME}/code/sentry/.devenv/bin/node"
 got=$(command -v node)
