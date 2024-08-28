@@ -11,6 +11,7 @@ from devenv.lib import brew
 from devenv.lib import direnv
 from devenv.lib import github
 from devenv.lib import proc
+from devenv.lib import rosetta
 from devenv.lib.config import Config
 from devenv.lib.config import initialize_config
 from devenv.lib.context import Context
@@ -50,6 +51,10 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
             _ = proc.run(("xcrun", "-f", "git"), stdout=True)
         except RuntimeError:
             return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+
+    # even though this is called before colima starts,
+    # better to try and potentially (although unlikely) fail earlier rather than later
+    rosetta.ensure()
 
     github.add_to_known_hosts()
 
