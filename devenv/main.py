@@ -52,6 +52,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="version", version=version)
+    parser.add_argument("-v", "--verbose", action="store_true")
     subparser = parser.add_subparsers(
         title=argparse.SUPPRESS,
         metavar="command",
@@ -74,6 +75,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
         "config_path": config_path,
         "code_root": code_root,
         "repo": Repository(current_root) if current_root else None,
+        "verbose": args.verbose,
     }
 
     command_actions = {info.command: info.action for info in modinfo_list}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import os
 from collections.abc import Sequence
@@ -11,6 +12,13 @@ from devenv.lib.modules import require_repo
 
 @require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args(argv)
+
+    # also support devenv sync -v in addition to devenv -v sync
+    verbose = context["verbose"] or args.verbose
+
     repo = context["repo"]
     assert repo is not None
 
@@ -29,6 +37,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         "reporoot": repo.path,
         "repo": repo.name,
         "coderoot": context.get("code_root"),
+        "verbose": verbose,
     }
     return module.main(context_compat)  # type: ignore
 
