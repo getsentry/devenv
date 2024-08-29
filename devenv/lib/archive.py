@@ -28,7 +28,8 @@ def download(
     retries: int = 3,
     retry_exp: float = 2.0,
 ) -> str:
-    assert retries >= 0
+    if retries < 0:
+        raise ValueError("Retries cannot be negative")
 
     if not dest:
         cache_root = f"{home}/.cache/sentry-devenv"
