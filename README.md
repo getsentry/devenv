@@ -6,6 +6,11 @@ managing dev environments since '24
 a simple set of high level commands - bootstrap, sync, doctor, nuke - that
 manage a repository's dev environment.
 
+## prerequisites
+
+Are you a Sentry employee? Make sure your GitHub account has been added to a [`getsentry/engineering` team](https://github.com/orgs/getsentry/teams/engineering). If not, open an IT Ticket before continuing.
+
+Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable.
 
 ## install
 
