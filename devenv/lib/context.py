@@ -10,3 +10,10 @@ class Context(TypedDict):
     code_root: str
     repo: Repository | None
     verbose: bool
+
+
+class ContextRequiredRepo(TypedDict):
+    config_path: str
+    code_root: str
+    repo: Repository
+    verbose: bool

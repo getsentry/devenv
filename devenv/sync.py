@@ -20,7 +20,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     verbose = context["verbose"] or args.verbose
 
     repo = context["repo"]
-    assert repo is not None
+    # assert repo is not None
 
     if not os.path.exists(f"{repo.config_path}/sync.py"):
         print(f"{repo.config_path}/sync.py not found!")
