@@ -6,6 +6,7 @@ import secrets
 import shutil
 import tarfile
 import tempfile
+import time
 import urllib.request
 from urllib.error import HTTPError
 
@@ -20,17 +21,35 @@ def atomic_replace(src: str, dest: str) -> None:
     os.replace(src, dest)
 
 
-def download(url: str, sha256: str, dest: str = "") -> str:
+def download(
+    url: str,
+    sha256: str,
+    dest: str = "",
+    retries: int = 3,
+    retry_exp: float = 2.0,
+) -> str:
+    if retries < 0:
+        raise ValueError("Retries cannot be negative")
+
     if not dest:
         cache_root = f"{home}/.cache/sentry-devenv"
         dest = f"{cache_root}/{sha256}"
         os.makedirs(cache_root, exist_ok=True)
 
     if not os.path.exists(dest):
-        try:
-            resp = urllib.request.urlopen(url)
-        except HTTPError as e:
-            raise RuntimeError(f"Error getting {url}: {e}")
+        retry_sleep = 1.0
+        while retries >= 0:
+            try:
+                resp = urllib.request.urlopen(url)
+                break
+            except HTTPError as e:
+                if retries == 0:
+                    raise RuntimeError(f"Error getting {url}: {e}")
+                print(f"Error getting {url} ({retries} retries left): {e}")
+
+            time.sleep(retry_sleep)
+            retries -= 1
+            retry_sleep *= retry_exp
 
         dest_dir = os.path.dirname(dest)
         os.makedirs(dest_dir, exist_ok=True)
