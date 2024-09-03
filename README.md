@@ -6,6 +6,11 @@ managing dev environments since '24
 a simple set of high level commands - bootstrap, sync, doctor, nuke - that
 manage a repository's dev environment.
 
+## prerequisites
+
+Are you a Sentry employee? Make sure your GitHub account has been added to a [`getsentry/engineering` team](https://github.com/orgs/getsentry/teams/engineering). If not, open an IT Ticket before continuing.
+
+Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable.
 
 ## install
 
@@ -15,11 +20,16 @@ Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-
 bash install-devenv.sh
 ```
 
+This "global" devenv is installed to `~/.local/share/sentry-devenv`.
+
+To update this installation, run `devenv update`.
+
+
 ## user guide
 
 `devenv bootstrap`
 
-This is intended for initial setup. 
+This is intended for initial setup.
 
 
 `devenv fetch [repository name]`
@@ -48,7 +58,8 @@ When you're inside a repository, this completely removes the dev environment.
 
 ## technical overview
 
-devenv itself lives in `~/.local/share/sentry-devenv`. Inside:
+devenv itself lives in `~/.local/share/sentry-devenv`.
+This is the "global" devenv. Inside:
 - `bin` contains devenv itself and `direnv`
   - this is the only PATH entry needed for devenv
 - a private python and virtualenv used exclusively by `devenv`

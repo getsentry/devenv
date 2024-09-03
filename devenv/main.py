@@ -10,6 +10,7 @@ from devenv import doctor
 from devenv import fetch
 from devenv import pin_gha
 from devenv import sync
+from devenv import update
 from devenv.constants import home
 from devenv.constants import user
 from devenv.constants import version
@@ -44,7 +45,7 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     modinfo_list: Sequence[DevModuleInfo] = [
         module.module_info
-        for module in [bootstrap, fetch, colima, doctor, pin_gha, sync]
+        for module in [bootstrap, fetch, colima, doctor, pin_gha, sync, update]
         if hasattr(module, "module_info")
     ]
 

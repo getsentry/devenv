@@ -97,3 +97,21 @@ def test_run_command_failed_with_exit() -> None:
 
     with pytest.raises(SystemExit):
         run(cmd, exit=True)
+
+
+def test_run_command_failed_capture_combined_output() -> None:
+    cmd = ("sh", "-c", "echo foo && echo >&2 err && echo bar && false")
+
+    try:
+        run(cmd, stdout=True, exit=False)
+    except RuntimeError as e:
+        assert (
+            f"{e}"
+            == """Command `sh -c 'echo foo && echo >&2 err && echo bar && false'` failed! (code 1)
+combined out:
+foo
+err
+bar
+
+"""
+        )
