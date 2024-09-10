@@ -28,21 +28,21 @@ devenv fetch sentry
 # overwrite sentry's devenv config so we don't break when upstream config is updated
 cat <<EOF > "$HOME/code/sentry/devenv/config.ini"
 [venv.sentry]
-python = 3.11.8
+python = 3.12.3
 path = .venv
 requirements = requirements-dev.txt
 editable =
   .
 
-[python3.11.8]
-darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240224/cpython-3.11.8+20240224-x86_64-apple-darwin-install_only.tar.gz
-darwin_x86_64_sha256 = 097f467b0c36706bfec13f199a2eaf924e668f70c6e2bd1f1366806962f7e86e
-darwin_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240224/cpython-3.11.8+20240224-aarch64-apple-darwin-install_only.tar.gz
-darwin_arm64_sha256 = 389a51139f5abe071a0d70091ca5df3e7a3dfcfcbe3e0ba6ad85fb4c5638421e
-linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240224/cpython-3.11.8+20240224-x86_64-unknown-linux-gnu-install_only.tar.gz
-linux_x86_64_sha256 = 94e13d0e5ad417035b80580f3e893a72e094b0900d5d64e7e34ab08e95439987
-linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240224/cpython-3.11.8+20240224-aarch64-unknown-linux-gnu-install_only.tar.gz
-linux_arm64_sha256 = 389b9005fb78dd5a6f68df5ea45ab7b30d9a4b3222af96999e94fd20d4ad0c6a
+[python3.12.3]
+darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-apple-darwin-install_only.tar.gz
+darwin_x86_64_sha256 = c37a22fca8f57d4471e3708de6d13097668c5f160067f264bb2b18f524c890c8
+darwin_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-apple-darwin-install_only.tar.gz
+darwin_arm64_sha256 = ccc40e5af329ef2af81350db2a88bbd6c17b56676e82d62048c15d548401519e
+linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-unknown-linux-gnu-install_only.tar.gz
+linux_x86_64_sha256 = a73ba777b5d55ca89edef709e6b8521e3f3d4289581f174c8699adfb608d09d6
+linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-unknown-linux-gnu-install_only.tar.gz
+linux_arm64_sha256 = ec8126de97945e629cca9aedc80a29c4ae2992c9d69f2655e27ae73906ba187d
 
 [node]
 darwin_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-v20.13.1-darwin-x64.tar.xz
@@ -51,6 +51,7 @@ darwin_arm64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-
 darwin_arm64_sha256 = e8a8e78b91485bc95d20f2aa86201485593685c828ee609245ce21c5680d07ce
 linux_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-v20.13.1-linux-x64.tar.xz
 linux_x86_64_sha256 = efc0f295dd878e510ab12ea36bbadc3db03c687ab30c07e86c7cdba7eed879a9
+# used for autoupdate
 version = v20.13.1
 yarn_version = 1.22.22
 
@@ -63,6 +64,7 @@ linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colim
 linux_x86_64_sha256 = bf9e370c4bacbbebdfaa46de04d0e01fe2649a8e366f282cf35ae7dd84559a25
 linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Linux-aarch64
 linux_arm64_sha256 = 6ecba675e90d154f22e20200fa5684f20ad1495b73c0462f1bd7da4e9d0beaf8
+# used for autoupdate
 version = v0.6.6
 EOF
 
