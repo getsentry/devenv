@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import pathlib
 import tarfile
 import time
@@ -22,6 +23,23 @@ def tar(tmp_path: pathlib.Path) -> pathlib.Path:
 
     with tarfile.open(tar, "w:tar") as tarf:
         tarf.add(plain, arcname="hello.txt")
+
+    return tar
+
+
+@pytest.fixture
+def tgz(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path.joinpath("a")
+    a.write_text("a")
+    b = tmp_path.joinpath("b")
+    b.write_text("b")
+
+    tar = tmp_path.joinpath("tgz")
+
+    with tarfile.open(tar, "w:gz") as tarf:
+        # faster to arcname than to actually mkdirs in tmp_path
+        tarf.add(a, arcname="foo-v1/bin/foo")
+        tarf.add(b, arcname="foo-v1/baz")
 
     return tar
 
