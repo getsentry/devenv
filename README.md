@@ -20,7 +20,7 @@ Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-
 bash install-devenv.sh
 ```
 
-This "global" devenv is installed to `~/.local/share/sentry-devenv`.
+This "global" devenv is installed to `~/.local/share/sentry-devenv/bin/devenv`.
 
 To update this installation, run `devenv update`.
 
@@ -29,7 +29,7 @@ To update this installation, run `devenv update`.
 
 `devenv bootstrap`
 
-This is intended for initial setup.
+This is intended for initial setup of a new machine.
 
 
 `devenv fetch [repository name]`
@@ -42,9 +42,19 @@ Note: `sentry` and `ops` are currently special names which perform more complica
 
 `devenv sync`
 
-When you're inside a repository, this will bring the dev environment up to date,
-or create it if it doesn't exist.
-It runs `[reporoot]/devenv/sync.py`.
+This runs a user-supplied `[reporoot]/devenv/sync.py` which should:
+- make sure any desired tools are installed
+- bring the dev environment up-to-date, or create it if it doesn't exist
+
+This script runs within devenv's [runtime](#runtime), which has access to many useful high-level routines.
+There are currently no api docs, but referring to the [examples](#examples) should get you 90% of the way there.
+
+If you have a feature request, please open an issue!
+
+In general, our library is designed to isolate, as much as possible, a repo's dev environment within `[reporoot]/.devenv`.
+For example, [gcloud](#gcloud) is installed to `[reporoot]/.devenv/bin/gcloud` (with the gcloud sdk at `[reporoot]/.devenv/bin/google-cloud-sdk`).
+An exception to this would be python virtualenvs, which was implemented before the idea of `[reporoot]/.devenv`.
+
 
 `devenv doctor`
 
@@ -58,20 +68,19 @@ When you're inside a repository, this completely removes the dev environment.
 
 ## technical overview
 
-devenv itself lives in `~/.local/share/sentry-devenv`.
-This is the "global" devenv. Inside:
-- `bin` contains devenv itself and `direnv`
-  - this is the only PATH entry needed for devenv
-- a private python and virtualenv used exclusively by `devenv`
+Everything devenv needs is in `~/.local/share/sentry-devenv`.
 
-As much as possible, a repo's dev environment is self-contained within `[reporoot]/.devenv`.
+- `~/.local/share/sentry-devenv/bin` contains `devenv` and `direnv`
+    - we currently rely on a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH
+    - see [examples](#examples) for .envrc suggestions
 
-We're relying on `direnv` (which bootstrap will install for you at `~/.local/share/sentry-devenv/bin/direnv`)
-to add `[reporoot]/.devenv/bin` to PATH.
-See [examples](#examples) for an example `[reporoot]/.envrc`.
+### runtime
+
+- `devenv` is installed exclusively in a virtualenv at `~/.local/share/sentry-devenv/venv`
+    - this venv exclusively uses a python at `~/.local/share/sentry-devenv/python`
 
 
-## configuration
+### configuration
 
 global configuration is at `~/.config/sentry-devenv/config.ini`.
 
@@ -81,12 +90,15 @@ repository configuration is at `[reporoot]/devenv/config.ini`.
 ## examples
 
 Skip to:
+- [direnv](#direnv)
 - [python](#python)
 - [node](#node)
 - [brew](#brew)
 - [colima](#colima)
 - [gcloud](#gcloud)
 - [terraform](#terraform)
+
+### direnv
 
 A minimum viable `[reporoot]/.envrc` is currently needed:
 
@@ -110,6 +122,14 @@ PATH_add "${PWD}/.devenv/bin"
 You can have multiple virtualenvs, which is useful if you rely on a python tool
 that has a bunch of dependencies that may conflict with others.
 
+`[reporoot]/.envrc`
+```bash
+export VIRTUAL_ENV="${PWD}/.exampleproject"
+
+PATH_add "${PWD}/.venv-exampleproject/bin"
+PATH_add "${PWD}/.venv-inhouse-tool/bin"
+```
+
 `[reporoot]/devenv/sync.py`
 ```py
 from devenv.lib import config, venv
@@ -131,7 +151,6 @@ def main(context: dict[str, str]) -> int:
 ```ini
 [venv.exampleproject]
 python = 3.12.3
-path = .venv
 requirements = requirements-dev.txt
 editable =
   .
@@ -139,9 +158,6 @@ editable =
 [venv.inhouse-tool]
 python = 3.12.3
 requirements = inhouse-tool/requirements-dev.txt
-bins =
-  # .devenv/bin/tool -> .venv-inhouse-tool/bin/tool
-  tool
 
 [python3.12.3]
 darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-apple-darwin-install_only.tar.gz
@@ -155,6 +171,58 @@ linux_arm64_sha256 = ec8126de97945e629cca9aedc80a29c4ae2992c9d69f2655e27ae73906b
 ```
 
 ### node
+
+`[reporoot]/.envrc`
+```bash
+PATH_add "${PWD}/node_modules/.bin"
+```
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv import constants
+from devenv.lib import config, node
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+    repo_config = config.get_config(f"{reporoot}/devenv/config.ini")
+
+    node.install(
+        repo_config["node"]["version"],
+        repo_config["node"][constants.SYSTEM_MACHINE],
+        repo_config["node"][f"{constants.SYSTEM_MACHINE}_sha256"],
+        reporoot,
+    )
+    node.install_yarn(repo_config["node"]["yarn_version"], reporoot)
+
+    print("installing node dependencies...")
+    proc.run(
+        (
+            ".devenv/bin/yarn",
+            "install",
+            "--frozen-lockfile",
+            "--no-progress",
+            "--non-interactive",
+        ),
+    )
+```
+
+If you'd like a different node version, fill in the appropriate urls https://nodejs.org/dist/
+first in config.ini, then reach out to dev-infra and we can mirror it to GCS.
+
+`[reporoot]/devenv/config.ini`
+```ini
+[node]
+# upstream (https://nodejs.org/dist/) is not reliable enough so we've mirrored it to GCS
+darwin_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-v20.13.1-darwin-x64.tar.xz
+darwin_x86_64_sha256 = c83bffeb4eb793da6cb61a44c422b399048a73d7a9c5eb735d9c7f5b0e8659b6
+darwin_arm64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-v20.13.1-darwin-arm64.tar.xz
+darwin_arm64_sha256 = e8a8e78b91485bc95d20f2aa86201485593685c828ee609245ce21c5680d07ce
+linux_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-v20.13.1-linux-x64.tar.xz
+linux_x86_64_sha256 = efc0f295dd878e510ab12ea36bbadc3db03c687ab30c07e86c7cdba7eed879a9
+# used for autoupdate
+version = v20.13.1
+yarn_version = 1.22.22
+```
 
 
 ## develop
