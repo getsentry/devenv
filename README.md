@@ -249,6 +249,7 @@ def main(context: dict[str, str]) -> int:
 ```
 
 `[reporoot]/Brewfile`
+```
 # whatever you want, but we generally discourage installing
 # things via brew as it's very difficult to pin a particular
 # version of something
