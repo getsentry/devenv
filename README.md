@@ -145,6 +145,8 @@ def main(context: dict[str, str]) -> int:
 
         print(f"syncing {name} with {requirements}...")
         venv.sync(reporoot, venv_dir, requirements, editable_paths, bins)
+
+    return 0
 ```
 
 `[reporoot]/devenv/config.ini`
@@ -180,19 +182,19 @@ PATH_add "${PWD}/node_modules/.bin"
 `[reporoot]/devenv/sync.py`
 ```py
 from devenv import constants
-from devenv.lib import config, node
+from devenv.lib import config, node, proc
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
-    repo_config = config.get_config(f"{reporoot}/devenv/config.ini")
+    cfg = config.get_repo(reporoot)
 
     node.install(
-        repo_config["node"]["version"],
-        repo_config["node"][constants.SYSTEM_MACHINE],
-        repo_config["node"][f"{constants.SYSTEM_MACHINE}_sha256"],
+        cfg["node"]["version"],
+        cfg["node"][constants.SYSTEM_MACHINE],
+        cfg["node"][f"{constants.SYSTEM_MACHINE}_sha256"],
         reporoot,
     )
-    node.install_yarn(repo_config["node"]["yarn_version"], reporoot)
+    node.install_yarn(cfg["node"]["yarn_version"], reporoot)
 
     print("installing node dependencies...")
     proc.run(
@@ -204,6 +206,8 @@ def main(context: dict[str, str]) -> int:
             "--non-interactive",
         ),
     )
+
+    return 0
 ```
 
 If you'd like a different node version, fill in the appropriate urls https://nodejs.org/dist/
@@ -222,6 +226,163 @@ linux_x86_64_sha256 = efc0f295dd878e510ab12ea36bbadc3db03c687ab30c07e86c7cdba7ee
 # used for autoupdate
 version = v20.13.1
 yarn_version = 1.22.22
+```
+
+### brew
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv import constants
+from devenv.lib import brew
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+
+    brew.install()
+
+    proc.run(
+        (f"{constants.homebrew_bin}/brew", "bundle"),
+        cwd=reporoot,
+    )
+
+    return 0
+```
+
+`[reporoot]/Brewfile`
+# whatever you want, but we generally discourage installing
+# things via brew as it's very difficult to pin a particular
+# version of something
+```
+
+
+### colima
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv import constants
+from devenv.lib import brew, config, colima, limactl, proc
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+    cfg = config.get_repo(reporoot)
+
+    brew.install()
+
+    proc.run(
+        (f"{constants.homebrew_bin}/brew", "bundle"),
+        cwd=reporoot,
+    )
+
+    colima.install(
+        cfg["colima"]["version"],
+        cfg["colima"][constants.SYSTEM_MACHINE],
+        cfg["colima"][f"{constants.SYSTEM_MACHINE}_sha256"],
+        reporoot,
+    )
+    limactl.install(reporoot)
+
+    # start colima if it's not already running
+    colima.start(reporoot)
+
+    return 0
+```
+
+`[reporoot]/Brewfile`
+```
+# this is docker cli (not desktop) which is needed for interacting with colima
+brew 'docker'
+
+# QEMU is needed if you are on an intel mac
+# brew 'qemu'
+```
+
+`[reporoot]/devenv/config.ini`
+```ini
+[colima]
+darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Darwin-x86_64
+darwin_x86_64_sha256 = 84e72678945aacba5805fe363f6c7c87dc73e05cbbfdfc09f9b57cedf110865d
+darwin_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Darwin-arm64
+darwin_arm64_sha256 = b2729edcf99470071240ab6986349346211e25944a5dc317bba8fa27ed0f25e5
+linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Linux-x86_64
+linux_x86_64_sha256 = bf9e370c4bacbbebdfaa46de04d0e01fe2649a8e366f282cf35ae7dd84559a25
+linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Linux-aarch64
+linux_arm64_sha256 = 6ecba675e90d154f22e20200fa5684f20ad1495b73c0462f1bd7da4e9d0beaf8
+# used for autoupdate
+version = v0.6.6
+```
+
+### gcloud
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv import constants
+from devenv.lib import config, gcloud
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+    cfg = config.get_repo(reporoot)
+
+    gcloud.install(
+        cfg["gcloud"]["version"],
+        cfg["gcloud"][SYSTEM_MACHINE],
+        cfg["gcloud"][f"{SYSTEM_MACHINE}_sha256"],
+        reporoot,
+    )
+
+    return 0
+```
+
+`[reporoot]/devenv/config.ini`
+```ini
+[gcloud]
+# custom python version not supported yet, it just uses
+# devenv's internal python 3.11
+darwin_x86_64 = https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-490.0.0-darwin-x86_64.tar.gz
+darwin_x86_64_sha256 = fa396909acc763cf831dd5d89e778999debf37ceadccb3c1bdec606e59ba2694
+darwin_arm64 = https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-490.0.0-darwin-arm.tar.gz
+darwin_arm64_sha256 = a3a098a5f067b561e003c37284a9b164f28f37fd0d6371bb55e326679f48641c
+linux_x86_64 = https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-490.0.0-linux-x86_64.tar.gz
+linux_x86_64_sha256 = 40ce41958236f76d9cb08f377ccb9fd6502d2df4da14b36d9214bcb620e2b020
+# used for autoupdate
+version = 490.0.0
+```
+
+
+### terraform
+
+Our responsibility ends at installing `tenv` and containing `TENV_ROOT` at  `[reporoot]/.devenv/bin/tenv-root`. We install `terraform` and `terragrunt` shims which use that `TENV_ROOT`.
+
+Define `[reporoot]/.terraform-version` and `[reporoot]/.terragrunt-version` (if you want it) and after running sync, you should be able to just type `terraform` and `tenv` takes care of the rest.
+
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv import constants
+from devenv.lib import config, tenv
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+    cfg = config.get_repo(reporoot)
+
+    tenv.install(
+        cfg["tenv"]["version"],
+        cfg["tenv"][SYSTEM_MACHINE],
+        cfg["tenv"][f"{SYSTEM_MACHINE}_sha256"],
+        reporoot,
+    )
+
+    return 0
+```
+
+`[reporoot]/devenv/config.ini`
+```ini
+[tenv]
+darwin_x86_64 = https://github.com/tofuutils/tenv/releases/download/v1.3.0/tenv_v1.3.0_Darwin_x86_64.tar.gz
+darwin_x86_64_sha256 = 994100d26f4de6de4eebc7691ca4ea7b424e2fd73e6d5d77c5bf6dfd4af94752
+darwin_arm64 =  https://github.com/tofuutils/tenv/releases/download/v1.3.0/tenv_v1.3.0_Darwin_arm64.tar.gz
+darwin_arm64_sha256 = c31d2b8412147316a0cadb684408bc123e567852d7948091be7e4303fc19397a
+# used for autoupdate
+version = v1.3.0
 ```
 
 
