@@ -27,13 +27,17 @@ def _install(url: str, sha256: str, into: str) -> None:
     fs.write_script(
         f"{into}/gcloud",
         f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gcloud "$@"
+export CLOUDSDK_PYTHON="{root}/python/bin/python3" \
+       PATH="{into}/google-cloud-sdk/bin:${{PATH}}"
+exec gcloud "$@"
 """,
     )
     fs.write_script(
         f"{into}/gsutil",
         f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gsutil "$@"
+export CLOUDSDK_PYTHON="{root}/python/bin/python3" \
+       PATH="{into}/google-cloud-sdk/bin:${{PATH}}"
+exec gsutil "$@"
 """,
     )
 

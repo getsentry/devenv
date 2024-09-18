@@ -33,19 +33,22 @@ def _install(url: str, sha256: str, into: str) -> None:
     fs.write_script(
         f"{into}/tenv",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/tenv "$@"
+export TENV_ROOT="{TENV_ROOT}"
+exec "{TENV_ROOT}/bin/tenv" "$@"
 """,
     )
     fs.write_script(
         f"{into}/terraform",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terraform "$@"
+export TENV_ROOT="{TENV_ROOT}"
+exec "{TENV_ROOT}/bin/terraform" "$@"
 """,
     )
     fs.write_script(
         f"{into}/terragrunt",
         f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terragrunt "$@"
+export TENV_ROOT="{TENV_ROOT}"
+exec "{TENV_ROOT}/bin/terragrunt" "$@"
 """,
     )
 
