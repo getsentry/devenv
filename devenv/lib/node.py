@@ -57,13 +57,18 @@ def installed(version: str, binroot: str) -> bool:
             print("volta-based node detected")
             return False
 
-    stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
-    installed_version = stdout.strip()
-    if version == installed_version:
-        return True
+    try:
+        stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
+    except RuntimeError:
+        print("installed node failed to start!")
+        return False
+    else:
+        installed_version = stdout.strip()
+        if version == installed_version:
+            return True
 
-    print(f"installed node {installed_version} is outdated!")
-    return False
+        print(f"installed node {installed_version} is outdated!")
+        return False
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
