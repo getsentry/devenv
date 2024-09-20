@@ -13,6 +13,11 @@ name = "getsentry-mock"
 version = "0.0.0"
 EOF
 
+# devenv should ignore npm's prefix even if it's changed via config
+cat <<EOF > "$HOME/.npmrc"
+prefix = ${HOME}/.local/lib/nodejs
+EOF
+
 : PATH: "$PATH"
 
 # doesn't functionally do anything, just exercises

@@ -57,13 +57,18 @@ def installed(version: str, binroot: str) -> bool:
             print("volta-based node detected")
             return False
 
-    stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
-    installed_version = stdout.strip()
-    if version == installed_version:
-        return True
+    try:
+        stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
+    except RuntimeError:
+        print("installed node failed to start!")
+        return False
+    else:
+        installed_version = stdout.strip()
+        if version == installed_version:
+            return True
 
-    print(f"installed node {installed_version} is outdated!")
-    return False
+        print(f"installed node {installed_version} is outdated!")
+        return False
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
@@ -76,11 +81,15 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     uninstall(binroot)
     _install(url, sha256, binroot)
 
+    # NPM_CONFIG_PREFIX is needed to ensure npm install -g yarn
+    # puts yarn into our node-env.
+
     for shim in _shims:
         fs.write_script(
             f"{binroot}/{shim}",
             f"""#!/bin/sh
 export PATH="{binroot}/node-env/bin:${{PATH}}"
+export NPM_CONFIG_PREFIX="{binroot}/node-env"
 exec "{binroot}/node-env/bin/{shim}" "$@"
 """,
         )
