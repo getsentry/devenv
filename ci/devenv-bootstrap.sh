@@ -94,10 +94,6 @@ fi
 export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
 export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
 
-cat "${HOME}/code/sentry/.devenv/bin/node"
-ls -lah "${HOME}/code/sentry/.devenv/bin/node-env/bin"
-ls -lah "${HOME}/.local/lib/nodejs"
-
 expected="${HOME}/code/sentry/.devenv/bin/node"
 got=$(command -v node)
 if [[ "$got" != "$expected" ]]; then
