@@ -18,6 +18,8 @@ cat <<EOF > "$HOME/.npmrc"
 prefix = ${HOME}/.local/lib/nodejs
 EOF
 
+cat "$HOME/.npmrc"
+
 : PATH: "$PATH"
 
 # doesn't functionally do anything, just exercises
@@ -93,6 +95,10 @@ fi
 # so instead, just do here the essentials that sentry's .envrc does
 export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
 export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
+
+cat "${HOME}/code/sentry/.devenv/bin/node"
+ls -lah "${HOME}/.devenv/bin/node-env/bin"
+ls -lah "${HOME}/.local/lib/nodejs"
 
 expected="${HOME}/code/sentry/.devenv/bin/node"
 got=$(command -v node)
