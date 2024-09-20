@@ -81,14 +81,11 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     uninstall(binroot)
     _install(url, sha256, binroot)
 
-    # NPM_CONFIG_PREFIX is needed to ensure npm install -g yarn
-    # puts yarn into our node-env.
-
     for shim in _shims:
         fs.write_script(
             f"{binroot}/{shim}",
             f"""#!/bin/sh
-exec /usr/bin/env PATH={binroot}/node-env/bin:"$PATH" NPM_CONFIG_PREFIX="{binroot}/node-env" {binroot}/node-env/bin/{shim} "$@"
+exec /usr/bin/env PATH={binroot}/node-env/bin:"$PATH" {binroot}/node-env/bin/{shim} "$@"
 """,
         )
 
