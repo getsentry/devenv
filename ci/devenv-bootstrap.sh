@@ -18,8 +18,6 @@ cat <<EOF > "$HOME/.npmrc"
 prefix = ${HOME}/.local/lib/nodejs
 EOF
 
-cat "$HOME/.npmrc"
-
 : PATH: "$PATH"
 
 # doesn't functionally do anything, just exercises
@@ -97,7 +95,7 @@ export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.b
 export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
 
 cat "${HOME}/code/sentry/.devenv/bin/node"
-ls -lah "${HOME}/.devenv/bin/node-env/bin"
+ls -lah "${HOME}/code/sentry/.devenv/bin/node-env/bin"
 ls -lah "${HOME}/.local/lib/nodejs"
 
 expected="${HOME}/code/sentry/.devenv/bin/node"
