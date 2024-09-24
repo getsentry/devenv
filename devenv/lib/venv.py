@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import shutil
+from collections.abc import Generator
 from enum import Enum
 from typing import Optional
+from typing import TypeAlias
 
 from devenv import pythons
 from devenv.lib import config
@@ -14,36 +16,17 @@ VenvStatus = Enum(
     "VenvStatus", ("OK", "VERSION_MISMATCH", "NOT_PRESENT", "NOT_CONFIGURED")
 )
 
+Venv: TypeAlias = tuple[
+    str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]
+]
 
-# example venv configuration section:
-#
-# [venv.sentry-kube]
-# python = 3.11.6
-# requirements = k8s/cli/requirements.txt
-# path = optional
-# editable =
-#   k8s/cli
-#   k8s/cli/libsentrykube
-# bins =
-#   sentry-kube
-#   sentry-kube-pop
-#
-# [venv.salt]
-# python = 3.10.13
-# requirements = salt/requirements.txt
-# bins =
-#   salt-ssh
-#   ...
-#
-# example usage:
-#
-# venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
-# url, sha256 = config.get_python(reporoot, python_version)
-# ensure(path, python_version, url, sha256)
-# sync(reporoot, venv_dir, requirements, editable_paths, bins)
-def get(
-    reporoot: str, name: str
-) -> tuple[str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]]:
+
+def get_all(reporoot: str) -> Generator[Venv, None, None]:
+    cfg = config.get_repo(reporoot)
+    return (get(reporoot, k[5:]) for k in cfg.keys() if k.startswith("venv."))
+
+
+def get(reporoot: str, name: str) -> Venv:
     cfg = config.get_repo(reporoot)
 
     if not cfg.has_section(f"venv.{name}"):

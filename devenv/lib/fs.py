@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 
 from devenv.constants import home
@@ -43,6 +44,10 @@ def gitroot(cd: str = "") -> str:
         ("git", "-C", cd, "rev-parse", "--show-cdup"), stdout=True
     )
     return normpath(join(cd, stdout))
+
+
+def rmtree(path: str) -> None:
+    print(f"removing {path}")
 
 
 def idempotent_add(filepath: str, text: str) -> None:

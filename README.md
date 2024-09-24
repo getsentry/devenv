@@ -55,6 +55,10 @@ In general, our library is designed to isolate, as much as possible, a repo's de
 For example, [gcloud](#gcloud) is installed to `[reporoot]/.devenv/bin/gcloud` (with the gcloud sdk at `[reporoot]/.devenv/bin/google-cloud-sdk`).
 An exception to this would be python virtualenvs, which was implemented before the idea of `[reporoot]/.devenv`.
 
+`devenv delete`
+
+This is the opposite of `sync`. It deletes a repo's dev environment.
+
 
 `devenv doctor`
 
