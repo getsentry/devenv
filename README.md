@@ -57,7 +57,10 @@ An exception to this would be python virtualenvs, which was implemented before t
 
 `devenv delete`
 
-This is the opposite of `sync`. It deletes a repo's dev environment.
+This is the opposite of `sync`. It deletes a repo's dev environment if you're in a repo.
+Optionally, you can also perform even more drastic deletions:
+- `--colima`: remove global colima state
+- `--uninstall`: completely uninstalls devenv itself
 
 
 `devenv doctor`
