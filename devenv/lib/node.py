@@ -87,11 +87,12 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     for shim in _shims:
         fs.write_script(
             f"{binroot}/{shim}",
-            f"""#!/bin/sh
+            """#!/bin/sh
 export PATH="{binroot}/node-env/bin:${{PATH}}"
 export NPM_CONFIG_PREFIX="{binroot}/node-env"
 exec "{binroot}/node-env/bin/{shim}" "$@"
 """,
+            shell_escape={"binroot": binroot, "shim": shim},
         )
 
     if not installed(version, binroot):

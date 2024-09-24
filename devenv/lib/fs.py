@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
+from typing import Optional
 
 from devenv.constants import home
 from devenv.constants import shell
@@ -56,7 +58,12 @@ def idempotent_add(filepath: str, text: str) -> None:
             f.write(f"\n{text}\n")
 
 
-def write_script(filepath: str, text: str) -> None:
+def write_script(
+    filepath: str, text: str, shell_escape: Optional[dict[str, str]] = None
+) -> None:
+    if shell_escape:
+        shell_escaped = {k: shlex.quote(v) for k, v in shell_escape.items()}
+        text = text.format(**shell_escaped)
     with open(filepath, "w") as f:
         f.write(text)
     os.chmod(filepath, 0o775)
