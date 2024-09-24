@@ -124,3 +124,22 @@ if [[ "$got" != "$expected" ]]; then
     echo "unexpected yarn version ${got}, expected ${expected}"
     exit 1
 fi
+
+devenv delete
+
+if [[ ! -e "${HOME}/code/sentry/.devenv" ]]; then
+    echo "${HOME}/code/sentry/.devenv still exists"
+    exit 1
+fi
+
+if [[ ! -e "${HOME}/code/sentry/.venv" ]]; then
+    echo "${HOME}/code/sentry/.venv still exists"
+    exit 1
+fi
+
+devenv delete --uninstall
+
+if [[ ! -e "${HOME}/.local/share/sentry-devenv" ]]; then
+    echo "${HOME}/.local/share/sentry-devenv still exists"
+    exit 1
+fi

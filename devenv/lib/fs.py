@@ -46,8 +46,13 @@ def gitroot(cd: str = "") -> str:
     return normpath(join(cd, stdout))
 
 
-def rmtree(path: str) -> None:
+def rmtree(path: str, invalid_ok: bool = True) -> None:
+    if invalid_ok and not os.path.isdir(path):
+        # if the path doesn't exist or is a file, silently complete.
+        # we want shutil.rmtree to only error during deletions
+        return
     print(f"removing {path}")
+    shutil.rmtree(path)
 
 
 def idempotent_add(filepath: str, text: str) -> None:
