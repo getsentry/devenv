@@ -136,10 +136,11 @@ def install_yarn(version: str, reporoot: str) -> None:
 
     fs.write_script(
         f"{binroot}/yarn",
-        f"""#!/bin/sh
+        """#!/bin/sh
 export PATH="{binroot}/node-env/bin:${{PATH}}"
 exec "{binroot}/node-env/bin/yarn" "$@"
 """,
+        shell_escape={"binroot": binroot},
     )
 
     if not installed_yarn(version, binroot):

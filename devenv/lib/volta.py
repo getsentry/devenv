@@ -130,8 +130,9 @@ use that for your node+yarn needs!
         # is to use ~/.volta.
         fs.write_script(
             f"{binroot}/{executable}",
-            f"""#!/bin/sh
+            """#!/bin/sh
 export VOLTA_HOME="{VOLTA_HOME}"
 exec "{VOLTA_HOME}/bin/{executable}" "$@"
 """,
+            shell_escape={"VOLTA_HOME": VOLTA_HOME, "executable": executable},
         )
