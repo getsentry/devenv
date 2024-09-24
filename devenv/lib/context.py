@@ -9,3 +9,4 @@ class Context(TypedDict):
     config_path: str
     code_root: str
     repo: Repository | None
+    verbose: bool
