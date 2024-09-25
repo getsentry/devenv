@@ -32,4 +32,6 @@ def require(var: str, message: str) -> Callable[[Action], Action]:
     return outer
 
 
-require_repo = require("repo", "This command requires a repository")
+require_repo = require(
+    "repo", "This command requires that you be inside a repository."
+)
