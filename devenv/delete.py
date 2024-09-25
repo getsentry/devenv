@@ -40,7 +40,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 
         for v in venv.get_all(reporoot):
             venv_dir = v[0]
-            fs.rmtree(venv_dir)
+            fs.rmtree(f"{reporoot}/{venv_dir}")
 
     if args.colima:
         print("removing global colima state")

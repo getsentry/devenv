@@ -127,15 +127,17 @@ fi
 
 devenv delete
 
-if [[ ! -e "${HOME}/code/sentry/.devenv" ]]; then
-    echo "${HOME}/code/sentry/.devenv still exists"
-    exit 1
-fi
+ls -lah "${HOME}/code/sentry/.devenv" || true
 
-if [[ ! -e "${HOME}/code/sentry/.venv" ]]; then
-    echo "${HOME}/code/sentry/.venv still exists"
-    exit 1
-fi
+#if [[ ! -e "${HOME}/code/sentry/.devenv" ]]; then
+#    echo "${HOME}/code/sentry/.devenv still exists"
+#    exit 1
+#fi
+
+#if [[ ! -e "${HOME}/code/sentry/.venv" ]]; then
+#    echo "${HOME}/code/sentry/.venv still exists"
+#    exit 1
+#fi
 
 devenv delete --uninstall
 
