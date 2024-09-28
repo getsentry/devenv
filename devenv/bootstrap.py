@@ -58,7 +58,10 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     github.add_to_known_hosts()
 
-    if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access():
+    if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access(
+        # silence the error the first time since it's expected to happen
+        silent=True
+    ):
         is_employee = (
             False
             if CI
