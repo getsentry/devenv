@@ -26,15 +26,21 @@ def _install(url: str, sha256: str, into: str) -> None:
     # and we may as well reuse devenv's internal python.
     fs.write_script(
         f"{into}/gcloud",
-        f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gcloud "$@"
+        """#!/bin/sh
+export CLOUDSDK_PYTHON="{root}/python/bin/python3" \
+       PATH="{into}/google-cloud-sdk/bin:${{PATH}}"
+exec gcloud "$@"
 """,
+        shell_escape={"root": root, "into": into},
     )
     fs.write_script(
         f"{into}/gsutil",
-        f"""#!/bin/sh
-exec /usr/bin/env CLOUDSDK_PYTHON={root}/python/bin/python3 PATH={into}/google-cloud-sdk/bin:$PATH gsutil "$@"
+        """#!/bin/sh
+export CLOUDSDK_PYTHON="{root}/python/bin/python3" \
+       PATH="{into}/google-cloud-sdk/bin:${{PATH}}"
+exec gsutil "$@"
 """,
+        shell_escape={"root": root, "into": into},
     )
 
 
