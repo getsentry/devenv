@@ -26,7 +26,7 @@ def _install(url: str, sha256: str, into: str) -> None:
 
 
 def uninstall(binroot: str) -> None:
-    for d in (f"{home}/.lima",):
+    for d in (f"{home}/.colima",):
         shutil.rmtree(d, ignore_errors=True)
 
     for fp in (f"{binroot}/colima",):
@@ -39,6 +39,7 @@ def uninstall(binroot: str) -> None:
             pass
 
 
+<<<<<<< HEAD
 def install_shim(binroot: str) -> None:
     fs.write_script(
         f"{binroot}/colima",
