@@ -30,6 +30,8 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         "repo": repo.name,
         "coderoot": context.get("code_root"),
     }
+
+    os.chdir(repo.path)
     return module.main(context_compat)  # type: ignore
 
 
