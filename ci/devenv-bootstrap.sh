@@ -61,16 +61,28 @@ version = v20.13.1
 yarn_version = 1.22.22
 
 [colima]
-darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Darwin-x86_64
-darwin_x86_64_sha256 = 84e72678945aacba5805fe363f6c7c87dc73e05cbbfdfc09f9b57cedf110865d
-darwin_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Darwin-arm64
-darwin_arm64_sha256 = b2729edcf99470071240ab6986349346211e25944a5dc317bba8fa27ed0f25e5
-linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Linux-x86_64
-linux_x86_64_sha256 = bf9e370c4bacbbebdfaa46de04d0e01fe2649a8e366f282cf35ae7dd84559a25
-linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.6.6/colima-Linux-aarch64
-linux_arm64_sha256 = 6ecba675e90d154f22e20200fa5684f20ad1495b73c0462f1bd7da4e9d0beaf8
+darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Darwin-x86_64
+darwin_x86_64_sha256 = 53f78b4aaef5fb5dab65cae19fba4504047de1fdafa152fba90435d8a7569c2b
+darwin_arm64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Darwin-arm64
+darwin_arm64_sha256 = 267696d6cb28eaf6daa3ea9622c626697b4baeb847b882d15b26c732e841913c
+linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Linux-x86_64
+linux_x86_64_sha256 = a3d440033776b2fb0cdd6139a2dbebf6764aabf78a671d4aa13b45c26df21a8a
+linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Linux-aarch64
+linux_arm64_sha256 = 330e11a4b2e5ce69ee6253635308c9f0f49195f236da01718ede35cdb2729901
 # used for autoupdate
-version = v0.6.6
+version = v0.7.5
+
+[lima]
+darwin_x86_64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Darwin-x86_64.tar.gz
+darwin_x86_64_sha256 = bdb833f4ccd76255a4718bc4c0014b898acbc0a1c249731baf441d3c5070e567
+darwin_arm64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Darwin-arm64.tar.gz
+darwin_arm64_sha256 = 8b75ccfb166df348430df7ebd15cd50b6f980d40ed4b765ee3b14a6e805ae311
+linux_x86_64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-x86_64.tar.gz
+linux_x86_64_sha256 = 5d0034316096e3f3ceedcb2e1dcac7c7d380e26defb59a5894eaf1e3265b191e
+linux_arm64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-aarch64.tar.gz
+linux_arm64_sha256 = 299d36898204a0e9c1b3b8a4ae750c129ed7b84ce062e2c51cd5224da4874a43
+# used for autoupdate
+version = 0.23.2
 EOF
 
 cd "$HOME/code/sentry"
