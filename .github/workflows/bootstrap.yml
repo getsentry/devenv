@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: master
+      DEVENV_FETCH_BRANCH: master
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
@@ -47,7 +47,7 @@ jobs:
     runs-on: macos-13
     timeout-minutes: 60
     env:
-      SENTRY_BRANCH: devenv-upgrade-colima
+      DEVENV_FETCH_BRANCH: devenv-upgrade-colima
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
