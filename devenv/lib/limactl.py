@@ -14,7 +14,13 @@ def uninstall(binroot: str) -> None:
     for d in (f"{home}/.lima",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for fp in (f"{binroot}/lima", f"{binroot}/limactl"):
+    for fp in (
+        f"{binroot}/lima",
+        f"{binroot}/limactl",
+        f"{binroot}/lima-guestagent.Linux-aarch64",
+        f"{binroot}/lima-guestagent.Linux-x86_64",
+        f"{binroot}/templates/default.yaml",
+    ):
         try:
             os.remove(fp)
         except FileNotFoundError:
