@@ -12,8 +12,7 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-# 3.10 is just for internal pypi compat
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
