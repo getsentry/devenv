@@ -45,6 +45,38 @@ def tgz(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
+def tar2(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path.joinpath("a")
+    a.write_text("")
+    b = tmp_path.joinpath("b")
+    b.write_text("")
+
+    tar = tmp_path.joinpath("tar")
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(a, arcname="foo/v1/bin/foo")
+        tarf.add(b, arcname="foo/v1/baz")
+
+    return tar
+
+
+@pytest.fixture
+def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path.joinpath("a")
+    a.write_text("")
+    b = tmp_path.joinpath("b")
+    b.write_text("")
+
+    tar = tmp_path.joinpath("tar")
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(a, arcname="foo/v1/bin/foo")
+        tarf.add(b, arcname="foo/bad")
+
+    return tar
+
+
+@pytest.fixture
 def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
@@ -121,6 +153,19 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
     assert dest.joinpath("hello.txt").read_text() == "hello world\n"
 
 
+def test_unpack_tar_strip1(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack(
+        str(tar), str(dest), perform_strip1=True, strip1_new_prefix="foo"
+    )
+    # strip1 should noop (there is no top level directory)
+    # but a new prefix should be added still
+    assert os.path.exists(f"{tmp_path}/dest/foo/hello.txt")
+
+    # actually i think we should error if there's any member
+    # that exceeds strip
+
+
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
     archive.unpack(str(tgz), str(dest), perform_strip1=True)
@@ -133,3 +178,31 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     )
     assert os.path.exists(f"{tmp_path}/dest2/node/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest2/node/baz")
+
+
+def test_unpack_stripN(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar2), str(dest), strip_n=2)
+    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
+    assert os.path.exists(f"{tmp_path}/dest/baz")
+
+    dest2 = tmp_path.joinpath("dest2")
+    archive.unpack_strip_n(str(tar2), str(dest2), strip_n=2, new_prefix="x")
+    assert os.path.exists(f"{tmp_path}/dest2/x/bin/foo")
+    assert os.path.exists(f"{tmp_path}/dest2/x/baz")
+
+
+def test_unpack_stripN_unexpected_structure(
+    tar3: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    with pytest.raises(RuntimeError) as excinfo:
+        archive.unpack_strip_n(str(tar3), str(dest), strip_n=2)
+
+    assert (
+        f"{excinfo.value}"
+        == """unexpected archive structure:
+
+foo/bad doesn't have the prefix to be removed (foo/v1/)
+"""
+    )
