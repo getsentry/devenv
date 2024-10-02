@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import pathlib
 import shutil
@@ -9,13 +10,12 @@ import pytest
 
 from devenv.lib.fs import gitroot
 from devenv.lib.fs import write_script
-from tests.utils import chdir
 
 
 def test_gitroot(tmp_path: pathlib.Path) -> None:
     subprocess.run(("git", "init", f"{tmp_path}"))
 
-    with chdir(tmp_path):
+    with contextlib.chdir(tmp_path):
         assert os.path.samefile(tmp_path, gitroot())
         assert os.path.isdir(f"{gitroot()}/.git")
 
@@ -31,7 +31,7 @@ def test_gitroot_cd(tmp_path: pathlib.Path) -> None:
 
 def test_no_gitroot(tmp_path: pathlib.Path) -> None:
     with pytest.raises(RuntimeError):
-        with chdir(tmp_path):
+        with contextlib.chdir(tmp_path):
             gitroot()
 
 
