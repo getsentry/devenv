@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import shutil
+import sys
 import tempfile
 from enum import Enum
 
@@ -39,10 +40,38 @@ def uninstall(binroot: str) -> None:
             pass
 
 
+def install_shim(binroot: str) -> None:
+    fs.write_script(
+        f"{binroot}/colima",
+        """#!/bin/sh
+export COLIMA_HOME="{home}/.colima"
+
+# needed to ensure COLIMA_HOME is what we want it to be
+unset XDG_CONFIG_HOME
+
+# no one is going to type 'devenv colima start'
+# but it's very important that colima is started with the
+# right parameters
+for arg in "$@"; do
+  if [ "$arg" = "start" ]; then
+    exec "{py}" -P -m devenv colima start
+  fi
+done
+
+exec "{binroot}/colima-bin" "$@"
+""",
+        shell_escape={"binroot": binroot, "home": home, "py": sys.executable},
+    )
+
+
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
     if shutil.which("colima", path=binroot) == f"{binroot}/colima":
+        if not os.path.exists(f"{binroot}/colima-bin"):
+            os.rename(f"{binroot}/colima", f"{binroot}/colima-bin")
+            install_shim(binroot)
+
         stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]
         if version == installed_version:
@@ -52,17 +81,7 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     print(f"installing colima {version}...")
     uninstall(binroot)
     _install(url, sha256, binroot)
-
-    fs.write_script(
-        f"{binroot}/colima",
-        # both are needed to really hit home that we want ~/.colima
-        """#!/bin/sh
-export COLIMA_HOME="{home}/.colima"
-unset XDG_CONFIG_HOME
-exec "{binroot}/colima-bin" "$@"
-""",
-        shell_escape={"binroot": binroot, "home": home},
-    )
+    install_shim(binroot)
 
     stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
