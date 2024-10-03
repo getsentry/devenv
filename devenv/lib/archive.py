@@ -91,22 +91,26 @@ def download(
 # the same component was stripped across all members
 # (/ is always stripped and doesn't count)
 def strip1(members: Sequence[tarfile.TarInfo]) -> None:
-    for member in members:
-        i = member.path.find("/")
-        if i == -1:
+    end = members[0].path.find("/")
+    if end == -1:
+        raise ValueError(
+            f"unexpected archive structure: no component left to strip in {members[0].path}"
+        )
+    elif end == 0:
+        end = members[0].path[1:].find("/") + 1
+        if end == 0:
             raise ValueError(
-                f"unexpected archive structure: no component left to strip in {member.path}"
+                f"unexpected archive structure: no component left to strip in {members[0].path}"
             )
-        elif i == 0:
-            i = member.path[1:].find("/") + 1
-            if i == 0:
-                raise ValueError(
-                    f"unexpected archive structure: no component left to strip in {member.path}"
-                )
 
-        member.path = member.path[i + 1 :]  # noqa: E203
+    first_stripped_component = members[0].path[: end + 1]
 
-    # TODO: assert that the same component was stripped across all members
+    for member in members:
+        if not member.path.startswith(first_stripped_component):
+            raise ValueError(
+                f"unexpected archive structure: leading component in {member.path} inconsistent with {first_stripped_component}"
+            )
+        member.path = member.path[end + 1 :]  # noqa: E203
 
 
 def unpack(

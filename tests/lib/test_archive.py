@@ -90,6 +90,22 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
+def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path.joinpath("a")
+    a.write_text("")
+    b = tmp_path.joinpath("b")
+    b.write_text("")
+
+    tar = tmp_path.joinpath("tar")
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(a, arcname="foo/v1/bar")
+        tarf.add(b, arcname="foo/v2/baz")
+
+    return tar
+
+
+@pytest.fixture
 def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
@@ -212,7 +228,8 @@ def test_unpack_strip_n_unexpected_structure(
 
     assert (
         f"{excinfo.value}"
-        == "unexpected archive structure: no component left to strip in bad"
+        # technically should be "no component left to strip in bad" but w/e
+        == "unexpected archive structure: leading component in bad inconsistent with v1/"
     )
 
 
@@ -228,3 +245,16 @@ def test_unpack_strip_n_root(
     archive.unpack_strip_n(str(tar4), str(dest2), n=0)
     # n=0 can be used to just strip the root component
     assert os.path.exists(f"{tmp_path}/dest/foo/bar")
+
+
+def test_unpack_strip_n_unexpected_structure_inconsistent_components(
+    tar5: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    with pytest.raises(ValueError) as excinfo:
+        archive.unpack_strip_n(str(tar5), str(dest), n=2)
+
+    assert (
+        f"{excinfo.value}"
+        == "unexpected archive structure: leading component in v2/baz inconsistent with v1/"
+    )
