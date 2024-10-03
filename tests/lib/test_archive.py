@@ -77,6 +77,19 @@ def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
+def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path.joinpath("a")
+    a.write_text("")
+
+    tar = tmp_path.joinpath("tar")
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(a, arcname="/foo/bar")
+
+    return tar
+
+
+@pytest.fixture
 def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
@@ -155,15 +168,16 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
 def test_unpack_tar_strip1(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
-    archive.unpack(
-        str(tar), str(dest), perform_strip1=True, strip1_new_prefix="foo"
-    )
-    # strip1 should noop (there is no top level directory)
-    # but a new prefix should be added still
-    assert os.path.exists(f"{tmp_path}/dest/foo/hello.txt")
+    with pytest.raises(ValueError) as excinfo:
+        archive.unpack(str(tar), str(dest), perform_strip1=True)
 
-    # actually i think we should error if there's any member
-    # that exceeds strip
+    assert (
+        f"{excinfo.value}"
+        == """unexpected archive structure:
+
+trying to strip 1 leading components but hello.txt isn't that deep
+"""
+    )
 
 
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
@@ -206,3 +220,17 @@ def test_unpack_strip_n_unexpected_structure(
 foo/bad doesn't have the prefix to be removed (foo/v1/)
 """
     )
+
+
+def test_unpack_strip_n_root(
+    tar4: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar4), str(dest), n=1)
+    # leading slash in /foo/bar doesn't count as a component
+    assert os.path.exists(f"{tmp_path}/dest/bar")
+
+    dest2 = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar4), str(dest2), n=0)
+    # n=0 can be used to just strip the root component
+    assert os.path.exists(f"{tmp_path}/dest/foo/bar")
