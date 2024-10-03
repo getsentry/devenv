@@ -173,10 +173,7 @@ def test_unpack_tar_strip1(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
     assert (
         f"{excinfo.value}"
-        == """unexpected archive structure:
-
-trying to strip 1 leading components but hello.txt isn't that deep
-"""
+        == "unexpected archive structure: no component left to strip in hello.txt"
     )
 
 
@@ -215,10 +212,7 @@ def test_unpack_strip_n_unexpected_structure(
 
     assert (
         f"{excinfo.value}"
-        == """unexpected archive structure:
-
-foo/bad doesn't have the prefix to be removed (foo/v1/)
-"""
+        == "unexpected archive structure: no component left to strip in bad"
     )
 
 
