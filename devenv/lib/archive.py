@@ -90,7 +90,7 @@ def download(
 # strips N leading components and optionally adds a new prefix
 # (what ends up being stripped should be a common prefix for all entries)
 # (/ is always stripped and doesn't count)
-def stripN(
+def strip_n(
     members: Sequence[tarfile.TarInfo], strip_n: int, new_prefix: str = ""
 ) -> None:
     # we'll use the first member to determine the prefix to strip
@@ -108,7 +108,7 @@ def stripN(
             # this means this member isn't nested as deep as
             # N directories we want to strip, which is
             # unexpected
-            raise RuntimeError(
+            raise ValueError(
                 f"""unexpected archive structure:
 
 trying to strip {strip_n} leading components but {member.path} isn't that deep
@@ -120,7 +120,7 @@ trying to strip {strip_n} leading components but {member.path} isn't that deep
 
     for member in members:
         if not member.path.startswith(stripped_prefix):
-            raise RuntimeError(
+            raise ValueError(
                 f"""unexpected archive structure:
 
 {member.path} doesn't have the prefix to be removed ({stripped_prefix})
@@ -134,7 +134,7 @@ trying to strip {strip_n} leading components but {member.path} isn't that deep
 
 
 def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
-    stripN(members, 1, new_prefix)
+    strip_n(members, 1, new_prefix)
 
 
 def unpack(
@@ -150,10 +150,8 @@ def unpack(
         tarf.extractall(into, filter="tar")
 
 
-def unpack_strip_n(
-    path: str, into: str, strip_n: int, new_prefix: str = ""
-) -> None:
+def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        stripN(tarf.getmembers(), strip_n, new_prefix)
+        strip_n(tarf.getmembers(), n, new_prefix)
         tarf.extractall(into, filter="tar")

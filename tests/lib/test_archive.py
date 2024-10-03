@@ -180,24 +180,24 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     assert os.path.exists(f"{tmp_path}/dest2/node/baz")
 
 
-def test_unpack_stripN(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
+def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
-    archive.unpack_strip_n(str(tar2), str(dest), strip_n=2)
+    archive.unpack_strip_n(str(tar2), str(dest), n=2)
     assert os.path.exists(f"{tmp_path}/dest/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest/baz")
 
     dest2 = tmp_path.joinpath("dest2")
-    archive.unpack_strip_n(str(tar2), str(dest2), strip_n=2, new_prefix="x")
+    archive.unpack_strip_n(str(tar2), str(dest2), n=2, new_prefix="x")
     assert os.path.exists(f"{tmp_path}/dest2/x/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest2/x/baz")
 
 
-def test_unpack_stripN_unexpected_structure(
+def test_unpack_strip_n_unexpected_structure(
     tar3: pathlib.Path, tmp_path: pathlib.Path
 ) -> None:
     dest = tmp_path.joinpath("dest")
-    with pytest.raises(RuntimeError) as excinfo:
-        archive.unpack_strip_n(str(tar3), str(dest), strip_n=2)
+    with pytest.raises(ValueError) as excinfo:
+        archive.unpack_strip_n(str(tar3), str(dest), n=2)
 
     assert (
         f"{excinfo.value}"
