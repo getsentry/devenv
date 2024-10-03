@@ -87,26 +87,63 @@ def download(
 
 
 # mutates members!
-# strips the leading component, and asserts that
-# the same component was stripped across all members
+# strips N leading components and optionally adds a new prefix
+# (what ends up being stripped should be a common prefix for all entries)
 # (/ is always stripped and doesn't count)
-def strip1(members: Sequence[tarfile.TarInfo]) -> None:
-    for member in members:
-        i = member.path.find("/")
-        if i == -1:
+def strip_n(
+    members: Sequence[tarfile.TarInfo], strip_n: int, new_prefix: str = ""
+) -> None:
+    # we'll use the first member to determine the prefix to strip
+    member = members[0]
+
+    end = 0
+    if member.path.find("/") == 0:
+        # strip leading "/"
+        end = 1
+
+    for n in range(strip_n):
+        next_at = member.path[end:].find("/")
+        if next_at == -1 and n != strip_n - 1:
+            # no more '/' but we're not done iterating
+            # this means this member isn't nested as deep as
+            # N directories we want to strip, which is
+            # unexpected
             raise ValueError(
-                f"unexpected archive structure: no component left to strip in {member.path}"
+                f"""unexpected archive structure:
+
+trying to strip {strip_n} leading components but {member.path} isn't that deep
+"""
             )
-        elif i == 0:
-            i = member.path[1:].find("/") + 1
-            if i == 0:
-                raise ValueError(
-                    f"unexpected archive structure: no component left to strip in {member.path}"
-                )
+        end += next_at + 1
 
-        member.path = member.path[i + 1 :]  # noqa: E203
+    if end == 0 and strip_n > 0:
+        # special case where members are just top level files
+        raise ValueError(
+            f"""unexpected archive structure:
 
-    # TODO: assert that the same component was stripped across all members
+trying to strip {strip_n} leading components but {member.path} isn't that deep
+"""
+        )
+
+    stripped_prefix = member.path[:end]
+
+    for member in members:
+        if not member.path.startswith(stripped_prefix):
+            raise ValueError(
+                f"""unexpected archive structure:
+
+{member.path} doesn't have the prefix to be removed ({stripped_prefix})
+"""
+            )
+
+        if new_prefix:
+            member.path = f"{new_prefix}/{member.path[end:]}"
+        else:
+            member.path = member.path[end:]
+
+
+def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
+    strip_n(members, 1, new_prefix)
 
 
 def unpack(
@@ -118,23 +155,12 @@ def unpack(
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
         if perform_strip1:
-            strip1(tarf.getmembers())
-
-        if strip1_new_prefix:
-            for member in tarf.getmembers():
-                member.path = f"{strip1_new_prefix}/{member.path}"
-
+            strip1(tarf.getmembers(), strip1_new_prefix)
         tarf.extractall(into, filter="tar")
 
 
 def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        for i in range(n):
-            strip1(tarf.getmembers())
-
-        if new_prefix:
-            for member in tarf.getmembers():
-                member.path = f"{new_prefix}/{member.path}"
-
+        strip_n(tarf.getmembers(), n, new_prefix)
         tarf.extractall(into, filter="tar")
