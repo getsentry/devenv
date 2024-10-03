@@ -5,10 +5,8 @@ import platform
 import shutil
 import tempfile
 from enum import Enum
-from typing import Optional
 
 from devenv.constants import home
-from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import docker
 from devenv.lib import fs
@@ -23,8 +21,8 @@ def _install(url: str, sha256: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive.download(url, sha256, dest=f"{tmpd}/colima")
-        os.replace(f"{tmpd}/colima", f"{into}/colima")
-        os.chmod(f"{into}/colima", 0o775)
+        os.replace(f"{tmpd}/colima", f"{into}/colima-bin")
+        os.chmod(f"{into}/colima-bin", 0o775)
 
 
 def uninstall(binroot: str) -> None:
@@ -41,15 +39,8 @@ def uninstall(binroot: str) -> None:
             pass
 
 
-def install(
-    version: str, url: str, sha256: str, reporoot: Optional[str] = ""
-) -> None:
-    if reporoot:
-        binroot = fs.ensure_binroot(reporoot)
-    else:
-        # compatibility with devenv <= 1.4.0
-        binroot = f"{root}/bin"
-        os.makedirs(binroot, exist_ok=True)
+def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
 
     if shutil.which("colima", path=binroot) == f"{binroot}/colima":
         stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
@@ -61,6 +52,17 @@ def install(
     print(f"installing colima {version}...")
     uninstall(binroot)
     _install(url, sha256, binroot)
+
+    fs.write_script(
+        f"{binroot}/colima",
+        # both are needed to really hit home that we want ~/.colima
+        """#!/bin/sh
+export COLIMA_HOME="{home}/.colima"
+unset XDG_CONFIG_HOME
+exec "{binroot}/colima-bin" "$@"
+""",
+        shell_escape={"binroot": binroot, "home": home},
+    )
 
     stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
