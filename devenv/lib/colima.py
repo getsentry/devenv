@@ -14,7 +14,7 @@ from devenv.lib import fs
 from devenv.lib import proc
 from devenv.lib import rosetta
 
-COLIMA_HOME = f"{home}/.colima"
+
 ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
 
 
@@ -44,7 +44,7 @@ def install_shim(binroot: str) -> None:
     fs.write_script(
         f"{binroot}/colima",
         """#!/bin/sh
-export COLIMA_HOME="{COLIMA_HOME}"
+export COLIMA_HOME="{home}/.colima"
 
 # needed to ensure COLIMA_HOME is what we want it to be
 unset XDG_CONFIG_HOME
@@ -60,11 +60,7 @@ done
 
 exec "{binroot}/colima-bin" "$@"
 """,
-        shell_escape={
-            "binroot": binroot,
-            "COLIMA_HOME": COLIMA_HOME,
-            "py": sys.executable,
-        },
+        shell_escape={"binroot": binroot, "home": home, "py": sys.executable},
     )
 
 
@@ -107,13 +103,13 @@ def check(reporoot: str) -> ColimaStatus:
             "docker executable not found, you might want to run devenv sync"
         )
 
-    colima = f"{reporoot}/.devenv/bin/colima-bin"
+    colima = f"{reporoot}/.devenv/bin/colima"
     if not os.path.isfile(colima):
         raise SystemExit(
             f"colima not found at {colima}, you might want to run devenv sync"
         )
 
-    if not os.path.exists(f"{COLIMA_HOME}/default/docker.sock"):
+    if not os.path.exists(f"{home}/.colima/default/docker.sock"):
         return ColimaStatus.DOWN
 
     # if colima's up, we should be able to communicate with that docker socket
@@ -139,12 +135,12 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     if status == ColimaStatus.UP:
         if not restart:
             return ColimaStatus.UP
-        proc.run(("colima-bin", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+        proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
     elif status == ColimaStatus.DOWN:
         pass
     elif status == ColimaStatus.UNHEALTHY:
         print("colima seems to be unhealthy, stopping it")
-        proc.run(("colima-bin", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+        proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
 
     # colima start will only WARN if rosetta is unavailable and keep going without it,
     # so we need to ensure it's installed and running ourselves
@@ -169,7 +165,7 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     proc.run(
         (
             # we share the "default" machine across repositories
-            "colima-bin",
+            "colima",
             "start",
             "--verbose",
             # ideally we keep ~ ro and reporoot rw, but currently the "default" vm
@@ -192,6 +188,6 @@ def restart(reporoot: str) -> ColimaStatus:
 
 
 def stop(reporoot: str) -> ColimaStatus:
-    proc.run(("colima-bin", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+    proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
     status = check(reporoot)
     return status
