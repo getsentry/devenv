@@ -117,7 +117,21 @@ trying to strip {strip_n} leading components but {member.path} isn't that deep
         end += next_at + 1
 
     stripped_prefix = member.path[:end]
-    breakpoint()
+
+    if end == 0:
+        if strip_n == 1:
+            # A common case where the first member is the directory
+            # to be stripped. In a python TarInfo object it won't have
+            # a trailing slash.
+            stripped_prefix = member.path[:]
+            end = len(stripped_prefix)
+        elif strip_n > 1:
+            raise ValueError(
+                f"""unexpected archive structure:
+
+trying to strip {strip_n} leading components but {member.path} isn't that deep
+"""
+            )
 
     for member in members:
         if not member.path.startswith(stripped_prefix):
