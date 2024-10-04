@@ -106,6 +106,26 @@ def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
+def tar6(tmp_path: pathlib.Path) -> pathlib.Path:
+    a = tmp_path / "a"
+    b = tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    c = tmp_path.joinpath("c")
+    c.write_text("")
+
+    tar = tmp_path.joinpath("tar")
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        # real world example, the first member is the top level directory itself
+        tarf.add(a, arcname="node-v20.13.1-linux-x64")
+        tarf.add(b, arcname="node-v20.13.1-linux-x64/bin")
+        tarf.add(c, arcname="node-v20.13.1-linux-x64/bin/node")
+
+    return tar
+
+
+@pytest.fixture
 def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
@@ -182,20 +202,6 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
     assert dest.joinpath("hello.txt").read_text() == "hello world\n"
 
 
-def test_unpack_tar_strip1(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    dest = tmp_path.joinpath("dest")
-    with pytest.raises(ValueError) as excinfo:
-        archive.unpack(str(tar), str(dest), perform_strip1=True)
-
-    assert (
-        f"{excinfo.value}"
-        == """unexpected archive structure:
-
-trying to strip 1 leading components but hello.txt isn't that deep
-"""
-    )
-
-
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
     archive.unpack(str(tgz), str(dest), perform_strip1=True)
@@ -266,3 +272,11 @@ def test_unpack_strip_n_unexpected_structure_inconsistent_components(
 foo/v2/baz doesn't have the prefix to be removed (foo/v1/)
 """
     )
+
+
+def test_unpack_strip_n_node(
+    tar6: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar6), str(dest), n=1)
+    assert os.path.exists(f"{tmp_path}/dest/bin/node")

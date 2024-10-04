@@ -116,16 +116,8 @@ trying to strip {strip_n} leading components but {member.path} isn't that deep
             )
         end += next_at + 1
 
-    if end == 0 and strip_n > 0:
-        # special case where members are just top level files
-        raise ValueError(
-            f"""unexpected archive structure:
-
-trying to strip {strip_n} leading components but {member.path} isn't that deep
-"""
-        )
-
     stripped_prefix = member.path[:end]
+    breakpoint()
 
     for member in members:
         if not member.path.startswith(stripped_prefix):
