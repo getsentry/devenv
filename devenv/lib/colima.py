@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import platform
 import shutil
-import sys
 import tempfile
 from enum import Enum
 
@@ -49,18 +48,9 @@ export COLIMA_HOME="{home}/.colima"
 # needed to ensure COLIMA_HOME is what we want it to be
 unset XDG_CONFIG_HOME
 
-# no one is going to type 'devenv colima start'
-# but it's very important that colima is started with the
-# right parameters
-for arg in "$@"; do
-  if [ "$arg" = "start" ]; then
-    exec "{py}" -P -m devenv colima start
-  fi
-done
-
 exec "{binroot}/colima-bin" "$@"
 """,
-        shell_escape={"binroot": binroot, "home": home, "py": sys.executable},
+        shell_escape={"binroot": binroot, "home": home},
     )
 
 
