@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 import time
 import urllib.request
+from collections.abc import Generator
 from collections.abc import Sequence
 from urllib.error import HTTPError
 
@@ -115,7 +116,7 @@ def unpack(
     with tarfile.open(name=path, mode="r:*") as tarf:
         members = tarf.getmembers()
         if perform_strip1:
-            members = strip1(members)
+            members = [_ for _ in strip1(members)]
 
         if strip1_new_prefix:
             for member in members:
@@ -130,7 +131,7 @@ def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
         members = tarf.getmembers()
 
         for _ in range(n):
-            members = strip1(members)
+            members = [_ for _ in strip1(members)]
 
         if new_prefix:
             for member in members:

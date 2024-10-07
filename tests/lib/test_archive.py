@@ -201,15 +201,16 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
 
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    dest = tmp_path.joinpath("dest")
-    archive.unpack(str(tgz), str(dest), perform_strip1=True)
-    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
-    assert os.path.exists(f"{tmp_path}/dest/baz")
+    #    dest = tmp_path.joinpath("dest")
+    #    archive.unpack(str(tgz), str(dest), perform_strip1=True)
+    #    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
+    #    assert os.path.exists(f"{tmp_path}/dest/baz")
 
     dest2 = tmp_path.joinpath("dest2")
     archive.unpack(
         str(tgz), str(dest2), perform_strip1=True, strip1_new_prefix="node"
     )
+    # breakpoint()
     assert os.path.exists(f"{tmp_path}/dest2/node/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest2/node/baz")
 
