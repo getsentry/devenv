@@ -38,10 +38,20 @@ def download(
         os.makedirs(cache_root, exist_ok=True)
 
     if not os.path.exists(dest):
+        headers = {}
+        if url.startswith("https://ghcr.io/v2/homebrew"):
+            # downloading homebrew blobs requires auth
+            # you can get an anonymous token from https://ghcr.io/token?service=ghcr.io&scope=repository%3Ahomebrew/core/go%3Apull
+            # but there's also a special shortcut token QQ==
+            # https://github.com/Homebrew/brew/blob/2184406bd8444e4de2626f5b0c749d4d08cb1aed/Library/Homebrew/brew.sh#L993
+            headers["Authorization"] = "bearer QQ=="
+
+        req = urllib.request.Request(url, headers=headers)
+
         retry_sleep = 1.0
         while retries >= 0:
             try:
-                resp = urllib.request.urlopen(url)
+                resp = urllib.request.urlopen(req)
                 break
             except HTTPError as e:
                 if retries == 0:
@@ -77,9 +87,10 @@ def download(
 
 
 # mutates members!
-# strips the leading component (/ is always stripped and doesn't count)
-# and optionally replaces with a new prefix
-def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
+# strips the leading component, and asserts that
+# the same component was stripped across all members
+# (/ is always stripped and doesn't count)
+def strip1(members: Sequence[tarfile.TarInfo]) -> None:
     for member in members:
         i = member.path.find("/")
         if i == -1:
@@ -91,9 +102,6 @@ def strip1(members: Sequence[tarfile.TarInfo], new_prefix: str = "") -> None:
 
         member.path = member.path[i + 1 :]  # noqa: E203
 
-        if new_prefix:
-            member.path = f"{new_prefix}/{member.path}"
-
 
 def unpack(
     path: str,
@@ -104,5 +112,23 @@ def unpack(
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
         if perform_strip1:
-            strip1(tarf.getmembers(), strip1_new_prefix)
+            strip1(tarf.getmembers())
+
+        if strip1_new_prefix:
+            for member in tarf.getmembers():
+                member.path = f"{strip1_new_prefix}/{member.path}"
+
+        tarf.extractall(into, filter="tar")
+
+
+def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
+    os.makedirs(into, exist_ok=True)
+    with tarfile.open(name=path, mode="r:*") as tarf:
+        for i in range(n):
+            strip1(tarf.getmembers())
+
+        if new_prefix:
+            for member in tarf.getmembers():
+                member.path = f"{new_prefix}/{member.path}"
+
         tarf.extractall(into, filter="tar")

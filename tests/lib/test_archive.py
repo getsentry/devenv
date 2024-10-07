@@ -16,30 +16,109 @@ from devenv.lib import archive
 
 @pytest.fixture
 def tar(tmp_path: pathlib.Path) -> pathlib.Path:
-    plain = tmp_path.joinpath("plain")
-    plain.write_text("hello world\n")
+    executable = tmp_path / "executable"
+    executable.write_text("hi")
 
-    tar = tmp_path.joinpath("tar")
-
+    tar = tmp_path / "tar"
     with tarfile.open(tar, "w:tar") as tarf:
-        tarf.add(plain, arcname="hello.txt")
+        tarf.add(executable, arcname="executable")
 
     return tar
 
 
 @pytest.fixture
 def tgz(tmp_path: pathlib.Path) -> pathlib.Path:
-    a = tmp_path.joinpath("a")
-    a.write_text("a")
-    b = tmp_path.joinpath("b")
-    b.write_text("b")
+    foo_v1 = tmp_path / "foo-v1"
+    foo_v1.mkdir()
 
-    tar = tmp_path.joinpath("tgz")
+    foo_v1_bin = tmp_path / "foo-v1/bin"
+    foo_v1_bin.mkdir()
 
-    with tarfile.open(tar, "w:gz") as tarf:
-        # faster to arcname than to actually mkdirs in tmp_path
-        tarf.add(a, arcname="foo-v1/bin/foo")
-        tarf.add(b, arcname="foo-v1/baz")
+    foo_v1_bin_foo = tmp_path / "foo-v1/bin/foo"
+    foo_v1_bin_foo.write_text("")
+
+    foo_v1_baz = tmp_path / "foo-v1/baz"
+    foo_v1_baz.write_text("")
+
+    tgz = tmp_path / "tgz"
+    with tarfile.open(tgz, "w:gz") as tarf:
+        tarf.add(foo_v1, arcname="foo-v1")
+        # foo-v1
+        # foo-v1/bin
+        # foo-v1/bin/foo
+        # foo-v1/baz
+
+    return tgz
+
+
+@pytest.fixture
+def tar2(tmp_path: pathlib.Path) -> pathlib.Path:
+    foo = tmp_path / "foo"
+    foo.mkdir()
+
+    foo_v1 = tmp_path / "foo/v1"
+    foo_v1.mkdir()
+
+    foo_v1_bin = tmp_path / "foo/v1/bin"
+    foo_v1_bin.mkdir()
+
+    foo_v1_bin_foo = tmp_path / "foo/v1/bin/foo"
+    foo_v1_bin_foo.write_text("")
+
+    foo_v1_baz = tmp_path / "foo/v1/baz"
+    foo_v1_baz.mkdir()
+
+    tar = tmp_path / "tar"
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(foo, arcname="foo")
+        # foo
+        # foo/v1
+        # foo/v1/bin
+        # foo/v1/bin/foo
+        # foo/v1/baz
+
+    return tar
+
+
+@pytest.fixture
+def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
+    foo = tmp_path / "foo"
+    foo.mkdir()
+
+    foo_bad = tmp_path / "foo/bad"
+    foo_bad.write_text("")
+
+    foo_v1 = tmp_path / "foo/v1"
+    foo_v1.mkdir()
+
+    foo_v1_foo = tmp_path / "foo/v1/foo"
+    foo_v1_foo.write_text("")
+
+    tar = tmp_path / "tar"
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(foo, arcname="foo")
+        # foo
+        # foo/bad
+        # foo/v1
+        # foo/v1/foo
+
+    return tar
+
+
+@pytest.fixture
+def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
+    foo = tmp_path / "foo"
+    foo.mkdir()
+
+    foo_bar = tmp_path / "foo/bar"
+    foo_bar.write_text("")
+
+    tar = tmp_path / "tar"
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(foo, arcname="/foo/bar")
+        # /foo
+        # /foo/bar
 
     return tar
 
@@ -118,7 +197,7 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
 def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
     archive.unpack(str(tar), str(dest))
-    assert dest.joinpath("hello.txt").read_text() == "hello world\n"
+    assert dest.joinpath("executable").read_text() == "hi"
 
 
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
@@ -133,3 +212,45 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     )
     assert os.path.exists(f"{tmp_path}/dest2/node/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest2/node/baz")
+
+
+def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar2), str(dest), n=2)
+    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
+    assert os.path.exists(f"{tmp_path}/dest/baz")
+
+    dest2 = tmp_path.joinpath("dest2")
+    archive.unpack_strip_n(str(tar2), str(dest2), n=2, new_prefix="x")
+    assert os.path.exists(f"{tmp_path}/dest2/x/bin/foo")
+    assert os.path.exists(f"{tmp_path}/dest2/x/baz")
+
+
+def test_unpack_strip_n_unexpected_structure(
+    tar3: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    with pytest.raises(ValueError) as excinfo:
+        archive.unpack_strip_n(str(tar3), str(dest), n=2)
+
+    # fail because we don't catch this
+    # [<TarInfo 'foo' at 0x1041fa080>, <TarInfo 'bad' at 0x1041f9f00>, <TarInfo 'v1' at 0x1041f9e40>, <TarInfo 'foo' at 0x1041f9cc0>]
+
+    assert (
+        f"{excinfo.value}"
+        == "unexpected archive structure: no component left to strip in bad"
+    )
+
+
+def test_unpack_strip_n_root(
+    tar4: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar4), str(dest), n=1)
+    # leading slash in /foo/bar doesn't count as a component
+    assert os.path.exists(f"{tmp_path}/dest/bar")
+
+    dest2 = tmp_path.joinpath("dest")
+    archive.unpack_strip_n(str(tar4), str(dest2), n=0)
+    # n=0 can be used to just strip the root component
+    assert os.path.exists(f"{tmp_path}/dest/foo/bar")
