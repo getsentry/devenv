@@ -91,16 +91,21 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
 
 @pytest.fixture
 def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
-    a = tmp_path.joinpath("a")
-    a.write_text("")
-    b = tmp_path.joinpath("b")
-    b.write_text("")
+    foo = tmp_path / "foo"
+    foo.mkdir()
+    foo_v1 = tmp_path / "foo/v1"
+    foo_v1.mkdir()
+    foo_v2 = tmp_path / "foo/v2"
+    foo_v2.mkdir()
+    foo_v1_bar = foo_v1 / "bar"
+    foo_v1_bar.write_text("")
+    foo_v2_baz = foo_v2 / "baz"
+    foo_v2_baz.write_text("")
 
     tar = tmp_path.joinpath("tar")
 
     with tarfile.open(tar, "w:tar") as tarf:
-        tarf.add(a, arcname="foo/v1/bar")
-        tarf.add(b, arcname="foo/v2/baz")
+        tarf.add(foo, arcname="foo")
 
     return tar
 
@@ -117,7 +122,6 @@ def tar6(tmp_path: pathlib.Path) -> pathlib.Path:
     tar = tmp_path.joinpath("tar")
 
     with tarfile.open(tar, "w:tar") as tarf:
-        # real world example, the first member is the top level directory itself
         tarf.add(a, arcname="node-v20.13.1-linux-x64")
         tarf.add(b, arcname="node-v20.13.1-linux-x64/bin")
         tarf.add(c, arcname="node-v20.13.1-linux-x64/bin/node")
@@ -269,7 +273,7 @@ def test_unpack_strip_n_unexpected_structure_inconsistent_components(
         f"{excinfo.value}"
         == """unexpected archive structure:
 
-foo/v2/baz doesn't have the prefix to be removed (foo/v1/)
+trying to strip 2 leading components but foo isn't that deep
 """
     )
 
