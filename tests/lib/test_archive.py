@@ -116,9 +116,12 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
     tar = tmp_path / "tar"
 
     with tarfile.open(tar, "w:tar") as tarf:
-        tarf.add(foo, arcname="/foo/bar")
+        # note: arcname /foo doesn't work, it gets added as foo
+        tarf.add(foo, arcname="foo")
         # /foo
         # /foo/bar
+        for member in tarf.getmembers():
+            member.path = f"/{member.path}"
 
     return tar
 
@@ -201,16 +204,15 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
 
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    #    dest = tmp_path.joinpath("dest")
-    #    archive.unpack(str(tgz), str(dest), perform_strip1=True)
-    #    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
-    #    assert os.path.exists(f"{tmp_path}/dest/baz")
+    dest = tmp_path.joinpath("dest")
+    archive.unpack(str(tgz), str(dest), perform_strip1=True)
+    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
+    assert os.path.exists(f"{tmp_path}/dest/baz")
 
     dest2 = tmp_path.joinpath("dest2")
     archive.unpack(
         str(tgz), str(dest2), perform_strip1=True, strip1_new_prefix="node"
     )
-    # breakpoint()
     assert os.path.exists(f"{tmp_path}/dest2/node/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest2/node/baz")
 
@@ -220,11 +222,24 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
     archive.unpack_strip_n(str(tar2), str(dest), n=2)
     assert os.path.exists(f"{tmp_path}/dest/bin/foo")
     assert os.path.exists(f"{tmp_path}/dest/baz")
+    assert [x for x in os.walk(dest)] == [
+        # baz
+        # bin/foo
+        (f"{dest}", ["bin", "baz"], []),
+        (f"{dest}/bin", [], ["foo"]),
+        (f"{dest}/baz", [], []),
+    ]
 
     dest2 = tmp_path.joinpath("dest2")
     archive.unpack_strip_n(str(tar2), str(dest2), n=2, new_prefix="x")
-    assert os.path.exists(f"{tmp_path}/dest2/x/bin/foo")
-    assert os.path.exists(f"{tmp_path}/dest2/x/baz")
+    assert [x for x in os.walk(dest2)] == [
+        # x/baz
+        # x/bin/foo
+        (f"{dest2}", ["x"], []),
+        (f"{dest2}/x", ["bin", "baz"], []),
+        (f"{dest2}/x/bin", [], ["foo"]),
+        (f"{dest2}/x/baz", [], []),
+    ]
 
 
 def test_unpack_strip_n_unconditionally_removed(
@@ -247,9 +262,22 @@ def test_unpack_strip_n_root(
     dest = tmp_path.joinpath("dest")
     archive.unpack_strip_n(str(tar4), str(dest), n=1)
     # leading slash in /foo/bar doesn't count as a component
-    assert os.path.exists(f"{tmp_path}/dest/bar")
+
+    assert [x for x in os.walk(dest)] == [
+        # bar
+        (f"{dest}", [], ["bar"])
+    ]
 
     dest2 = tmp_path.joinpath("dest")
     archive.unpack_strip_n(str(tar4), str(dest2), n=0)
     # n=0 can be used to just strip the root component
-    assert os.path.exists(f"{tmp_path}/dest/foo/bar")
+
+    # problem, we now have
+    # bar
+    # foo/bar
+
+    assert [x for x in os.walk(dest2)] == [
+        # foo/bar
+        (f"{dest}", ["foo"], ["bar"]),
+        (f"{dest}/foo", [], ["bar"]),
+    ]
