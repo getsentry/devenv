@@ -43,12 +43,12 @@ def install_shim(binroot: str) -> None:
     fs.write_script(
         f"{binroot}/colima",
         """#!/bin/sh
-export COLIMA_HOME="{home}/.colima"
+export COLIMA_HOME={home}/.colima
 
 # needed to ensure COLIMA_HOME is what we want it to be
 unset XDG_CONFIG_HOME
 
-exec "{binroot}/colima-bin" "$@"
+exec {binroot}/colima-bin "$@"
 """,
         shell_escape={"binroot": binroot, "home": home},
     )
