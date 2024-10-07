@@ -206,22 +206,31 @@ def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
     archive.unpack(str(tgz), str(dest), perform_strip1=True)
-    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
-    assert os.path.exists(f"{tmp_path}/dest/baz")
+
+    assert [x for x in os.walk(dest)] == [
+        # bin/foo
+        # baz
+        (f"{dest}", ["bin"], ["baz"]),
+        (f"{dest}/bin", [], ["foo"]),
+    ]
 
     dest2 = tmp_path.joinpath("dest2")
     archive.unpack(
         str(tgz), str(dest2), perform_strip1=True, strip1_new_prefix="node"
     )
-    assert os.path.exists(f"{tmp_path}/dest2/node/bin/foo")
-    assert os.path.exists(f"{tmp_path}/dest2/node/baz")
+
+    assert [x for x in os.walk(dest2)] == [
+        # node/bin/foo
+        # node/baz
+        (f"{dest2}", ["node"], []),
+        (f"{dest2}/node", ["bin"], ["baz"]),
+        (f"{dest2}/node/bin", [], ["foo"]),
+    ]
 
 
 def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path.joinpath("dest")
     archive.unpack_strip_n(str(tar2), str(dest), n=2)
-    assert os.path.exists(f"{tmp_path}/dest/bin/foo")
-    assert os.path.exists(f"{tmp_path}/dest/baz")
     assert [x for x in os.walk(dest)] == [
         # baz
         # bin/foo
