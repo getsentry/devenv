@@ -86,11 +86,12 @@ def download(
     return dest
 
 
-# mutates members!
-# strips the leading component, and asserts that
-# the same component was stripped across all members
+# strips the leading component unconditionally (like GNU tar)
 # (/ is always stripped and doesn't count)
-def strip1(members: Sequence[tarfile.TarInfo]) -> None:
+# if there are conflicting filepaths after this, they'll error during unpack
+def strip1(
+    members: Sequence[tarfile.TarInfo],
+) -> Generator[tarfile.TarInfo, None, None]:
     for member in members:
         i = member.path.find("/")
         if i == -1:
@@ -101,6 +102,7 @@ def strip1(members: Sequence[tarfile.TarInfo]) -> None:
                 continue
 
         member.path = member.path[i + 1 :]  # noqa: E203
+        yield member
 
 
 def unpack(
@@ -111,24 +113,27 @@ def unpack(
 ) -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
+        members = tarf.getmembers()
         if perform_strip1:
-            strip1(tarf.getmembers())
+            members = strip1(members)
 
         if strip1_new_prefix:
-            for member in tarf.getmembers():
+            for member in members:
                 member.path = f"{strip1_new_prefix}/{member.path}"
 
-        tarf.extractall(into, filter="tar")
+        tarf.extractall(into, members=members, filter="tar")
 
 
 def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
     os.makedirs(into, exist_ok=True)
     with tarfile.open(name=path, mode="r:*") as tarf:
-        for i in range(n):
-            strip1(tarf.getmembers())
+        members = tarf.getmembers()
+
+        for _ in range(n):
+            members = strip1(members)
 
         if new_prefix:
-            for member in tarf.getmembers():
+            for member in members:
                 member.path = f"{new_prefix}/{member.path}"
 
-        tarf.extractall(into, filter="tar")
+        tarf.extractall(into, members=members, filter="tar")

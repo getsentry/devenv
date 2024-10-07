@@ -85,8 +85,8 @@ def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
     foo = tmp_path / "foo"
     foo.mkdir()
 
-    foo_bad = tmp_path / "foo/bad"
-    foo_bad.write_text("")
+    foo_bar = tmp_path / "foo/bar"
+    foo_bar.write_text("")
 
     foo_v1 = tmp_path / "foo/v1"
     foo_v1.mkdir()
@@ -98,7 +98,7 @@ def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
     with tarfile.open(tar, "w:tar") as tarf:
         tarf.add(foo, arcname="foo")
         # foo
-        # foo/bad
+        # foo/bar
         # foo/v1
         # foo/v1/foo
 
@@ -226,20 +226,18 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
     assert os.path.exists(f"{tmp_path}/dest2/x/baz")
 
 
-def test_unpack_strip_n_unexpected_structure(
+def test_unpack_strip_n_unconditionally_removed(
     tar3: pathlib.Path, tmp_path: pathlib.Path
 ) -> None:
     dest = tmp_path.joinpath("dest")
-    with pytest.raises(ValueError) as excinfo:
-        archive.unpack_strip_n(str(tar3), str(dest), n=2)
+    archive.unpack_strip_n(str(tar3), str(dest), n=2)
 
-    # fail because we don't catch this
-    # [<TarInfo 'foo' at 0x1041fa080>, <TarInfo 'bad' at 0x1041f9f00>, <TarInfo 'v1' at 0x1041f9e40>, <TarInfo 'foo' at 0x1041f9cc0>]
+    # foo/bar is unconditionally removed
 
-    assert (
-        f"{excinfo.value}"
-        == "unexpected archive structure: no component left to strip in bad"
-    )
+    assert [x for x in os.walk(dest)] == [
+        # dest/foo
+        (f"{dest}", [], ["foo"])
+    ]
 
 
 def test_unpack_strip_n_root(
