@@ -198,13 +198,13 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
 
 
 def test_unpack_tar(tar: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    dest = tmp_path.joinpath("dest")
+    dest = tmp_path / "dest"
     archive.unpack(str(tar), str(dest))
-    assert dest.joinpath("executable").read_text() == "hi"
+    assert (dest / "executable").read_text() == "hi"
 
 
 def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    dest = tmp_path.joinpath("dest")
+    dest = tmp_path / "dest"
     archive.unpack(str(tgz), str(dest), perform_strip1=True)
 
     assert [x for x in os.walk(dest)] == [
@@ -214,7 +214,7 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
         (f"{dest}/bin", [], ["foo"]),
     ]
 
-    dest2 = tmp_path.joinpath("dest2")
+    dest2 = tmp_path / "dest2"
     archive.unpack(
         str(tgz), str(dest2), perform_strip1=True, strip1_new_prefix="node"
     )
@@ -229,7 +229,7 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
 
 def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
-    dest = tmp_path.joinpath("dest")
+    dest = tmp_path / "dest"
     archive.unpack_strip_n(str(tar2), str(dest), n=2)
     assert [x for x in os.walk(dest)] == [
         # baz
@@ -239,7 +239,7 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
         (f"{dest}/baz", [], []),
     ]
 
-    dest2 = tmp_path.joinpath("dest2")
+    dest2 = tmp_path / "dest2"
     archive.unpack_strip_n(str(tar2), str(dest2), n=2, new_prefix="x")
     assert [x for x in os.walk(dest2)] == [
         # x/baz
@@ -254,7 +254,7 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
 def test_unpack_strip_n_unconditionally_removed(
     tar3: pathlib.Path, tmp_path: pathlib.Path
 ) -> None:
-    dest = tmp_path.joinpath("dest")
+    dest = tmp_path / "dest"
     archive.unpack_strip_n(str(tar3), str(dest), n=2)
 
     # foo/bar is unconditionally removed
@@ -268,7 +268,7 @@ def test_unpack_strip_n_unconditionally_removed(
 def test_unpack_strip_n_root(
     tar4: pathlib.Path, tmp_path: pathlib.Path
 ) -> None:
-    dest = tmp_path.joinpath("dest")
+    dest = tmp_path / "dest"
     archive.unpack_strip_n(str(tar4), str(dest), n=1)
     # leading slash in /foo/bar doesn't count as a component
 
@@ -277,16 +277,12 @@ def test_unpack_strip_n_root(
         (f"{dest}", [], ["bar"])
     ]
 
-    dest2 = tmp_path.joinpath("dest")
+    dest2 = tmp_path / "dest2"
     archive.unpack_strip_n(str(tar4), str(dest2), n=0)
     # n=0 can be used to just strip the root component
 
-    # problem, we now have
-    # bar
-    # foo/bar
-
     assert [x for x in os.walk(dest2)] == [
         # foo/bar
-        (f"{dest}", ["foo"], ["bar"]),
-        (f"{dest}/foo", [], ["bar"]),
+        (f"{dest2}", ["foo"], []),
+        (f"{dest2}/foo", [], ["bar"]),
     ]
