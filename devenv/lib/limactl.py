@@ -34,7 +34,9 @@ def _install(url: str, sha256: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
-        archive.unpack(archive_file, tmpd)
+
+        # the archive from homebrew has a lima/version prefix
+        archive.unpack_strip_n(archive_file, tmpd, n=2)
 
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
