@@ -36,7 +36,10 @@ def _install(url: str, sha256: str, into: str) -> None:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
 
         # the archive from homebrew has a lima/version prefix
-        archive.unpack_strip_n(archive_file, tmpd, n=2)
+        if url.startswith("https://ghcr.io/v2/homebrew"):
+            archive.unpack_strip_n(archive_file, tmpd, n=2)
+        else:
+            archive.unpack(archive_file, tmpd)
 
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
