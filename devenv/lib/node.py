@@ -88,9 +88,9 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
         fs.write_script(
             f"{binroot}/{shim}",
             """#!/bin/sh
-export PATH="{binroot}/node-env/bin:${{PATH}}"
-export NPM_CONFIG_PREFIX="{binroot}/node-env"
-exec "{binroot}/node-env/bin/{shim}" "$@"
+export PATH={binroot}/node-env/bin:\"${{PATH}}\"
+export NPM_CONFIG_PREFIX={binroot}/node-env
+exec {binroot}/node-env/bin/{shim} "$@"
 """,
             shell_escape={"binroot": binroot, "shim": shim},
         )
@@ -137,8 +137,8 @@ def install_yarn(version: str, reporoot: str) -> None:
     fs.write_script(
         f"{binroot}/yarn",
         """#!/bin/sh
-export PATH="{binroot}/node-env/bin:${{PATH}}"
-exec "{binroot}/node-env/bin/yarn" "$@"
+export PATH={binroot}/node-env/bin:\"${{PATH}}\"
+exec {binroot}/node-env/bin/yarn "$@"
 """,
         shell_escape={"binroot": binroot},
     )
