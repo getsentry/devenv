@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Literal
@@ -18,9 +19,7 @@ base_env = {"PATH": base_path, "HOME": home, "SHELL": shell_path}
 
 def quote(cmd: tuple[str, ...]) -> str:
     """convert a command to bash-compatible form"""
-    from pipes import quote
-
-    return " ".join(quote(arg) for arg in cmd)
+    return " ".join(shlex.quote(arg) for arg in cmd)
 
 
 def xtrace(cmd: tuple[str, ...]) -> None:
