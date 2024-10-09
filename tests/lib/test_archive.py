@@ -11,7 +11,7 @@ from unittest import mock
 import pytest
 
 from devenv.lib import archive
-from tests.utils import sorted_walk
+from tests.utils import sorted_os_walk
 
 
 @pytest.fixture
@@ -207,7 +207,7 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path / "dest"
     archive.unpack(str(tgz), str(dest), perform_strip1=True)
 
-    assert [*sorted_walk(dest)] == [
+    assert [*sorted_os_walk(dest)] == [
         # bin/foo
         # baz
         (f"{dest}", ["bin"], ["baz"]),
@@ -219,7 +219,7 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
         str(tgz), str(dest2), perform_strip1=True, strip1_new_prefix="node"
     )
 
-    assert [*sorted_walk(dest2)] == [
+    assert [*sorted_os_walk(dest2)] == [
         # node/bin/foo
         # node/baz
         (f"{dest2}", ["node"], []),
@@ -231,7 +231,7 @@ def test_unpack_tgz_strip1(tgz: pathlib.Path, tmp_path: pathlib.Path) -> None:
 def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
     dest = tmp_path / "dest"
     archive.unpack_strip_n(str(tar2), str(dest), n=2)
-    assert [*sorted_walk(dest)] == [
+    assert [*sorted_os_walk(dest)] == [
         # baz
         # bin/foo
         (f"{dest}", ["baz", "bin"], []),
@@ -241,7 +241,7 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
 
     dest2 = tmp_path / "dest2"
     archive.unpack_strip_n(str(tar2), str(dest2), n=2, new_prefix="x")
-    assert [*sorted_walk(dest2)] == [
+    assert [*sorted_os_walk(dest2)] == [
         # x/baz
         # x/bin/foo
         (f"{dest2}", ["x"], []),
@@ -259,7 +259,7 @@ def test_unpack_strip_n_unconditionally_removed(
 
     # foo/bar is unconditionally removed
 
-    assert [*sorted_walk(dest)] == [
+    assert [*sorted_os_walk(dest)] == [
         # dest/foo
         (f"{dest}", [], ["foo"])
     ]
@@ -272,7 +272,7 @@ def test_unpack_strip_n_root(
     archive.unpack_strip_n(str(tar4), str(dest), n=1)
     # leading slash in /foo/bar doesn't count as a component
 
-    assert [*sorted_walk(dest)] == [
+    assert [*sorted_os_walk(dest)] == [
         # bar
         (f"{dest}", [], ["bar"])
     ]
@@ -281,7 +281,7 @@ def test_unpack_strip_n_root(
     archive.unpack_strip_n(str(tar4), str(dest2), n=0)
     # n=0 can be used to just strip the root component
 
-    assert [*sorted_walk(dest2)] == [
+    assert [*sorted_os_walk(dest2)] == [
         # foo/bar
         (f"{dest2}", ["foo"], []),
         (f"{dest2}/foo", [], ["bar"]),
