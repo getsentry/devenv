@@ -15,32 +15,6 @@ VenvStatus = Enum(
 )
 
 
-# example venv configuration section:
-#
-# [venv.sentry-kube]
-# python = 3.11.6
-# requirements = k8s/cli/requirements.txt
-# path = optional
-# editable =
-#   k8s/cli
-#   k8s/cli/libsentrykube
-# bins =
-#   sentry-kube
-#   sentry-kube-pop
-#
-# [venv.salt]
-# python = 3.10.13
-# requirements = salt/requirements.txt
-# bins =
-#   salt-ssh
-#   ...
-#
-# example usage:
-#
-# venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
-# url, sha256 = config.get_python(reporoot, python_version)
-# ensure(path, python_version, url, sha256)
-# sync(reporoot, venv_dir, requirements, editable_paths, bins)
 def get(
     reporoot: str, name: str
 ) -> tuple[str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]]:
@@ -103,6 +77,11 @@ def sync(
 
 
 def check(venv: str, python_version: str) -> VenvStatus:
+    try:
+        os.stat(f"{venv}/bin/python")
+    except FileNotFoundError:
+        return VenvStatus.NOT_PRESENT
+
     if not os.path.exists(f"{venv}/pyvenv.cfg"):
         return VenvStatus.NOT_PRESENT
 
