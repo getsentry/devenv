@@ -9,7 +9,7 @@ from collections.abc import Iterator
 def sorted_walk(
     top: pathlib.Path, topdown: bool = True, followlinks: bool = False
 ) -> Iterator[tuple[str, list[str], list[str]]]:
-    names = os.listdir(top)
+    names = sorted(os.listdir(top))
 
     dirs: list[str] = []
     nondirs: list[str] = []

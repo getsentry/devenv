@@ -235,8 +235,8 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
         # baz
         # bin/foo
         (f"{dest}", ["baz", "bin"], []),
-        (f"{dest}/bin", [], ["foo"]),
         (f"{dest}/baz", [], []),
+        (f"{dest}/bin", [], ["foo"]),
     ]
 
     dest2 = tmp_path / "dest2"
@@ -246,8 +246,8 @@ def test_unpack_strip_n(tar2: pathlib.Path, tmp_path: pathlib.Path) -> None:
         # x/bin/foo
         (f"{dest2}", ["x"], []),
         (f"{dest2}/x", ["baz", "bin"], []),
-        (f"{dest2}/x/bin", [], ["foo"]),
         (f"{dest2}/x/baz", [], []),
+        (f"{dest2}/x/bin", [], ["foo"]),
     ]
 
 
