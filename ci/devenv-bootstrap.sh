@@ -72,14 +72,14 @@ linux_arm64_sha256 = 330e11a4b2e5ce69ee6253635308c9f0f49195f236da01718ede35cdb27
 version = v0.7.5
 
 [lima]
-darwin_x86_64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Darwin-x86_64.tar.gz
-darwin_x86_64_sha256 = bdb833f4ccd76255a4718bc4c0014b898acbc0a1c249731baf441d3c5070e567
-darwin_arm64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Darwin-arm64.tar.gz
-darwin_arm64_sha256 = 8b75ccfb166df348430df7ebd15cd50b6f980d40ed4b765ee3b14a6e805ae311
-linux_x86_64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-x86_64.tar.gz
-linux_x86_64_sha256 = 5d0034316096e3f3ceedcb2e1dcac7c7d380e26defb59a5894eaf1e3265b191e
-linux_arm64 = https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-aarch64.tar.gz
-linux_arm64_sha256 = 299d36898204a0e9c1b3b8a4ae750c129ed7b84ce062e2c51cd5224da4874a43
+# upstream github releases aren't built for macOS 14, so we use homebrew binaries
+# from https://formulae.brew.sh/api/formula/lima.json
+darwin_x86_64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841
+darwin_x86_64_sha256 = c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841
+darwin_arm64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35
+darwin_arm64_sha256 = be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35
+linux_x86_64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c
+linux_x86_64_sha256 = 741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c
 # used for autoupdate
 version = 0.23.2
 EOF
