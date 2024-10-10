@@ -80,11 +80,26 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
     - this venv exclusively uses a python at `~/.local/share/sentry-devenv/python`
 
 
-### configuration
+### global configuration
 
-global configuration is at `~/.config/sentry-devenv/config.ini`.
+`~/.config/sentry-devenv/config.ini`
+```ini
+[devenv]
+# the parent directory of all devenv-managed repos
+coderoot = ~/code
+```
 
-repository configuration is at `[reporoot]/devenv/config.ini`.
+
+### repository configuration
+
+`[reporoot]/devenv/config.ini`
+```ini
+[devenv]
+# optionally require a minimum version to run sync.py
+minimum_version = 1.11.0
+```
+
+There are plenty more sections, their use is best seen in the [examples](#examples).
 
 
 ## examples
