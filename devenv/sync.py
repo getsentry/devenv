@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import os
 from collections.abc import Sequence
@@ -30,7 +31,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         "repo": repo.name,
         "coderoot": context.get("code_root"),
     }
-    return module.main(context_compat)  # type: ignore
+
+    with contextlib.chdir(repo.path):
+        return module.main(context_compat)  # type: ignore
 
 
 module_info = DevModuleInfo(
