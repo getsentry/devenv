@@ -44,7 +44,7 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
     venv_dir, python_version, requirements, editable_paths, bins = venv.get(
         repo.path, "sentry-kube"
     )
-    os.makedirs(venv_dir)
+    os.makedirs(f"{venv_dir}/bin")
 
     assert (venv_dir, python_version, requirements, editable_paths, bins) == (
         f"{repo.path}/.venv-sentry-kube",
@@ -71,6 +71,12 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
     # fake venv
     with open(f"{venv_dir}/pyvenv.cfg", "w") as f:
         f.write(f"version = {python_version}\n")
+
+    # venv_dir/bin/python isn't present yet since we mocked that out
+    assert venv.check(venv_dir, python_version) == venv.VenvStatus.NOT_PRESENT
+
+    with open(f"{venv_dir}/bin/python", "w"):
+        pass
 
     assert venv.check(venv_dir, python_version) == venv.VenvStatus.OK
 
