@@ -19,6 +19,8 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         print(f"{repo.config_path}/sync.py not found!")
         return 1
 
+    repo.check_minimum_version()
+
     spec = importlib.util.spec_from_file_location(
         "sync", f"{repo.config_path}/sync.py"
     )
