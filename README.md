@@ -134,7 +134,54 @@ PATH_add "${PWD}/.devenv/bin"
 
 ### python
 
-You can have multiple virtualenvs, which is useful if you rely on a python tool
+Need a single virtualenv (or have one already at `.venv` you want devenv to manage?)
+
+`[reporoot]/.envrc`
+```bash
+export VIRTUAL_ENV="${PWD}/.venv"
+
+PATH_add "${PWD}/.venv/bin"
+```
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv.lib import config, venv
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+
+    venv_dir, python_version, requirements, editable_paths, bins = venv.get(reporoot, "venv")
+    url, sha256 = config.get_python(reporoot, python_version)
+    print(f"ensuring venv at {venv_dir}...")
+    venv.ensure(venv_dir, python_version, url, sha256)
+
+    print(f"syncing venv with {requirements}...")
+    venv.sync(reporoot, venv_dir, requirements, editable_paths, bins)
+
+    return 0
+```
+
+`[reporoot]/devenv/config.ini`
+```ini
+[venv.venv]
+python = 3.12.3
+path = .venv
+requirements = requirements-dev.txt
+editable =
+  .
+
+[python3.12.3]
+darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-apple-darwin-install_only.tar.gz
+darwin_x86_64_sha256 = c37a22fca8f57d4471e3708de6d13097668c5f160067f264bb2b18f524c890c8
+darwin_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-apple-darwin-install_only.tar.gz
+darwin_arm64_sha256 = ccc40e5af329ef2af81350db2a88bbd6c17b56676e82d62048c15d548401519e
+linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-unknown-linux-gnu-install_only.tar.gz
+linux_x86_64_sha256 = a73ba777b5d55ca89edef709e6b8521e3f3d4289581f174c8699adfb608d09d6
+linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-unknown-linux-gnu-install_only.tar.gz
+linux_arm64_sha256 = ec8126de97945e629cca9aedc80a29c4ae2992c9d69f2655e27ae73906ba187d
+```
+
+You can also have multiple virtualenvs, which is useful if you rely on a python tool
 that has a bunch of dependencies that may conflict with others.
 
 `[reporoot]/.envrc`
