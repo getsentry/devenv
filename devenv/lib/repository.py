@@ -42,10 +42,10 @@ class Repository:
         except KeyError:
             return
 
-        min_major, min_minor, min_patch = map(int, minimum_version.split("."))
-        major, minor, patch = map(int, version.split("."))
+        parsed_version = tuple(map(int, version.split(".")))
+        parsed_minimum_version = tuple(map(int, minimum_version.split(".")))
 
-        if (major, minor, patch) < (min_major, min_minor, min_patch):
+        if parsed_version < parsed_minimum_version:
             raise SystemExit(
                 f"""
 Your devenv version ({version}) doesn't meet the
