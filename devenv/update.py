@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from collections.abc import Sequence
 
@@ -14,19 +15,28 @@ module_help = "Updates global devenv."
 
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     if not sys.executable.startswith(f"{constants.root}/venv/bin/python"):
-        raise SystemExit(
+        rc = subprocess.call((f"{constants.root}/bin/devenv", *sys.argv[1:]))
+        if rc != 0:
+            print(
+                """
+failed to update devenv!
+"""
+            )
+            return rc
+
+        print(
             f"""
-update is only applicable to the global devenv.
-This one is using: {sys.executable}
+The global devenv at {constants.root}/bin/devenv has been updated.
 
-To update the global devenv, run `{constants.root}/bin/devenv update`.
+You used a local (at {sys.executable}) devenv to do this,
+which has *not* been updated.
 
-To update a repo-local devenv, run `devenv sync`.
+If sync wasn't working before, try using global devenv to run it now:
 
-(It's the responsibility of devenv/sync.py and devenv/config.ini to
-maintain a virtualenv with a devenv version for that particular repository.)
+{constants.root}/bin/devenv sync
 """
         )
+        return 0
 
     parser = argparse.ArgumentParser()
     parser.add_argument("version", type=str, nargs="?")
