@@ -15,9 +15,7 @@ module_help = "Updates global devenv."
 
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     if not sys.executable.startswith(f"{constants.root}/venv/bin/python"):
-        rc = subprocess.call(
-            (f"{constants.root}/bin/devenv", "update", *sys.argv[1:])
-        )
+        rc = subprocess.call((f"{constants.root}/bin/devenv", *sys.argv[1:]))
         if rc != 0:
             print(
                 """
