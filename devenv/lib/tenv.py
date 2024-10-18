@@ -32,21 +32,27 @@ def _install(url: str, sha256: str, into: str) -> None:
     # This isolation also makes uninstallation safe.
     fs.write_script(
         f"{into}/tenv",
-        f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/tenv "$@"
+        """#!/bin/sh
+export TENV_ROOT={TENV_ROOT}
+exec {TENV_ROOT}/bin/tenv "$@"
 """,
+        shell_escape={"TENV_ROOT": TENV_ROOT},
     )
     fs.write_script(
         f"{into}/terraform",
-        f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terraform "$@"
+        """#!/bin/sh
+export TENV_ROOT={TENV_ROOT}
+exec {TENV_ROOT}/bin/terraform "$@"
 """,
+        shell_escape={"TENV_ROOT": TENV_ROOT},
     )
     fs.write_script(
         f"{into}/terragrunt",
-        f"""#!/bin/sh
-exec /usr/bin/env TENV_ROOT={TENV_ROOT} {TENV_ROOT}/bin/terragrunt "$@"
+        """#!/bin/sh
+export TENV_ROOT={TENV_ROOT}
+exec {TENV_ROOT}/bin/terragrunt "$@"
 """,
+        shell_escape={"TENV_ROOT": TENV_ROOT},
     )
 
 

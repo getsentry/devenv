@@ -15,3 +15,5 @@ trash/
 .*.sw[a-z]
 
 .coverage
+
+.env

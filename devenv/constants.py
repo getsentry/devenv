@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import importlib.metadata
 import os
 import platform
 import pwd
 import typing
+
+version = importlib.metadata.version("sentry_devenv")
 
 CI = os.getenv("CI")
 SYSTEM = platform.system().lower()
@@ -37,7 +40,3 @@ if INTEL_MAC:
 if LINUX:
     homebrew_repo = "/home/linuxbrew/.linuxbrew"
     homebrew_bin = f"{homebrew_repo}/bin"
-
-# compatibility with devenv <= 1.4.0
-# (used in sentry sync.py)
-VOLTA_HOME = f"{root}/volta"

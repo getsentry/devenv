@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import contextlib
 import os
 import pathlib
-from collections.abc import Generator
+from collections.abc import Iterator
 
 
-# TODO: replace with contextlib.chdir when we can use python3.11
-@contextlib.contextmanager
-def chdir(d: str | pathlib.Path) -> Generator[None, None, None]:
-    curdir = os.getcwd()
-    try:
-        os.chdir(d)
-        yield
-    finally:
-        os.chdir(curdir)
+def sorted_os_walk(
+    path: pathlib.Path,
+) -> Iterator[tuple[str, list[str], list[str]]]:
+    for a, b, c in sorted(os.walk(path)):
+        b.sort()
+        c.sort()
+        yield a, b, c

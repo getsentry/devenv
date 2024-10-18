@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sentry_devenv"
-version = "1.6.2"
+version = "1.13.0"
 authors = [
   { name="Joshua Li", email="joshua.li@sentry.io" },
   { name="Ian Woodard", email="ian.woodard@sentry.io" },
@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-# 3.10 is just for internal pypi compat
+# only tested on 3.11+, this is so internal pypi is happy
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",

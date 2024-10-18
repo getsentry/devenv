@@ -37,13 +37,14 @@ linux_arm64_sha256 = 3e26a672df17708c4dc928475a5974c3fb3a34a9b45c65fb4bd1e50504c
 def test_get_ensure(tmp_path: pathlib.Path) -> None:
     repo = Repository(f"{tmp_path}/ops")
 
-    os.makedirs(f"{repo.config_path}")
+    os.makedirs(repo.config_path)
     with open(f"{repo.config_path}/config.ini", "w") as f:
         f.write(mock_config)
 
     venv_dir, python_version, requirements, editable_paths, bins = venv.get(
         repo.path, "sentry-kube"
     )
+    os.makedirs(f"{venv_dir}/bin")
 
     assert (venv_dir, python_version, requirements, editable_paths, bins) == (
         f"{repo.path}/.venv-sentry-kube",
@@ -57,7 +58,7 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
 
     with patch("devenv.lib.venv.proc.run") as mock_run, patch(
         "devenv.lib.venv.pythons.get", return_value="python"
-    ) as mock_pythons_get:
+    ) as mock_pythons_get, patch("shutil.rmtree"):
         venv.ensure(venv_dir, python_version, url, sha256)
         assert mock_pythons_get.mock_calls == [
             call(python_version, url, sha256)
@@ -65,11 +66,17 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
         assert mock_run.mock_calls == [
             call(("python", "-m", "venv", venv_dir), exit=True)
         ]
+        assert os.path.isfile(f"{venv_dir}/.gitignore")
 
     # fake venv
-    os.makedirs(venv_dir)
     with open(f"{venv_dir}/pyvenv.cfg", "w") as f:
         f.write(f"version = {python_version}\n")
+
+    # venv_dir/bin/python isn't present yet since we mocked that out
+    assert venv.check(venv_dir, python_version) == venv.VenvStatus.NOT_PRESENT
+
+    with open(f"{venv_dir}/bin/python", "w"):
+        pass
 
     assert venv.check(venv_dir, python_version) == venv.VenvStatus.OK
 

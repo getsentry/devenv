@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import shlex
+import subprocess
 from pathlib import Path
-from subprocess import CalledProcessError
-from subprocess import PIPE
-from subprocess import run as subprocess_run
 from typing import Literal
 from typing import overload
 
@@ -20,9 +19,7 @@ base_env = {"PATH": base_path, "HOME": home, "SHELL": shell_path}
 
 def quote(cmd: tuple[str, ...]) -> str:
     """convert a command to bash-compatible form"""
-    from pipes import quote
-
-    return " ".join(quote(arg) for arg in cmd)
+    return " ".join(shlex.quote(arg) for arg in cmd)
 
 
 def xtrace(cmd: tuple[str, ...]) -> None:
@@ -68,9 +65,11 @@ def run(
     exit: bool = False,
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
+    # poorly named, should've been like capture_combined_output
     stdout: bool = False,
 ) -> str | None:
-    _stdout = PIPE if stdout else None
+    _stdout = subprocess.PIPE if stdout else None
+    _stderr = subprocess.STDOUT if stdout else None
     del stdout
 
     if env is None:
@@ -83,18 +82,20 @@ def run(
     if constants.DEBUG:
         xtrace(cmd)
     try:
-        proc = subprocess_run(cmd, check=True, stdout=_stdout, cwd=cwd, env=env)
+        proc = subprocess.run(
+            cmd, check=True, stdout=_stdout, stderr=_stderr, cwd=cwd, env=env
+        )
     except FileNotFoundError as e:
         # This is reachable if the command isn't found.
         if exit:
             raise SystemExit(f"{e}") from None
         else:
             raise RuntimeError(f"{e}") from None
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         detail = f"Command `{quote(e.cmd)}` failed! (code {e.returncode})"
         if _stdout:
             detail += f"""
-stdout:
+combined out:
 {"" if e.stdout is None else e.stdout.decode()}
 """
         if exit:
