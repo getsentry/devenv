@@ -343,9 +343,9 @@ def main(context: dict[str, str]) -> int:
         reporoot,
     )
     limactl.install(
-        repo_config["lima"]["version"],
-        repo_config["lima"][constants.SYSTEM_MACHINE],
-        repo_config["lima"][f"{constants.SYSTEM_MACHINE}_sha256"],
+        cfg["lima"]["version"],
+        cfg["lima"][constants.SYSTEM_MACHINE],
+        cfg["lima"][f"{constants.SYSTEM_MACHINE}_sha256"],
         reporoot,
     )
 
