@@ -112,7 +112,7 @@ def install_global() -> None:
         raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
 
 
-def check(reporoot: str) -> ColimaStatus:
+def check() -> ColimaStatus:
     if not os.getenv("CI"):
         macos_version = platform.mac_ver()[0]
         macos_major_version = int(macos_version.split(".")[0])
@@ -153,22 +153,18 @@ def check(reporoot: str) -> ColimaStatus:
     return ColimaStatus.UP
 
 
-def start(reporoot: str, restart: bool = False) -> ColimaStatus:
-    status = check(reporoot)
+def start(restart: bool = False) -> ColimaStatus:
+    status = check()
 
     if status == ColimaStatus.UP:
         if not restart:
             return ColimaStatus.UP
-        proc.run(
-            ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
-        )
+        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
     elif status == ColimaStatus.DOWN:
         pass
     elif status == ColimaStatus.UNHEALTHY:
         print("colima seems to be unhealthy, stopping it")
-        proc.run(
-            ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
-        )
+        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
 
     # colima start will only WARN if rosetta is unavailable and keep going without it,
     # so we need to ensure it's installed and running ourselves
@@ -196,28 +192,26 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
             "colima",
             "start",
             "--verbose",
-            # ideally we keep ~ ro and reporoot rw, but currently the "default" vm
+            # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
             f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
             *args,
         ),
-        pathprepend=f"{root}/bin:{reporoot}/.devenv/bin",
+        pathprepend=f"{root}/bin",
     )
 
     proc.run(("docker", "context", "use", "colima"))
 
-    status = check(reporoot)
+    status = check()
     return status
 
 
-def restart(reporoot: str) -> ColimaStatus:
-    status = start(reporoot, restart=True)
+def restart() -> ColimaStatus:
+    status = start(restart=True)
     return status
 
 
-def stop(reporoot: str) -> ColimaStatus:
-    proc.run(
-        ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
-    )
-    status = check(reporoot)
+def stop() -> ColimaStatus:
+    proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+    status = check()
     return status
