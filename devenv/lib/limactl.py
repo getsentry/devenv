@@ -68,6 +68,8 @@ def install_global() -> None:
         "darwin_x86_64_sha256": "c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
         "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
         "darwin_arm64_sha256": "be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
+        "linux_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c",
+        "linux_x86_64_sha256": "741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c",
     }
 
     binroot = f"{root}/bin"
