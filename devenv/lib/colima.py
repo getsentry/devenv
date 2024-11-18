@@ -7,6 +7,8 @@ import tempfile
 from enum import Enum
 
 from devenv.constants import home
+from devenv.constants import root
+from devenv.constants import SYSTEM_MACHINE
 from devenv.lib import archive
 from devenv.lib import docker
 from devenv.lib import fs
@@ -78,6 +80,38 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
         raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
 
 
+def install_global() -> None:
+    version = "v0.7.5"
+    cfg = {
+        "darwin_x86_64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Darwin-x86_64",
+        "darwin_x86_64_sha256": "53f78b4aaef5fb5dab65cae19fba4504047de1fdafa152fba90435d8a7569c2b",
+        "darwin_arm64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Darwin-arm64",
+        "darwin_arm64_sha256": "267696d6cb28eaf6daa3ea9622c626697b4baeb847b882d15b26c732e841913c",
+    }
+
+    binroot = f"{root}/bin"
+
+    if shutil.which("colima", path=binroot) == f"{binroot}/colima":
+        if not os.path.exists(f"{binroot}/colima-bin"):
+            os.rename(f"{binroot}/colima", f"{binroot}/colima-bin")
+            install_shim(binroot)
+
+        stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
+        installed_version = stdout.strip().split()[-1]
+        if version == installed_version:
+            return
+        print(f"installed colima {installed_version} is outdated!")
+
+    print(f"installing colima {version}...")
+    uninstall(binroot)
+    _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
+    install_shim(binroot)
+
+    stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
+    if f"colima version {version}" not in stdout:
+        raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
+
+
 def check(reporoot: str) -> ColimaStatus:
     if not os.getenv("CI"):
         macos_version = platform.mac_ver()[0]
@@ -93,10 +127,10 @@ def check(reporoot: str) -> ColimaStatus:
             "docker executable not found, you might want to run devenv sync"
         )
 
-    colima = f"{reporoot}/.devenv/bin/colima"
-    if not os.path.isfile(colima):
+    colima_executable = shutil.which("colima")
+    if not colima_executable:
         raise SystemExit(
-            f"colima not found at {colima}, you might want to run devenv sync"
+            "colima executable not found, try running devenv update (twice if this is your first time doing this) to install"
         )
 
     if not os.path.exists(f"{home}/.colima/default/docker.sock"):
@@ -125,12 +159,16 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
     if status == ColimaStatus.UP:
         if not restart:
             return ColimaStatus.UP
-        proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+        proc.run(
+            ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
+        )
     elif status == ColimaStatus.DOWN:
         pass
     elif status == ColimaStatus.UNHEALTHY:
         print("colima seems to be unhealthy, stopping it")
-        proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+        proc.run(
+            ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
+        )
 
     # colima start will only WARN if rosetta is unavailable and keep going without it,
     # so we need to ensure it's installed and running ourselves
@@ -163,7 +201,7 @@ def start(reporoot: str, restart: bool = False) -> ColimaStatus:
             f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
             *args,
         ),
-        pathprepend=f"{reporoot}/.devenv/bin",
+        pathprepend=f"{root}/bin:{reporoot}/.devenv/bin",
     )
 
     proc.run(("docker", "context", "use", "colima"))
@@ -178,6 +216,8 @@ def restart(reporoot: str) -> ColimaStatus:
 
 
 def stop(reporoot: str) -> ColimaStatus:
-    proc.run(("colima", "stop"), pathprepend=f"{reporoot}/.devenv/bin")
+    proc.run(
+        ("colima", "stop"), pathprepend=f"{root}/bin:{reporoot}/.devenv/bin"
+    )
     status = check(reporoot)
     return status

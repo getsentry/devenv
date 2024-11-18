@@ -5,6 +5,8 @@ import shutil
 import tempfile
 
 from devenv.constants import home
+from devenv.constants import root
+from devenv.constants import SYSTEM_MACHINE
 from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
@@ -75,6 +77,37 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
 
     uninstall(binroot)
     _install(url, sha256, binroot)
+
+    stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
+    if f"limactl version {version}" not in stdout:
+        raise SystemExit(
+            f"Failed to install limactl {version}! Found: {stdout}"
+        )
+
+
+def install_global() -> None:
+    version = "0.23.2"
+    cfg = {
+        "darwin_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
+        "darwin_x86_64_sha256": "c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
+        "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
+        "darwin_arm64_sha256": "be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
+    }
+
+    binroot = f"{root}/bin"
+
+    if (
+        shutil.which("lima", path=binroot) == f"{binroot}/lima"
+        and shutil.which("limactl", path=binroot) == f"{binroot}/limactl"
+    ):
+        stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
+        installed_version = stdout.strip().split()[-1]
+        if version == installed_version:
+            return
+        print(f"installed limactl {installed_version} is outdated!")
+
+    uninstall(binroot)
+    _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
 
     stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
     if f"limactl version {version}" not in stdout:
