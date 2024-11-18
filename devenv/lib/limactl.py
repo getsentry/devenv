@@ -62,29 +62,6 @@ def _install(url: str, sha256: str, into: str) -> None:
         )
 
 
-def install(version: str, url: str, sha256: str, reporoot: str) -> None:
-    binroot = fs.ensure_binroot(reporoot)
-
-    if (
-        shutil.which("lima", path=binroot) == f"{binroot}/lima"
-        and shutil.which("limactl", path=binroot) == f"{binroot}/limactl"
-    ):
-        stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
-        installed_version = stdout.strip().split()[-1]
-        if version == installed_version:
-            return
-        print(f"installed limactl {installed_version} is outdated!")
-
-    uninstall(binroot)
-    _install(url, sha256, binroot)
-
-    stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
-    if f"limactl version {version}" not in stdout:
-        raise SystemExit(
-            f"Failed to install limactl {version}! Found: {stdout}"
-        )
-
-
 def install_global() -> None:
     version = "0.23.2"
     cfg = {
@@ -114,3 +91,9 @@ def install_global() -> None:
         raise SystemExit(
             f"Failed to install limactl {version}! Found: {stdout}"
         )
+
+
+def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
+    uninstall(binroot)
+    install_global()

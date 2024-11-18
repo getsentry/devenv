@@ -56,30 +56,6 @@ exec {binroot}/colima-bin "$@"
     )
 
 
-def install(version: str, url: str, sha256: str, reporoot: str) -> None:
-    binroot = fs.ensure_binroot(reporoot)
-
-    if shutil.which("colima", path=binroot) == f"{binroot}/colima":
-        if not os.path.exists(f"{binroot}/colima-bin"):
-            os.rename(f"{binroot}/colima", f"{binroot}/colima-bin")
-            install_shim(binroot)
-
-        stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
-        installed_version = stdout.strip().split()[-1]
-        if version == installed_version:
-            return
-        print(f"installed colima {installed_version} is outdated!")
-
-    print(f"installing colima {version}...")
-    uninstall(binroot)
-    _install(url, sha256, binroot)
-    install_shim(binroot)
-
-    stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
-    if f"colima version {version}" not in stdout:
-        raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
-
-
 def install_global() -> None:
     version = "v0.7.5"
     cfg = {
@@ -110,6 +86,12 @@ def install_global() -> None:
     stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
         raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
+
+
+def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    binroot = fs.ensure_binroot(reporoot)
+    uninstall(binroot)
+    install_global()
 
 
 def check() -> ColimaStatus:
