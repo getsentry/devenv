@@ -320,76 +320,9 @@ def main(context: dict[str, str]) -> int:
 
 ### colima
 
-`[reporoot]/devenv/sync.py`
-```py
-from devenv import constants
-from devenv.lib import brew, config, colima, limactl, proc
+Since devenv 1.14.0, colima (and the docker CLI needed to interact with it) should have been installed globally for you during bootstrap.
+If you're on an older version, run `devenv update` twice to get global colima.
 
-def main(context: dict[str, str]) -> int:
-    reporoot = context["reporoot"]
-    cfg = config.get_repo(reporoot)
-
-    brew.install()
-
-    proc.run(
-        (f"{constants.homebrew_bin}/brew", "bundle"),
-        cwd=reporoot,
-    )
-
-    colima.install(
-        cfg["colima"]["version"],
-        cfg["colima"][constants.SYSTEM_MACHINE],
-        cfg["colima"][f"{constants.SYSTEM_MACHINE}_sha256"],
-        reporoot,
-    )
-    limactl.install(
-        cfg["lima"]["version"],
-        cfg["lima"][constants.SYSTEM_MACHINE],
-        cfg["lima"][f"{constants.SYSTEM_MACHINE}_sha256"],
-        reporoot,
-    )
-
-    # start colima if it's not already running
-    colima.start(reporoot)
-
-    return 0
-```
-
-`[reporoot]/Brewfile`
-```
-# this is docker cli (not desktop) which is needed for interacting with colima
-brew 'docker'
-
-# QEMU is needed if you are on an intel mac
-# brew 'qemu'
-```
-
-`[reporoot]/devenv/config.ini`
-```ini
-[colima]
-darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Darwin-x86_64
-darwin_x86_64_sha256 = 53f78b4aaef5fb5dab65cae19fba4504047de1fdafa152fba90435d8a7569c2b
-darwin_arm64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Darwin-arm64
-darwin_arm64_sha256 = 267696d6cb28eaf6daa3ea9622c626697b4baeb847b882d15b26c732e841913c
-linux_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Linux-x86_64
-linux_x86_64_sha256 = a3d440033776b2fb0cdd6139a2dbebf6764aabf78a671d4aa13b45c26df21a8a
-linux_arm64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Linux-aarch64
-linux_arm64_sha256 = 330e11a4b2e5ce69ee6253635308c9f0f49195f236da01718ede35cdb2729901
-# used for autoupdate
-version = v0.7.5
-
-[lima]
-# upstream github releases aren't built for macOS 14, so we use homebrew binaries
-# from https://formulae.brew.sh/api/formula/lima.json
-darwin_x86_64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841
-darwin_x86_64_sha256 = c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841
-darwin_arm64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35
-darwin_arm64_sha256 = be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35
-linux_x86_64 = https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c
-linux_x86_64_sha256 = 741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c
-# used for autoupdate
-version = 0.23.2
-```
 
 ### gcloud
 

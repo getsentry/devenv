@@ -64,6 +64,7 @@ def _install(url: str, sha256: str, into: str) -> None:
 def install_global() -> None:
     version = "0.23.2"
     cfg = {
+        # upstream github releases aren't built for macOS 14, so we use homebrew binaries
         "darwin_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
         "darwin_x86_64_sha256": "c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
         "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",

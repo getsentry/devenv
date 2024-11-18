@@ -85,6 +85,14 @@ def install_global() -> None:
     _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
     install_shim(binroot)
 
+    # TODO: install docker cli
+
+    if SYSTEM_MACHINE == "darwin_x86_64":
+        if not shutil.which("qemu"):
+            print(
+                "WARNING: you're on darwin_x86_64, but QEMU isn't installed. Run: `brew install qemu`."
+            )
+
     stdout = proc.run((f"{binroot}/colima", "--version"), stdout=True)
     if f"colima version {version}" not in stdout:
         raise SystemExit(f"Failed to install colima {version}! Found: {stdout}")
