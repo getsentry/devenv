@@ -89,8 +89,6 @@ def install_global() -> None:
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
-    binroot = fs.ensure_binroot(reporoot)
-    uninstall(binroot)
     install_global()
 
 

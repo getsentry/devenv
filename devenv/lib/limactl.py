@@ -8,7 +8,6 @@ from devenv.constants import home
 from devenv.constants import root
 from devenv.constants import SYSTEM_MACHINE
 from devenv.lib import archive
-from devenv.lib import fs
 from devenv.lib import proc
 
 
@@ -94,6 +93,4 @@ def install_global() -> None:
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
-    binroot = fs.ensure_binroot(reporoot)
-    uninstall(binroot)
     install_global()
