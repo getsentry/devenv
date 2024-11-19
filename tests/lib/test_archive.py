@@ -127,6 +127,32 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
+def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
+    foo = tmp_path / "foo"
+    foo.mkdir()
+
+    foo_bar = tmp_path / "foo/bar"
+    foo_bar.write_text("")
+
+    foo_baz = tmp_path / "foo/baz"
+    foo_baz.symlink_to("foo/bar")
+
+    # need to download linux archive and read it with tar and need to preproduce the symlink structure
+
+   # breakpoint()
+
+    tar = tmp_path / "tar"
+
+    with tarfile.open(tar, "w:tar") as tarf:
+        tarf.add(foo, arcname="foo")
+        # foo
+        # foo/bar
+        # foo/baz -> foo/bar
+
+    return tar
+
+
+@pytest.fixture
 def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
@@ -285,4 +311,18 @@ def test_unpack_strip_n_root(
         # foo/bar
         (f"{dest2}", ["foo"], []),
         (f"{dest2}/foo", [], ["bar"]),
+    ]
+
+
+def test_unpack_strip_n_symlink(
+    tar5: pathlib.Path, tmp_path: pathlib.Path
+) -> None:
+    dest = tmp_path / "dest"
+    archive.unpack_strip_n(str(tar5), str(dest), n=1)
+    # leading slash in /foo/bar doesn't count as a component
+
+    assert [*sorted_os_walk(dest)] == [
+        # bar
+        # baz (-> bar)
+        (f"{dest}", [], ["bar", "baz"]),
     ]
