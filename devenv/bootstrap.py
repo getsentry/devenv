@@ -10,6 +10,7 @@ from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.lib import brew
 from devenv.lib import colima
 from devenv.lib import direnv
+from devenv.lib import docker
 from devenv.lib import github
 from devenv.lib import limactl
 from devenv.lib import proc
@@ -97,7 +98,9 @@ When done, hit ENTER to continue.
             )
 
     # Install global tools.
+    # Mirror this in update.py.
     brew.install()
+    docker.install_global()
     direnv.install()
     colima.install_global()
     limactl.install_global()

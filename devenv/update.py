@@ -9,6 +9,7 @@ from devenv import constants
 from devenv.lib import brew
 from devenv.lib import colima
 from devenv.lib import direnv
+from devenv.lib import docker
 from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib.context import Context
@@ -53,7 +54,9 @@ If sync wasn't working before, try using global devenv to run it now:
     # This is so that people don't have to run update twice.
     if args.post_update:
         # Reinstall/update global tools.
+        # Mirror this in bootstrap.py.
         brew.install()
+        docker.install_global()
         direnv.install()
         colima.install_global()
         limactl.install_global()
