@@ -103,6 +103,9 @@ def strip1(
                 continue
 
         member.path = member.path[i + 1 :]  # noqa: E203
+        if member.islnk():
+            member.linkname = member.linkname[i + 1 :]  # noqa: E203
+
         yield member
 
 
