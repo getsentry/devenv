@@ -135,11 +135,7 @@ def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
     foo_bar.write_text("")
 
     foo_baz = tmp_path / "foo/baz"
-    foo_baz.symlink_to("foo/bar")
-
-    # need to download linux archive and read it with tar and need to preproduce the symlink structure
-
-   # breakpoint()
+    foo_baz.hardlink_to(foo_bar)
 
     tar = tmp_path / "tar"
 
@@ -324,5 +320,5 @@ def test_unpack_strip_n_symlink(
     assert [*sorted_os_walk(dest)] == [
         # bar
         # baz (-> bar)
-        (f"{dest}", [], ["bar", "baz"]),
+        (f"{dest}", [], ["bar", "baz"])
     ]

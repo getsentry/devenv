@@ -137,5 +137,4 @@ def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
             for member in members:
                 member.path = f"{new_prefix}/{member.path}"
 
-        breakpoint()
         tarf.extractall(into, members=members, filter="tar")
