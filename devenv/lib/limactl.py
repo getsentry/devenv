@@ -75,6 +75,8 @@ def install_global() -> None:
 
     binroot = f"{root}/bin"
 
+    print(shutil.which("limactl", path=binroot))
+
     if (
         shutil.which("lima", path=binroot) == f"{binroot}/lima"
         and shutil.which("limactl", path=binroot) == f"{binroot}/limactl"
