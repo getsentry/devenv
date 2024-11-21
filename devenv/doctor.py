@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import typing
 from collections.abc import Callable
 from collections.abc import Iterable
@@ -15,7 +16,6 @@ from typing import List
 
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
-from devenv.lib.modules import require_repo
 from devenv.lib.repository import Repository
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
@@ -106,6 +106,37 @@ def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
     return checks
 
 
+def load_builtin_checks(match_tags: set[str]) -> List[Check]:
+    """
+    Loads builtin checks.
+    Optionally filter by tags.
+    If a check doesn't have the required attributes, skip it.
+    """
+    checks: list[Check] = []
+    match_tags.add("builtin")
+
+    here = os.path.dirname(os.path.realpath(__file__))
+
+    for module_finder, module_name, _ in walk_packages((f"{here}/checks",)):
+        module_spec = module_finder.find_spec(module_name, None)
+
+        # it "should be" impossible to fail these:
+        assert module_spec is not None, module_name
+        assert module_spec.loader is not None, module_name
+
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        try:
+            check = Check(module)
+        except AssertionError as e:
+            print(f"⚠️ Skipping {module_name}: {e}")
+            continue
+        if match_tags and not check.tags.issuperset(match_tags):
+            continue
+        checks.append(check)
+    return checks
+
+
 def run_checks(
     checks: List[Check],
     executor: ThreadPoolExecutor,
@@ -161,7 +192,6 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
         return False, f"Fix threw a runtime exception: {e}"
 
 
-@require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -175,11 +205,15 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    repo = context["repo"]
-    assert repo is not None
-
     match_tags: set[str] = set(args.tag if args.tag else ())
-    checks = load_checks(repo, match_tags)
+
+    # First, we load builtin checks. These are not repo specific.
+    checks = load_builtin_checks(match_tags)
+
+    # Then we load any repo specific checks if any.
+    repo = context.get("repo")
+    if repo is not None:
+        checks.extend(load_checks(repo, match_tags))
 
     if not checks:
         print(f"No checks found for tags: {args.tag}")
