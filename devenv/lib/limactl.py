@@ -81,7 +81,14 @@ def install_global() -> None:
         shutil.which("lima", path=binroot) == f"{binroot}/lima"
         and shutil.which("limactl", path=binroot) == f"{binroot}/limactl"
     ):
-        stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
+        try:
+            stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
+        except Exception as e:
+            stdout = proc.run(("file", f"{binroot}/limactl"), stdout=True)
+            print(stdout)
+            stdout = proc.run(("ls", "-lah", binroot), stdout=True)
+            print(stdout)
+            raise e
         installed_version = stdout.strip().split()[-1]
         if version == installed_version:
             return
