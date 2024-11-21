@@ -69,26 +69,19 @@ def install_global() -> None:
         "darwin_x86_64_sha256": "c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
         "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
         "darwin_arm64_sha256": "be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
-        "linux_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c",
-        "linux_x86_64_sha256": "741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803411e0c",
+        # on linux we use github releases since most people are probably not using
+        # linuxbrew and the go binary in homebrew links to homebrew's ld.so
+        "linux_x86_64": "https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-x86_64.tar.gz",
+        "linux_x86_64_sha256": "6395e7d236989f6f29ccd092d2f302bb85de8d373e7793eec12d9f2f5c60bab5",
     }
 
     binroot = f"{root}/bin"
-
-    print(shutil.which("limactl", path=binroot))
 
     if (
         shutil.which("lima", path=binroot) == f"{binroot}/lima"
         and shutil.which("limactl", path=binroot) == f"{binroot}/limactl"
     ):
-        try:
-            stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
-        except Exception as e:
-            stdout = proc.run(("file", f"{binroot}/limactl"), stdout=True)
-            print(stdout)
-            stdout = proc.run(("ls", "-lah", binroot), stdout=True)
-            print(stdout)
-            raise e
+        stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]
         if version == installed_version:
             return
