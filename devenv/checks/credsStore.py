@@ -30,11 +30,11 @@ def check() -> tuple[bool, str]:
 def fix() -> tuple[bool, str]:
     try:
         with open(os.path.expanduser("~/.docker/config.json"), "rb") as f:
-            config = json.loads(f.read())
+            config = json.load(f)
             config.pop("credsStore", None)
 
         with open(os.path.expanduser("~/.docker/config.json"), "w") as f:
-            f.write(json.dumps(config))
+            json.dump(config, f)
     except Exception as e:
         return False, f"{e}"
 
