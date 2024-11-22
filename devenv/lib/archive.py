@@ -103,6 +103,12 @@ def strip1(
                 continue
 
         member.path = member.path[i + 1 :]  # noqa: E203
+
+        # hardlink target (linkname) is relative to the root of the
+        # archive and must also be stripped
+        if member.islnk():
+            member.linkname = member.linkname[i + 1 :]  # noqa: E203
+
         yield member
 
 
