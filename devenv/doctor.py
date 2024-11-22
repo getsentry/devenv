@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import os
 import typing
 from collections.abc import Callable
 from collections.abc import Iterable
@@ -14,6 +13,7 @@ from types import ModuleType
 from typing import Dict
 from typing import List
 
+import devenv.checks
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 from devenv.lib.repository import Repository
@@ -115,17 +115,8 @@ def load_builtin_checks(match_tags: set[str]) -> List[Check]:
     checks: list[Check] = []
     match_tags.add("builtin")
 
-    here = os.path.dirname(os.path.realpath(__file__))
-
-    for module_finder, module_name, _ in walk_packages((f"{here}/checks",)):
-        module_spec = module_finder.find_spec(module_name, None)
-
-        # it "should be" impossible to fail these:
-        assert module_spec is not None, module_name
-        assert module_spec.loader is not None, module_name
-
-        module = importlib.util.module_from_spec(module_spec)
-        module_spec.loader.exec_module(module)
+    for _, module_name, _ in walk_packages(devenv.checks.__path__):
+        module = __import__(f"devenv.checks.{module_name}", fromlist=["_trash"])
         try:
             check = Check(module)
         except AssertionError as e:
