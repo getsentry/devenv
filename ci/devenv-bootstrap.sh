@@ -29,8 +29,30 @@ cd "$HOME"
 devenv bootstrap
 devenv fetch sentry
 
-# overwrite sentry's devenv config so we don't break when upstream config is updated
-cat <<EOF > "$HOME/code/sentry/devenv/config.ini"
+cd "$HOME/code/sentry"
+
+# check that sentry's post_fetch ran
+grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
+
+expected="${HOME}/.local/share/sentry-devenv/bin/direnv"
+got=$(command -v direnv)
+if [[ "$got" != "$expected" ]]; then
+    echo "unexpected direnv location ${got}, expected ${expected}"
+    exit 1
+fi
+
+# XXX: direnv allow/reload weirdly just exits 0 in GHA after writing
+# the allow file, and using delve (gdb for go binaries) with action-tmate
+# is painful because you get logged out for no reason after a few minutes,
+# strace also doesn't reveal anything obvious
+
+# so instead, just do here the essentials that sentry's .envrc does
+export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
+export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
+
+# overwrite sentry's devenv config and resync
+# so we don't break when upstream config is updated
+cat <<EOF > "devenv/config.ini"
 [venv.sentry]
 python = 3.12.3
 path = .venv
@@ -84,26 +106,7 @@ linux_x86_64_sha256 = 741e9c7345e15f04b8feaf5034868f00fc3ff792226c485ab2e7679803
 version = 0.23.2
 EOF
 
-cd "$HOME/code/sentry"
-
-# check that sentry's post_fetch ran
-grep -Fxq 'ignorerevsfile = .git-blame-ignore-revs' .git/config
-
-expected="${HOME}/.local/share/sentry-devenv/bin/direnv"
-got=$(command -v direnv)
-if [[ "$got" != "$expected" ]]; then
-    echo "unexpected direnv location ${got}, expected ${expected}"
-    exit 1
-fi
-
-# XXX: direnv allow/reload weirdly just exits 0 in GHA after writing
-# the allow file, and using delve (gdb for go binaries) with action-tmate
-# is painful because you get logged out for no reason after a few minutes,
-# strace also doesn't reveal anything obvious
-
-# so instead, just do here the essentials that sentry's .envrc does
-export PATH="${HOME}/code/sentry/.devenv/bin:${HOME}/code/sentry/node_modules/.bin:${HOME}/.local/share/sentry-devenv/bin:${PATH}"
-export VIRTUAL_ENV="${HOME}/code/sentry/.venv"
+devenv sync
 
 expected="${HOME}/code/sentry/.devenv/bin/node"
 got=$(command -v node)
