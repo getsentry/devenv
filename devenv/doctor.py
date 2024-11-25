@@ -42,35 +42,35 @@ class Check:
 
     def __init__(self, module: ModuleType):
         # Check that the module has the required attributes.
-        assert hasattr(module, "name"), "missing the `name` attribute"
-        assert isinstance(
-            module.name, str
-        ), "the `name` attribute should be a str"
+        if not hasattr(module, "name"):
+            raise TypeError("missing the `name` attribute")
+        if not isinstance(module.name, str):
+            raise TypeError("the `name` attribute should be a str")
         self.name = module.name
 
-        assert hasattr(module, "tags"), "missing the `tags` attribute"
-        assert isinstance(
-            module.tags, set
-        ), "the `tags` attribute should be a set"
+        if not hasattr(module, "tags"):
+            raise TypeError("missing the `tags` attribute")
+        if not isinstance(module.tags, set):
+            raise TypeError("the `tags` attribute should be a set")
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
-        assert hasattr(module, "check"), "must have a `check` function"
-        assert callable(
-            module.check
-        ), "the `check` attribute must be a function"
+        if not hasattr(module, "check"):
+            raise TypeError("must have a `check` function")
+        if not callable(module.check):
+            raise TypeError("the `check` attribute must be a function")
         check_hints = typing.get_type_hints(module.check)
-        assert (
-            check_hints["return"] == tuple[bool, str]
-        ), "`check(...)` should return a tuple of (bool, str)"
+        if not (check_hints["return"] == tuple[bool, str]):
+            raise TypeError("`check(...)` should return a tuple of (bool, str)")
         self.check = checker(module.check)
 
-        assert hasattr(module, "fix"), "must have a `fix` function"
-        assert callable(module.fix), "the `fix` attribute should be a function"
+        if not hasattr(module, "fix"):
+            raise TypeError("must have a `fix` function")
+        if not callable(module.fix):
+            raise TypeError("the `fix` attribute should be a function")
         fix_hints = typing.get_type_hints(module.fix)
-        assert (
-            fix_hints["return"] == tuple[bool, str]
-        ), "`fix(...)` should return a tuple of (bool, str)"
+        if not (fix_hints["return"] == tuple[bool, str]):
+            raise TypeError("`fix(...)` should return a tuple of (bool, str)")
         self.fix = fixer(module.fix)
 
         super().__init__()
@@ -119,7 +119,7 @@ def load_builtin_checks(match_tags: set[str]) -> List[Check]:
         module = __import__(f"devenv.checks.{module_name}", fromlist=["_trash"])
         try:
             check = Check(module)
-        except AssertionError as e:
+        except TypeError as e:
             print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
