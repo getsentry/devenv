@@ -22,6 +22,22 @@ from devenv.lib.modules import ExitCode
 from devenv.lib.repository import Repository
 
 
+troubleshooting_help = """\
+===============
+Troubleshooting
+===============
+
+Problem? First try running `devenv doctor`.
+If that doesn't help, then proceed:
+
+Internal living doc (more up-to-date):
+https://www.notion.so/sentry/devenv-troubleshooting-1448b10e4b5d8080ba04f452e33de48d
+
+Public doc:
+https://develop.sentry.dev/development-infrastructure/environment/#troubleshooting
+"""
+
+
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
     # determine current repo, if applicable
     fake_reporoot = os.getenv("CI_DEVENV_INTEGRATION_FAKE_REPOROOT")
@@ -51,7 +67,10 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     # TODO: Search for modules in work repo
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=troubleshooting_help,
+    )
     parser.add_argument("--version", action="version", version=version)
     subparser = parser.add_subparsers(
         title=argparse.SUPPRESS,
@@ -62,7 +81,12 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     for info in modinfo_list:
         # Argparse stuff
-        subparser.add_parser(info.command, help=info.help)
+        subparser.add_parser(
+            info.command,
+            help=info.help,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=troubleshooting_help,
+        )
 
     if len(argv) == 1:
         parser.print_help()
