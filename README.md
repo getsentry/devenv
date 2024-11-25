@@ -58,12 +58,10 @@ An exception to this would be python virtualenvs, which was implemented before t
 
 `devenv doctor`
 
-When you're inside a repository, this diagnoses and tries to fix common issues.
-Checks and fixes are defined in `[reporoot]/devenv/checks`.
+Use this to diagnose and fix common issues.
 
-`devenv nuke|uninstall` (wip)
-
-When you're inside a repository, this completely removes the dev environment.
+Repo-specific checks and fixes can be defined in `[reporoot]/devenv/checks`.
+Otherwise we have "builtin" checks and fixes in `devenv.checks`.
 
 
 ## technical overview

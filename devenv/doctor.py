@@ -13,9 +13,9 @@ from types import ModuleType
 from typing import Dict
 from typing import List
 
+import devenv.checks
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
-from devenv.lib.modules import require_repo
 from devenv.lib.repository import Repository
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
@@ -42,35 +42,37 @@ class Check:
 
     def __init__(self, module: ModuleType):
         # Check that the module has the required attributes.
-        assert hasattr(module, "name"), "missing the `name` attribute"
-        assert isinstance(
-            module.name, str
-        ), "the `name` attribute should be a str"
+        if not hasattr(module, "name"):
+            raise ValueError("missing the `name` attribute")
+        if not isinstance(module.name, str):
+            raise ValueError("the `name` attribute should be a str")
         self.name = module.name
 
-        assert hasattr(module, "tags"), "missing the `tags` attribute"
-        assert isinstance(
-            module.tags, set
-        ), "the `tags` attribute should be a set"
+        if not hasattr(module, "tags"):
+            raise ValueError("missing the `tags` attribute")
+        if not isinstance(module.tags, set):
+            raise ValueError("the `tags` attribute should be a set")
         self.tags = module.tags
 
         # Check that the module has the check and fix functions.
-        assert hasattr(module, "check"), "must have a `check` function"
-        assert callable(
-            module.check
-        ), "the `check` attribute must be a function"
+        if not hasattr(module, "check"):
+            raise ValueError("must have a `check` function")
+        if not callable(module.check):
+            raise ValueError("the `check` attribute must be a function")
         check_hints = typing.get_type_hints(module.check)
-        assert (
-            check_hints["return"] == tuple[bool, str]
-        ), "`check(...)` should return a tuple of (bool, str)"
+        if not (check_hints["return"] == tuple[bool, str]):
+            raise ValueError(
+                "`check(...)` should return a tuple of (bool, str)"
+            )
         self.check = checker(module.check)
 
-        assert hasattr(module, "fix"), "must have a `fix` function"
-        assert callable(module.fix), "the `fix` attribute should be a function"
+        if not hasattr(module, "fix"):
+            raise ValueError("must have a `fix` function")
+        if not callable(module.fix):
+            raise ValueError("the `fix` attribute should be a function")
         fix_hints = typing.get_type_hints(module.fix)
-        assert (
-            fix_hints["return"] == tuple[bool, str]
-        ), "`fix(...)` should return a tuple of (bool, str)"
+        if not (fix_hints["return"] == tuple[bool, str]):
+            raise ValueError("`fix(...)` should return a tuple of (bool, str)")
         self.fix = fixer(module.fix)
 
         super().__init__()
@@ -97,7 +99,29 @@ def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
         module_spec.loader.exec_module(module)
         try:
             check = Check(module)
-        except AssertionError as e:
+        except ValueError as e:
+            print(f"⚠️ Skipping {module_name}: {e}")
+            continue
+        if match_tags and not check.tags.issuperset(match_tags):
+            continue
+        checks.append(check)
+    return checks
+
+
+def load_builtin_checks(match_tags: set[str]) -> List[Check]:
+    """
+    Loads builtin checks.
+    Optionally filter by tags.
+    If a check doesn't have the required attributes, skip it.
+    """
+    checks: list[Check] = []
+    match_tags.add("builtin")
+
+    for _, module_name, _ in walk_packages(devenv.checks.__path__):
+        module = __import__(f"devenv.checks.{module_name}", fromlist=["_trash"])
+        try:
+            check = Check(module)
+        except ValueError as e:
             print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
@@ -161,7 +185,6 @@ def attempt_fix(check: Check, executor: ThreadPoolExecutor) -> tuple[bool, str]:
         return False, f"Fix threw a runtime exception: {e}"
 
 
-@require_repo
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -175,11 +198,15 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    repo = context["repo"]
-    assert repo is not None
-
     match_tags: set[str] = set(args.tag if args.tag else ())
-    checks = load_checks(repo, match_tags)
+
+    # First, we load builtin checks. These are not repo specific.
+    checks = load_builtin_checks(match_tags)
+
+    # Then we load any repo specific checks if any.
+    repo = context.get("repo")
+    if repo is not None:
+        checks.extend(load_checks(repo, match_tags))
 
     if not checks:
         print(f"No checks found for tags: {args.tag}")
