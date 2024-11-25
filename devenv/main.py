@@ -12,6 +12,7 @@ from devenv import pin_gha
 from devenv import sync
 from devenv import update
 from devenv.constants import home
+from devenv.constants import troubleshooting_help
 from devenv.constants import user
 from devenv.constants import version
 from devenv.lib.config import read_config
@@ -51,7 +52,10 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     # TODO: Search for modules in work repo
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=troubleshooting_help,
+    )
     parser.add_argument("--version", action="version", version=version)
     subparser = parser.add_subparsers(
         title=argparse.SUPPRESS,
@@ -62,7 +66,12 @@ def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
 
     for info in modinfo_list:
         # Argparse stuff
-        subparser.add_parser(info.command, help=info.help)
+        subparser.add_parser(
+            info.command,
+            help=info.help,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=troubleshooting_help,
+        )
 
     if len(argv) == 1:
         parser.print_help()

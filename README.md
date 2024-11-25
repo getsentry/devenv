@@ -318,8 +318,9 @@ def main(context: dict[str, str]) -> int:
 
 ### colima
 
-Since devenv 1.14.0, colima (and the docker CLI needed to interact with it) should have been installed globally for you during bootstrap.
-If you're on an older version, run `devenv update` twice to get global colima.
+Since devenv 1.14.0, colima (and the docker CLI needed to interact with it)
+should have been installed globally for you during bootstrap.
+If you're on an older version, run `devenv update`.
 
 
 ### gcloud
