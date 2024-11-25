@@ -91,7 +91,7 @@ def install_global() -> None:
 
     if shutil.which("docker", path=binroot) == f"{binroot}/docker":
         stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
-        installed_version = stdout.strip().split()[2]
+        installed_version = stdout.strip().split()[2][:-1]
         if version == installed_version:
             return
         print(f"installed docker {installed_version} is outdated!")
