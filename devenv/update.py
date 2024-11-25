@@ -6,11 +6,16 @@ import sys
 from collections.abc import Sequence
 
 from devenv import constants
+from devenv.lib import brew
+from devenv.lib import colima
+from devenv.lib import direnv
+from devenv.lib import docker
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 
-module_help = "Updates global devenv."
+module_help = "Updates global devenv and tools."
 
 
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
@@ -40,8 +45,22 @@ If sync wasn't working before, try using global devenv to run it now:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("version", type=str, nargs="?")
+    parser.add_argument(
+        "--post-update", action="store_true", help="Internal, do not use."
+    )
 
     args = parser.parse_args(argv)
+
+    # This is so that people don't have to run update twice.
+    if args.post_update:
+        # Reinstall/update global tools.
+        # Mirror this in bootstrap.py.
+        brew.install()
+        docker.install_global()
+        direnv.install()
+        colima.install_global()
+        limactl.install_global()
+        return 0
 
     if args.version is None:
         proc.run(
@@ -68,6 +87,8 @@ If sync wasn't working before, try using global devenv to run it now:
                 "PIP_DISABLE_PIP_VERSION_CHECK": "1"
             },
         )
+
+    proc.run((f"{constants.root}/bin/devenv", "update", "--post-update"))
 
     return 0
 

@@ -8,8 +8,11 @@ from collections.abc import Sequence
 from devenv.constants import CI
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.lib import brew
+from devenv.lib import colima
 from devenv.lib import direnv
+from devenv.lib import docker
 from devenv.lib import github
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import rosetta
 from devenv.lib.config import Config
@@ -94,8 +97,13 @@ When done, hit ENTER to continue.
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
             )
 
+    # Install global tools.
+    # Mirror this in update.py.
     brew.install()
+    docker.install_global()
     direnv.install()
+    colima.install_global()
+    limactl.install_global()
 
     os.makedirs(context["code_root"], exist_ok=True)
 

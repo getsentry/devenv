@@ -46,7 +46,7 @@ jobs:
     runs-on: macos-13
     timeout-minutes: 60
     env:
-      DEVENV_FETCH_BRANCH: master
+      DEVENV_FETCH_BRANCH: devenv-global-colima
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
