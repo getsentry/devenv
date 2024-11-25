@@ -5,6 +5,7 @@ import importlib.util
 import os
 from collections.abc import Sequence
 
+from devenv.constants import troubleshooting_help
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 from devenv.lib.modules import require_repo
@@ -35,7 +36,10 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     }
 
     with contextlib.chdir(repo.path):
-        return module.main(context_compat)  # type: ignore
+        rc = module.main(context_compat)
+        if rc != 0:
+            print(troubleshooting_help)
+        return rc  # type: ignore
 
 
 module_info = DevModuleInfo(

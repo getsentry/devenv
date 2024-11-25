@@ -12,6 +12,7 @@ from devenv import pin_gha
 from devenv import sync
 from devenv import update
 from devenv.constants import home
+from devenv.constants import troubleshooting_help
 from devenv.constants import user
 from devenv.constants import version
 from devenv.lib.config import read_config
@@ -20,22 +21,6 @@ from devenv.lib.fs import gitroot
 from devenv.lib.modules import DevModuleInfo
 from devenv.lib.modules import ExitCode
 from devenv.lib.repository import Repository
-
-
-troubleshooting_help = """\
-===============
-Troubleshooting
-===============
-
-Problem? First try running `devenv doctor`.
-If that doesn't help, then proceed:
-
-Internal living doc (more up-to-date):
-https://www.notion.so/sentry/devenv-troubleshooting-1448b10e4b5d8080ba04f452e33de48d
-
-Public doc:
-https://develop.sentry.dev/development-infrastructure/environment/#troubleshooting
-"""
 
 
 def devenv(argv: Sequence[str], config_path: str) -> ExitCode:
