@@ -99,7 +99,7 @@ def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
         module_spec.loader.exec_module(module)
         try:
             check = Check(module)
-        except AssertionError as e:
+        except ValueError as e:
             print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
