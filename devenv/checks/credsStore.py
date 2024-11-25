@@ -18,10 +18,11 @@ def check() -> tuple[bool, str]:
     # generally installed. Most people don't need to login to docker anyways.
     with open(os.path.expanduser("~/.docker/config.json"), "rb") as f:
         config = json.load(f)
-        if config.get("credsStore", "") == "desktop" and not shutil.which(
-            "docker-credential-desktop"
-        ):
-            return False, "credsStore requires nonexistent binary"
+
+    if config.get("credsStore", "") == "desktop" and not shutil.which(
+        "docker-credential-desktop"
+    ):
+        return False, "credsStore requires nonexistent binary"
 
     return True, ""
 
@@ -31,7 +32,8 @@ def fix() -> tuple[bool, str]:
     try:
         with open(os.path.expanduser("~/.docker/config.json"), "rb") as f:
             config = json.load(f)
-            config.pop("credsStore", None)
+
+        config.pop("credsStore", None)
 
         with open(os.path.expanduser("~/.docker/config.json"), "w") as f:
             json.dump(config, f)
