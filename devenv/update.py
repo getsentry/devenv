@@ -32,7 +32,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         # Mirror this in bootstrap.py.
         print(
             f"""\
-Updating global tools in {constants.root}/bin
+Updating global tools (at {constants.root}/bin).
 """
         )
         brew.install()
@@ -66,6 +66,7 @@ Updating global tools in {constants.root}/bin
 
         print(
             f"""\
+
 Global devenv at {constants.root}/bin/devenv updated.
 """
         )
