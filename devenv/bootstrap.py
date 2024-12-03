@@ -102,7 +102,7 @@ When done, hit ENTER to continue.
 Updating global tools (at {constants.root}/bin).
 """
     )
-    os.makedirs(f"{constants.root}/bin")
+    os.makedirs(f"{constants.root}/bin", exist_ok=True)
     brew.install()
     docker.install_global()
     direnv.install()
