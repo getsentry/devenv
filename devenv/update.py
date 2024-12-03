@@ -35,6 +35,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 Updating global tools (at {constants.root}/bin).
 """
         )
+        os.makedirs(f"{constants.root}/bin")
         brew.install()
         docker.install_global()
         direnv.install()
