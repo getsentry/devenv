@@ -99,7 +99,7 @@ When done, hit ENTER to continue.
     # Mirror this in bootstrap.py.
     print(
         f"""\
-Updating global tools in {constants.root}/bin
+Updating global tools (at {constants.root}/bin).
 """
     )
     brew.install()
