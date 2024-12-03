@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
+import os
 import sys
 from collections.abc import Sequence
 
@@ -19,30 +19,6 @@ module_help = "Updates global devenv and tools."
 
 
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
-    if not sys.executable.startswith(f"{constants.root}/venv/bin/python"):
-        rc = subprocess.call((f"{constants.root}/bin/devenv", *sys.argv[1:]))
-        if rc != 0:
-            print(
-                """
-failed to update devenv!
-"""
-            )
-            return rc
-
-        print(
-            f"""
-The global devenv at {constants.root}/bin/devenv has been updated.
-
-You used a local (at {sys.executable}) devenv to do this,
-which has *not* been updated.
-
-If sync wasn't working before, try using global devenv to run it now:
-
-{constants.root}/bin/devenv sync
-"""
-        )
-        return 0
-
     parser = argparse.ArgumentParser()
     parser.add_argument("version", type=str, nargs="?")
     parser.add_argument(
@@ -53,8 +29,13 @@ If sync wasn't working before, try using global devenv to run it now:
 
     # This is so that people don't have to run update twice.
     if args.post_update:
-        # Reinstall/update global tools.
         # Mirror this in bootstrap.py.
+        print(
+            f"""\
+Updating global tools (at {constants.root}/bin).
+"""
+        )
+        os.makedirs(f"{constants.root}/bin", exist_ok=True)
         brew.install()
         docker.install_global()
         direnv.install()
@@ -62,33 +43,43 @@ If sync wasn't working before, try using global devenv to run it now:
         limactl.install_global()
         return 0
 
-    if args.version is None:
+    is_global_devenv = sys.executable.startswith(
+        f"{constants.root}/venv/bin/python"
+    )
+
+    global_devenv_exists = os.path.exists(f"{constants.root}/bin/devenv")
+
+    # even if we aren't the global devenv, we want to update
+    # the global devenv (but only if it exists) out of convenience
+    if is_global_devenv or global_devenv_exists:
+        if args.version is None:
+            version = "sentry-devenv"
+        else:
+            version = "sentry-devenv=={args.version}"
+
         proc.run(
-            (
-                f"{constants.root}/venv/bin/pip",
-                "install",
-                "-U",
-                "sentry-devenv",
-            ),
-            env={
-                # better than cli flag (who knows if it'll break in the future)
-                "PIP_DISABLE_PIP_VERSION_CHECK": "1"
-            },
-        )
-    else:
-        proc.run(
-            (
-                f"{constants.root}/venv/bin/pip",
-                "install",
-                f"sentry-devenv=={args.version}",
-            ),
+            (f"{constants.root}/venv/bin/pip", "install", "-U", version),
             env={
                 # better than cli flag (who knows if it'll break in the future)
                 "PIP_DISABLE_PIP_VERSION_CHECK": "1"
             },
         )
 
-    proc.run((f"{constants.root}/bin/devenv", "update", "--post-update"))
+        print(
+            f"""\
+
+Global devenv at {constants.root}/bin/devenv updated.
+"""
+        )
+
+    proc.run((sys.executable, "-P", "-m", "devenv", "update", "--post-update"))
+
+    if not is_global_devenv:
+        print(
+            """\
+To update the local devenv, you'll want to run `devenv sync`.
+"""
+        )
 
     return 0
 

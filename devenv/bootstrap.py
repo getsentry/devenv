@@ -5,8 +5,7 @@ import os
 import shutil
 from collections.abc import Sequence
 
-from devenv.constants import CI
-from devenv.constants import EXTERNAL_CONTRIBUTOR
+from devenv import constants
 from devenv.lib import brew
 from devenv.lib import colima
 from devenv.lib import direnv
@@ -43,7 +42,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     default_config: Config = {"devenv": configs}
     initialize_config(context["config_path"], default_config)
 
-    if not CI and shutil.which("xcrun"):
+    if not constants.CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
         # and involves elevated permissions with a GUI,
         # so best to just let the user go through that separately then retrying,
@@ -61,23 +60,23 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
 
     github.add_to_known_hosts()
 
-    if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access(
+    if not constants.EXTERNAL_CONTRIBUTOR and not github.check_ssh_access(
         # silence the error the first time since it's expected to happen
         silent=True
     ):
         is_employee = (
             False
-            if CI
+            if constants.CI
             else input("Are you a Sentry employee? (Y/n): ").lower()
             in {"y", "yes", ""}
         )
-        if not CI and not is_employee:
+        if not constants.CI and not is_employee:
             print(
                 "Please set the SENTRY_EXTERNAL_CONTRIBUTOR environment variable and re-run bootstrap."
             )
             return 1
         pubkey = github.generate_and_configure_ssh_keypair()
-        if not CI:
+        if not constants.CI:
             input(
                 f"""
 Failed to authenticate with an ssh key to GitHub.
@@ -97,8 +96,13 @@ When done, hit ENTER to continue.
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
             )
 
-    # Install global tools.
-    # Mirror this in update.py.
+    # Mirror this in bootstrap.py.
+    print(
+        f"""\
+Updating global tools (at {constants.root}/bin).
+"""
+    )
+    os.makedirs(f"{constants.root}/bin", exist_ok=True)
     brew.install()
     docker.install_global()
     direnv.install()
