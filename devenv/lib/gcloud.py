@@ -75,6 +75,8 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
         and shutil.which("gsutil", path=binroot) == f"{binroot}/gsutil"
         and shutil.which("gke-gcloud-auth-plugin", path=binroot)
         == f"{binroot}/gke-gcloud-auth-plugin"
+        and shutil.which("docker-credential-gcloud", path=binroot)
+        == f"{binroot}/docker-credential-gcloud"
     ):
         with open(f"{binroot}/google-cloud-sdk/VERSION", "r") as f:
             installed_version = f.read().strip()
