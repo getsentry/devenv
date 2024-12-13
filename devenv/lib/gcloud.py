@@ -42,6 +42,15 @@ exec gsutil "$@"
 """,
         shell_escape={"root": root, "into": into},
     )
+    fs.write_script(
+        f"{into}/docker-credential-gcloud",
+        """#!/bin/sh
+export CLOUDSDK_PYTHON={root}/python/bin/python3 \
+       PATH={into}/google-cloud-sdk/bin:"${{PATH}}"
+exec docker-credential-gcloud "$@"
+""",
+        shell_escape={"root": root, "into": into},
+    )
 
 
 def uninstall(binroot: str) -> None:
