@@ -25,15 +25,20 @@ def get(
 
     venv = cfg[f"venv.{name}"]
     venv_dir = venv.get("path", f"{reporoot}/.venv-{name}")
-    editable_paths = venv.get("editable", None)
-    if editable_paths is not None:
+    editable_paths_s = venv.get("editable", None)
+    if editable_paths_s is not None:
         editable_paths = tuple(
-            f"{reporoot}/{path}" for path in editable_paths.strip().split("\n")
+            f"{reporoot}/{path}"
+            for path in editable_paths_s.strip().split("\n")
         )
+    else:
+        editable_paths = None
 
-    bins = venv.get("bins", None)
-    if bins is not None:
-        bins = tuple(bins.strip().split("\n"))
+    bins_s = venv.get("bins", None)
+    if bins_s is not None:
+        bins = tuple(bins_s.strip().split("\n"))
+    else:
+        bins = None
 
     return (
         venv_dir,
