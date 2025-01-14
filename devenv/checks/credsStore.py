@@ -19,9 +19,8 @@ def check() -> tuple[bool, str]:
     with open(os.path.expanduser("~/.docker/config.json"), "rb") as f:
         config = json.load(f)
 
-    if config.get("credsStore", "") == "desktop" and not shutil.which(
-        "docker-credential-desktop"
-    ):
+    store = config.get("credsStore", "")
+    if store and not shutil.which(f"docker-credential-{store}"):
         return False, "credsStore requires nonexistent binary"
 
     return True, ""
