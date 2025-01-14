@@ -20,7 +20,7 @@ def tar(tmp_path: pathlib.Path) -> pathlib.Path:
     executable.write_text("hi")
 
     tar = tmp_path / "tar"
-    with tarfile.open(tar, "w:tar") as tarf:
+    with tarfile.open(tar, "w:") as tarf:
         tarf.add(executable, arcname="executable")
 
     return tar
@@ -69,7 +69,7 @@ def tar2(tmp_path: pathlib.Path) -> pathlib.Path:
     foo_v1_baz.mkdir()
 
     tar = tmp_path / "tar"
-    with tarfile.open(tar, "w:tar") as tarf:
+    with tarfile.open(tar, "w:") as tarf:
         tarf.add(foo, arcname="foo")
         # foo
         # foo/v1
@@ -95,7 +95,7 @@ def tar3(tmp_path: pathlib.Path) -> pathlib.Path:
     foo_v1_foo.write_text("")
 
     tar = tmp_path / "tar"
-    with tarfile.open(tar, "w:tar") as tarf:
+    with tarfile.open(tar, "w:") as tarf:
         tarf.add(foo, arcname="foo")
         # foo
         # foo/bar
@@ -115,7 +115,7 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
 
     tar = tmp_path / "tar"
 
-    with tarfile.open(tar, "w:tar") as tarf:
+    with tarfile.open(tar, "w:") as tarf:
         # note: arcname /foo doesn't work, it gets added as foo
         tarf.add(foo, arcname="foo")
         # /foo
@@ -139,7 +139,7 @@ def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
 
     tar = tmp_path / "tar"
 
-    with tarfile.open(tar, "w:tar") as tarf:
+    with tarfile.open(tar, "w:") as tarf:
         tarf.add(foo, arcname="foo")
         # foo
         # foo/bar
