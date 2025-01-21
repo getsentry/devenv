@@ -63,7 +63,7 @@ def install_global() -> None:
         "darwin_x86_64_sha256": "791330c62c60389f70e5e1c33a56c35502a9e36e544a418daea0273e539acbf4",
         "darwin_arm64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Darwin-arm64",
         "darwin_arm64_sha256": "c266fcb272b39221ef6152d2093bb02a1ebadc26042233ad359e1ae52d5d5922",
-        "linux_x86_64": "https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Linux-x86_64",
+        "linux_x86_64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Linux-x86_64",
         "linux_x86_64_sha256": "f2d6664a79ff3aa35f0718aac2ba9f6b531772e1464f3b096c1ac2aab404943e",
     }
 
