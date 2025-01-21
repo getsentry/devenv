@@ -78,7 +78,7 @@ def install_global() -> None:
         # on linux we use github releases since most people are probably not using
         # linuxbrew and the go binary in homebrew links to linuxbrew's ld.so
         "linux_x86_64": f"https://github.com/lima-vm/lima/releases/download/v{version}/lima-{version}-Linux-x86_64.tar.gz",
-        "linux_x86_64_sha256": "b109cac29569a4aacab01c588f922ea6c7e2ef06ce9260bbc4c382e475bc3b98 ",
+        "linux_x86_64_sha256": "b109cac29569a4aacab01c588f922ea6c7e2ef06ce9260bbc4c382e475bc3b98",
     }
 
     binroot = f"{root}/bin"
