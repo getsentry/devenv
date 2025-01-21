@@ -62,17 +62,23 @@ def _install(url: str, sha256: str, into: str) -> None:
 
 
 def install_global() -> None:
-    version = "0.23.2"
+    version = "1.0.3"
     cfg = {
-        # upstream github releases aren't built for macOS 14, so we use homebrew binaries
-        "darwin_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
-        "darwin_x86_64_sha256": "c2e69a572afa3a3cf895643ede988c87dc0622dae4aebc539d5564d820845841",
-        "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
-        "darwin_arm64_sha256": "be8e2b92961eca2f862f1a994dbef367e86d36705a705ebfa16d21c7f1366c35",
+        # upstream github releases aren't built for macOS 14, so for now
+        # we use homebrew binaries from https://formulae.brew.sh/api/formula/lima.json
+        # unfortunately there's no way to view previous versions of a formula
+        # so if we ever need to upgrade to a specific non-latest version we'll
+        # have to build it ourselves
+        # sonoma
+        "darwin_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:f675abee28d0f10f335f7a04dc6ad3de12434c83c2f0f32c913061204c137a94",
+        "darwin_x86_64_sha256": "f675abee28d0f10f335f7a04dc6ad3de12434c83c2f0f32c913061204c137a94",
+        # arm64_sonoma
+        "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
+        "darwin_arm64_sha256": "8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
         # on linux we use github releases since most people are probably not using
-        # linuxbrew and the go binary in homebrew links to homebrew's ld.so
-        "linux_x86_64": "https://github.com/lima-vm/lima/releases/download/v0.23.2/lima-0.23.2-Linux-x86_64.tar.gz",
-        "linux_x86_64_sha256": "5d0034316096e3f3ceedcb2e1dcac7c7d380e26defb59a5894eaf1e3265b191e",
+        # linuxbrew and the go binary in homebrew links to linuxbrew's ld.so
+        "linux_x86_64": f"https://github.com/lima-vm/lima/releases/download/v{version}/lima-{version}-Linux-x86_64.tar.gz",
+        "linux_x86_64_sha256": "b109cac29569a4aacab01c588f922ea6c7e2ef06ce9260bbc4c382e475bc3b98 ",
     }
 
     binroot = f"{root}/bin"
