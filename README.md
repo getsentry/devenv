@@ -17,8 +17,11 @@ Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable.
 Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh) and run it:
 
 ```
+curl https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh > install-devenv.sh
 bash install-devenv.sh
 ```
+
+Make sure to call this file `install-devenv.sh` as the script calls itself when you run it.
 
 This "global" devenv is installed to `~/.local/share/sentry-devenv/bin/devenv`.
 
