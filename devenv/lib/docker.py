@@ -139,12 +139,12 @@ def install_global() -> None:
             _install(
                 cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot
             )
+    else:
+        _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
 
-            stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
-            if f"Docker version {version}" not in stdout:
-                raise SystemExit(
-                    f"Failed to install docker {version}!\n\n{stdout}"
-                )
+    stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
+    if f"Docker version {version}" not in stdout:
+        raise SystemExit(f"Failed to install docker {version}!\n\n{stdout}")
 
     if not _check_buildx(binroot, version_buildx):
         print(f"installing docker buildx {version_buildx}...")
