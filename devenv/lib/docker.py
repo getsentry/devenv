@@ -100,7 +100,13 @@ def _check_buildx(binroot: str, expected_version: str) -> bool:
     # github.com/docker/buildx v0.22.0 Homebrew
     installed_version = stdout.strip().split()[1]
 
-    return installed_version == expected_version
+    if installed_version == expected_version:
+        return True
+
+    print(
+        f"installed docker-buildx {installed_version} is outdated! expected: {expected_version}"
+    )
+    return False
 
 
 def install_global() -> None:
