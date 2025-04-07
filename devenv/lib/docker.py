@@ -86,9 +86,6 @@ def _install_buildx(url: str, sha256: str, into: str) -> None:
 
 
 def _check_buildx(binroot: str, expected_version: str) -> bool:
-    if not shutil.which("docker", path=binroot):
-        return False
-
     try:
         stdout = proc.run(
             (f"{binroot}/docker", "buildx", "version"), stdout=True
@@ -123,7 +120,7 @@ def install_global() -> None:
     version_buildx = "v0.22.0"
     cfg_buildx = {
         "darwin_x86_64": f"https://github.com/docker/buildx/releases/download/{version_buildx}/buildx-{version_buildx}.darwin-amd64",
-        "darwin_x86_64_sha256": "5221ad6b8acd2283f8fbbeebc79ae4b657e83519ca1c1e4cfbb9405230b3d933 ",
+        "darwin_x86_64_sha256": "5221ad6b8acd2283f8fbbeebc79ae4b657e83519ca1c1e4cfbb9405230b3d933",
         "darwin_arm64": f"https://github.com/docker/buildx/releases/download/{version_buildx}/buildx-{version_buildx}.darwin-arm64",
         "darwin_arm64_sha256": "5898c338abb1f673107bc087997dc3cb63b4ea66d304ce4223472f57bd8d616e",
         "linux_x86_64": f"https://github.com/docker/buildx/releases/download/{version_buildx}/buildx-{version_buildx}.linux-amd64",
