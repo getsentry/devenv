@@ -82,6 +82,7 @@ def _install(url: str, sha256: str, into: str) -> None:
 
 def _install_buildx(url: str, sha256: str, into: str) -> None:
     archive.download(url, sha256, dest=f"{into}/docker-buildx")
+    os.chmod(f"{into}/docker-buildx", 0o775)
 
 
 def _check_buildx(binroot: str, expected_version: str) -> bool:
@@ -128,27 +129,29 @@ def install_global() -> None:
     if shutil.which("docker", path=binroot) == f"{binroot}/docker":
         stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
         installed_version = stdout.strip().split()[2][:-1]
-        if version == installed_version:
-            return
-        print(f"installed docker {installed_version} is outdated!")
+        if version != installed_version:
+            print(f"installed docker {installed_version} is outdated!")
+            print(f"installing docker (cli, not desktop) {version}...")
+            uninstall(binroot)
+            _install(
+                cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot
+            )
 
-    print(f"installing docker (cli, not desktop) {version}...")
-    uninstall(binroot)
-    _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
-
-    stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
-    if f"Docker version {version}" not in stdout:
-        raise SystemExit(f"Failed to install docker {version}!\n\n{stdout}")
-
-    if _check_buildx(binroot, version_buildx):
-        return
-
-    print(f"installing docker buildx {version_buildx}...")
-    _install(
-        cfg_buildx[SYSTEM_MACHINE],
-        cfg_buildx[f"{SYSTEM_MACHINE}_sha256"],
-        f"{home}/.docker/cli-plugins",
-    )
+            stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
+            if f"Docker version {version}" not in stdout:
+                raise SystemExit(
+                    f"Failed to install docker {version}!\n\n{stdout}"
+                )
 
     if not _check_buildx(binroot, version_buildx):
-        raise SystemExit(f"Failed to install docker buildx {version_buildx}!")
+        print(f"installing docker buildx {version_buildx}...")
+        _install_buildx(
+            cfg_buildx[SYSTEM_MACHINE],
+            cfg_buildx[f"{SYSTEM_MACHINE}_sha256"],
+            f"{home}/.docker/cli-plugins",
+        )
+
+        if not _check_buildx(binroot, version_buildx):
+            raise SystemExit(
+                f"Failed to install docker buildx {version_buildx}!"
+            )
