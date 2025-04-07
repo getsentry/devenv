@@ -3,7 +3,7 @@
 managing dev environments since '24
 
 `devenv` is an extensible execution framework and library for authoring
-a simple set of high level commands - bootstrap, sync, doctor, nuke - that
+a simple set of high level commands - bootstrap, fetch, sync, doctor - that
 manage a repository's dev environment.
 
 ## prerequisites
