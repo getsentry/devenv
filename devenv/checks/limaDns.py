@@ -22,13 +22,27 @@ def check() -> tuple[bool, str]:
         return False, "colima isn't up"
 
     try:
-        # afaict there's no other executable on the default vm
-        # that can do DNS resolution
         proc.run(
-            ("colima", "exec", "--", "curl", "--head", "ghcr.io"), stdout=True
+            (
+                "colima",
+                "exec",
+                "--",
+                "python3",
+                "-Su",
+                "-c",
+                """
+import socket
+
+try:
+    socket.getaddrinfo("ghcr.io", None)
+except socket.gaierror as e:
+    raise SystemExit(f"failed to resolve ghcr.io: {e}")
+""",
+            ),
+            stdout=True,
         )
     except RuntimeError as e:
-        return False, f"colima failed to resolve ghcr.io:\n{e}\n"
+        return False, f"{e}"
 
     return True, ""
 
