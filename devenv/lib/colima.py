@@ -180,6 +180,17 @@ def start(restart: bool = False) -> ColimaStatus:
             "colima",
             "start",
             "--verbose",
+            # this effectively makes the vm's resolvectl status use:
+            # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
+            # https://lima-vm.io/docs/config/network/user/
+            # 192.168.5.2 is the host, accessible from the vm
+            # sometimes using only the host will result in dns breaking
+            # for any number of reasons (public wifi that gives you some weird dns server,
+            # tethering, vpn, what have you)
+            "--dns",
+            "8.8.8.8",
+            "--dns",
+            "1.1.1.1",
             # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
             f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",

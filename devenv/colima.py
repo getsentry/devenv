@@ -18,6 +18,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    # TODO: in addition to returning 1 we should print colima logs
+    #       (and/or send to sentry)
+
     if args.command == "start":
         status = colima.start()
         if status == colima.ColimaStatus.UNHEALTHY:
