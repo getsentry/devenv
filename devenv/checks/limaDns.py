@@ -49,7 +49,8 @@ def fix() -> tuple[bool, str]:
                 "systemctl",
                 "restart",
                 "systemd-resolved.service",
-            )
+            ),
+            stdout=True,
         )
     except RuntimeError as e:
         print(
