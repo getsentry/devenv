@@ -8,7 +8,7 @@ from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
 tags: set[str] = {"builtin"}
-name = "limaDns"
+name = "colima's DNS isn't working"
 
 
 @checker
@@ -19,7 +19,7 @@ def check() -> tuple[bool, str]:
 
     status = colima.check()
     if status != colima.ColimaStatus.UP:
-        return False, "colima isn't up"
+        return False, "Colima isn't running."
 
     try:
         proc.run(

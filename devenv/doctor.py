@@ -164,7 +164,7 @@ def filter_failing_checks(
         if ok:
             print(f"\t✅ check: {check.name}".expandtabs(4))
             continue
-        print(f"\t❌ check: {check.name}{msg}".expandtabs(4))
+        print(f"\t❌ check: {check.name}\n\t   {msg}".expandtabs(4))
         failing_checks.append(check)
     return failing_checks
 
@@ -172,7 +172,7 @@ def filter_failing_checks(
 def prompt_for_fix(check: Check) -> bool:
     """Prompt the user to attempt a fix."""
     return input(
-        f"\t\tDo you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
+        f"   Do you want to attempt to fix {check.name}? (Y/n): ".expandtabs(4)
     ).lower() in {"y", "yes", ""}
 
 
@@ -229,19 +229,19 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         if args.check_only:
             return 1
 
-    print("\nThe following problems have been identified:")
     skip: list[Check] = []
+    print("\nLet's go through the failures one by one.")
     for check in failing_checks:
-        print(f"\t❌ {check.name}".expandtabs(4))
+        print(f"❌ {check.name}".expandtabs(4))
         # Prompt for fixes one by one, so the user can decide to skip a fix.
         if prompt_for_fix(check):
             ok, msg = attempt_fix(check, executor)
             if ok:
-                print(f"\t\t✅ fix: {check.name}".expandtabs(4))
+                print(f"✅ fix: {check.name}".expandtabs(4))
             else:
-                print(f"\t\t❌ fix: {check.name}{msg}".expandtabs(4))
+                print(f"❌ fix: {check.name}{msg}".expandtabs(4))
         else:
-            print(f"\t\t⏭️  Skipping {check.name}".expandtabs(4))
+            print(f"⏭️  Skipping {check.name}".expandtabs(4))
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")

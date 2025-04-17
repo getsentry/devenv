@@ -8,7 +8,7 @@ from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
 tags: set[str] = {"builtin"}
-name = "credsStore"
+name = "credsStore fix"
 
 
 @checker
