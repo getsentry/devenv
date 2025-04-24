@@ -143,7 +143,7 @@ def run_checks(
     results: dict[Check, tuple[bool, str]] = {}
     for check in checks:
         if check in skip:
-            print(f"   Skipped {check.name}")
+            print(f"   ⏭️  Skipped {check.name}")
             continue
         futures[check] = executor.submit(check.check)
     for check, future in futures.items():
@@ -241,7 +241,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
             else:
                 print(f"❌ fix: {check.name}{msg}")
         else:
-            print(f"⏭️  Skipping {check.name}")
+            print(f"   ⏭️  Skipping {check.name}")
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")
