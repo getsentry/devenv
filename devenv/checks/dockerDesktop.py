@@ -41,7 +41,7 @@ def fix() -> tuple[bool, str]:
     # so let's block for up to 5 secs
     for i in range(10):
         time.sleep(0.5)
-        if docker_desktop_is_running():
+        if not docker_desktop_is_running():
             return True, ""
 
-    return True, ""
+    return False, "Docker Desktop is taking too long to quit... try again?"
