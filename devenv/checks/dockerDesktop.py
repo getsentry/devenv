@@ -39,7 +39,7 @@ def fix() -> tuple[bool, str]:
 
     # osascript doesn't wait to make sure it finishes quitting
     # so let's block for up to 5 secs
-    for i in range(10):
+    for _ in range(10):
         time.sleep(0.5)
         if not docker_desktop_is_running():
             return True, ""
