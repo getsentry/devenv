@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import pathlib
 import tarfile
 import time
@@ -169,6 +170,12 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
     )
 
     dest = f"{tmp_path}/a"
+
+    # just exercising the delete symlink if exists path here than copypaste this entire test
+    with open(f"{tmp_path}/hi", "wb"):
+        pass
+    os.symlink(f"{tmp_path}/hi", dest)
+
     with mock.patch.object(
         urllib.request,
         "urlopen",

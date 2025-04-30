@@ -38,51 +38,60 @@ def download(
         dest = f"{cache_root}/{sha256}"
         os.makedirs(cache_root, exist_ok=True)
 
-    if not os.path.exists(dest):
-        headers = {}
-        if url.startswith("https://ghcr.io/v2/homebrew"):
-            # downloading homebrew blobs requires auth
-            # you can get an anonymous token from https://ghcr.io/token?service=ghcr.io&scope=repository%3Ahomebrew/core/go%3Apull
-            # but there's also a special shortcut token QQ==
-            # https://github.com/Homebrew/brew/blob/2184406bd8444e4de2626f5b0c749d4d08cb1aed/Library/Homebrew/brew.sh#L993
-            headers["Authorization"] = "bearer QQ=="
+    if os.path.islink(dest):
+        # there are cases where dest can be an existing symlink
+        # (docker desktop starts and puts symlinks into ~/.docker/cli-plugins)
+        # such symlinks should be removed otherwise callers to download
+        # usually try to chmod after and end up with PermissionError
+        os.remove(dest)
 
-        req = urllib.request.Request(url, headers=headers)
+    if os.path.exists(dest):
+        return dest
 
-        retry_sleep = 1.0
-        while retries >= 0:
-            try:
-                resp = urllib.request.urlopen(req)
-                break
-            except HTTPError as e:
-                if retries == 0:
-                    raise RuntimeError(f"Error getting {url}: {e}")
-                print(f"Error getting {url} ({retries} retries left): {e}")
+    headers = {}
+    if url.startswith("https://ghcr.io/v2/homebrew"):
+        # downloading homebrew blobs requires auth
+        # you can get an anonymous token from https://ghcr.io/token?service=ghcr.io&scope=repository%3Ahomebrew/core/go%3Apull
+        # but there's also a special shortcut token QQ==
+        # https://github.com/Homebrew/brew/blob/2184406bd8444e4de2626f5b0c749d4d08cb1aed/Library/Homebrew/brew.sh#L993
+        headers["Authorization"] = "bearer QQ=="
 
-            time.sleep(retry_sleep)
-            retries -= 1
-            retry_sleep *= retry_exp
+    req = urllib.request.Request(url, headers=headers)
 
-        dest_dir = os.path.dirname(dest)
-        os.makedirs(dest_dir, exist_ok=True)
+    retry_sleep = 1.0
+    while retries >= 0:
+        try:
+            resp = urllib.request.urlopen(req)
+            break
+        except HTTPError as e:
+            if retries == 0:
+                raise RuntimeError(f"Error getting {url}: {e}")
+            print(f"Error getting {url} ({retries} retries left): {e}")
 
-        with tempfile.NamedTemporaryFile(delete=False, dir=dest_dir) as tmpf:
-            shutil.copyfileobj(resp, tmpf)
-            tmpf.seek(0)
-            checksum = hashlib.sha256()
+        time.sleep(retry_sleep)
+        retries -= 1
+        retry_sleep *= retry_exp
+
+    dest_dir = os.path.dirname(dest)
+    os.makedirs(dest_dir, exist_ok=True)
+
+    with tempfile.NamedTemporaryFile(delete=False, dir=dest_dir) as tmpf:
+        shutil.copyfileobj(resp, tmpf)
+        tmpf.seek(0)
+        checksum = hashlib.sha256()
+        buf = tmpf.read(4096)
+        while buf:
+            checksum.update(buf)
             buf = tmpf.read(4096)
-            while buf:
-                checksum.update(buf)
-                buf = tmpf.read(4096)
 
-            if not secrets.compare_digest(checksum.hexdigest(), sha256):
-                raise RuntimeError(
-                    f"checksum mismatch for {url}:\n"
-                    f"- got: {checksum.hexdigest()}\n"
-                    f"- expected: {sha256}\n"
-                )
+        if not secrets.compare_digest(checksum.hexdigest(), sha256):
+            raise RuntimeError(
+                f"checksum mismatch for {url}:\n"
+                f"- got: {checksum.hexdigest()}\n"
+                f"- expected: {sha256}\n"
+            )
 
-            atomic_replace(tmpf.name, dest)
+        atomic_replace(tmpf.name, dest)
 
     return dest
 
