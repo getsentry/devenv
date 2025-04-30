@@ -67,7 +67,7 @@ def installed(version: str, binroot: str) -> bool:
         if version == installed_version:
             return True
 
-        print(f"installed node {installed_version} is outdated!")
+        print(f"installed node {installed_version} is unexpected!")
         return False
 
 
@@ -118,7 +118,7 @@ def installed_yarn(version: str, binroot: str) -> bool:
     if version == installed_version:
         return True
 
-    print(f"installed yarn {installed_version} is outdated!")
+    print(f"installed yarn {installed_version} is unexpected!")
     return False
 
 

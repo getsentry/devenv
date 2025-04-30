@@ -101,7 +101,7 @@ def _check_buildx(binroot: str, expected_version: str) -> bool:
         return True
 
     print(
-        f"installed docker-buildx {installed_version} is outdated! expected: {expected_version}"
+        f"installed docker-buildx {installed_version} is unexpected! expected: {expected_version}"
     )
     return False
 
@@ -133,7 +133,7 @@ def install_global() -> None:
         stdout = proc.run((f"{binroot}/docker", "--version"), stdout=True)
         installed_version = stdout.strip().split()[2][:-1]
         if version != installed_version:
-            print(f"installed docker {installed_version} is outdated!")
+            print(f"installed docker {installed_version} is unexpected!")
             print(f"installing docker (cli, not desktop) {version}...")
             uninstall(binroot)
             _install(

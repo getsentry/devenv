@@ -88,7 +88,7 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
         installed_version = _version(binpath)
         if version == installed_version:
             return
-        print(f"installed tenv {installed_version} is outdated!")
+        print(f"installed tenv {installed_version} is unexpected!")
 
     print(f"installing tenv {version}...")
     uninstall(binroot)
