@@ -171,7 +171,7 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
 
     dest = f"{tmp_path}/a"
 
-    # just exercising the delete symlink if exists path here than copypaste this entire test
+    # if dest is already a valid symlink it should be paved over
     with open(f"{tmp_path}/hi", "wb"):
         pass
     os.symlink(f"{tmp_path}/hi", dest)
@@ -210,6 +210,22 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
     )
 
     dest = f"{tmp_path}/b"
+
+    # if dest is already a dead symlink it should be paved over as well
+    os.symlink(f"{tmp_path}/does-not-exist", dest)
+
+    with mock.patch.object(
+        urllib.request,
+        "urlopen",
+        autospec=True,
+        side_effect=(io.BytesIO(data),),
+    ):
+        archive.download("https://example.com/foo", data_sha256, dest)
+
+    with open(dest, "rb") as f:
+        assert f.read() == data
+
+    dest = f"{tmp_path}/c"
     with pytest.raises(RuntimeError) as excinfo:
         with mock.patch.object(
             urllib.request,
