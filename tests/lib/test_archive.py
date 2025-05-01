@@ -193,7 +193,22 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
     with open(dest, "rb") as f:
         assert f.read() == data
 
-    dest = f"{tmp_path}/b"
+
+def test_download_exceeded_retries(
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+) -> None:
+    data_sha256 = (
+        "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
+    )
+
+    err = urllib.error.HTTPError(
+        "https://example.com/foo",
+        503,
+        "Service Unavailable",
+        "",  # type: ignore
+        io.BytesIO(b""),
+    )
+    dest = f"{tmp_path}/a"
     with pytest.raises(RuntimeError) as excinfo:
         with mock.patch.object(
             urllib.request,
@@ -209,7 +224,16 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
         == "Error getting https://example.com/foo: HTTP Error 503: Service Unavailable"
     )
 
-    dest = f"{tmp_path}/b"
+
+def test_download_dest_is_broken_symlink(
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+) -> None:
+    data = b"foo\n"
+    data_sha256 = (
+        "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
+    )
+
+    dest = f"{tmp_path}/a"
 
     # if dest is already a dead symlink it should be paved over as well
     os.symlink(f"{tmp_path}/does-not-exist", dest)
@@ -225,7 +249,17 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
     with open(dest, "rb") as f:
         assert f.read() == data
 
-    dest = f"{tmp_path}/c"
+
+def test_download_wrong_sha(
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+) -> None:
+    data = b"foo\n"
+    data_sha256 = (
+        "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
+    )
+
+    dest = f"{tmp_path}/a"
+
     with pytest.raises(RuntimeError) as excinfo:
         with mock.patch.object(
             urllib.request,
