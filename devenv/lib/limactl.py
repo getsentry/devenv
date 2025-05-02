@@ -91,7 +91,7 @@ def install_global() -> None:
         installed_version = stdout.strip().split()[-1]
         if version == installed_version:
             return
-        print(f"installed limactl {installed_version} is outdated!")
+        print(f"installed limactl {installed_version} is unexpected!")
 
     uninstall(binroot)
     _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)

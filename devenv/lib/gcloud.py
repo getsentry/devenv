@@ -82,7 +82,7 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
             installed_version = f.read().strip()
             if version == installed_version:
                 return
-            print(f"installed gcloud {installed_version} is outdated!")
+            print(f"installed gcloud {installed_version} is unexpected!")
 
     print(f"installing gcloud {version}...")
     uninstall(binroot)

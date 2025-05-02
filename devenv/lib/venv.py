@@ -106,7 +106,7 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         return
 
     print(
-        f"virtualenv doesn't exist or is using an outdated python, recreating at {venv}..."
+        f"virtualenv doesn't exist or is using an unexpected python, recreating at {venv}..."
     )
     if os.path.exists(venv):
         shutil.rmtree(venv)

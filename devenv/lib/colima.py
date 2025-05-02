@@ -78,7 +78,7 @@ def install_global() -> None:
         installed_version = stdout.strip().split()[-1]
         if version == installed_version:
             return
-        print(f"installed colima {installed_version} is outdated!")
+        print(f"installed colima {installed_version} is unexpected!")
 
     print(f"installing colima {version}...")
     uninstall(binroot)

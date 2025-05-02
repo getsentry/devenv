@@ -8,7 +8,7 @@ from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
 tags: set[str] = {"builtin"}
-name = "credsStore fix"
+name = "correct docker configuration"
 
 
 @checker
@@ -23,6 +23,15 @@ def check() -> tuple[bool, str]:
     if store and not shutil.which(f"docker-credential-{store}"):
         return False, "credsStore requires nonexistent binary"
 
+    # When docker-buildx is installed via brew, brew adds cliPluginsExtraDirs
+    # which takes precedence over the default plugin path we rely on.
+    # This ensures the devenv-managed global docker cli uses the default plugin path.
+    if config.get("cliPluginsExtraDirs"):
+        return (
+            False,
+            "cliPluginsExtraDirs exists, which overshadows the default plugin path",
+        )
+
     return True, ""
 
 
@@ -33,6 +42,7 @@ def fix() -> tuple[bool, str]:
             config = json.load(f)
 
         config.pop("credsStore", None)
+        config.pop("cliPluginsExtraDirs", None)
 
         with open(os.path.expanduser("~/.docker/config.json"), "w") as f:
             json.dump(config, f)
