@@ -34,7 +34,6 @@ To update this installation, run `devenv update`.
 
 This is intended for initial setup of a new machine.
 
-
 `devenv fetch [repository name]`
 
 Any repository on github in the form of `[org]/[reponame]`
@@ -58,7 +57,6 @@ In general, our library is designed to isolate, as much as possible, a repo's de
 For example, [gcloud](#gcloud) is installed to `[reporoot]/.devenv/bin/gcloud` (with the gcloud sdk at `[reporoot]/.devenv/bin/google-cloud-sdk`).
 An exception to this would be python virtualenvs, which was implemented before the idea of `[reporoot]/.devenv`.
 
-
 `devenv doctor`
 
 Use this to diagnose and fix common issues.
@@ -66,14 +64,25 @@ Use this to diagnose and fix common issues.
 Repo-specific checks and fixes can be defined in `[reporoot]/devenv/checks`.
 Otherwise we have "builtin" checks and fixes in `devenv.checks`.
 
+`devenv update`
+
+This updates the global devenv installation, and global tools.
+
+If you're upgrading from a particularly old devenv, it won't have `update` so you need to:
+`~/.local/share/sentry-devenv/venv/bin/pip install -U sentry-devenv`
+
 
 ## technical overview
 
 Everything devenv needs is in `~/.local/share/sentry-devenv`.
 
-- `~/.local/share/sentry-devenv/bin` contains `devenv` and `direnv`
-    - we currently rely on a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH
-    - see [examples](#examples) for .envrc suggestions
+- `~/.local/share/sentry-devenv/bin` contains:
+    - `devenv` itself
+    - `direnv`
+      - we currently rely on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH
+      - see [examples](#examples) for .envrc suggestions
+    - global tools: `docker` (cli), `colima`
+
 
 ### runtime
 
