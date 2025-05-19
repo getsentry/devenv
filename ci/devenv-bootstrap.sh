@@ -63,13 +63,13 @@ editable =
 # bins =
 
 [python3.13.1]
-darwin_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-x86_64-apple-darwin-install_only.tar.gz
+darwin_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-x86_64-apple-darwin-install_only.tar.gz
 darwin_x86_64_sha256 = 4c4dafe2d59bb58e8d3ad26af637b7ae9c8141bb79738966752976861bdb103d
-darwin_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-aarch64-apple-darwin-install_only.tar.gz
+darwin_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-aarch64-apple-darwin-install_only.tar.gz
 darwin_arm64_sha256 = bbfc96038d0b6922fd783f6eb2c9bf9abb648531d23d236bc1a0c16bdd061944
-linux_x86_64 = https://github.com/indygreg/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-x86_64-unknown-linux-gnu-install_only.tar.gz
+linux_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-x86_64-unknown-linux-gnu-install_only.tar.gz
 linux_x86_64_sha256 = bb4696825039a2b5dc7fea2c6aeb085c89fd397016b44165ec73b4224ccc83e2
-linux_arm64 = https://github.com/indygreg/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-aarch64-unknown-linux-gnu-install_only.tar.gz
+linux_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20250106/cpython-3.13.1+20250106-aarch64-unknown-linux-gnu-install_only.tar.gz
 linux_arm64_sha256 = d37aef7bdf5c27f7d006918f7cedb31f4ba07c88f61baac4ffbe0bee6d4b5248
 
 [node]
