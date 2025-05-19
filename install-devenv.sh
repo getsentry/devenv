@@ -98,7 +98,7 @@ parseopt() {  # argument (and environment-var) processing
 }
 
 # translate from uname output to indygreg release tags:
-# e.g. https://github.com/indygreg/python-build-standalone/releases
+# e.g. https://github.com/astral-sh/python-build-standalone/releases
 indygreg_os() {
   case "$OSTYPE" in
     darwin) echo apple-darwin ;;
@@ -153,7 +153,7 @@ install_python() {
 
 
   tarball="cpython-$version+$release-$indygreg_platform-install_only.tar.gz"
-  src="https://github.com/indygreg/python-build-standalone/releases/download/$release/$tarball" \
+  src="https://github.com/astral-sh/python-build-standalone/releases/download/$release/$tarball" \
   dst="$SNTY_DEVENV_CACHE/${tarball}"
   if check_checksum "$sha256" "$dst"; then
     echo "Using cached python download..."
