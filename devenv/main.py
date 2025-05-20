@@ -103,7 +103,7 @@ def main() -> ExitCode:
         # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
         dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
         # enable performance monitoring
-        enable_tracing=True,
+        traces_sample_rate=1.0,
     )
 
     return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
