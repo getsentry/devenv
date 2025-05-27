@@ -97,16 +97,16 @@ parseopt() {  # argument (and environment-var) processing
   SNTY_DEVENV_PY_VERSION="${SNTY_DEVENV_PY_VERSION:-3.11.4}"
 }
 
-# translate from uname output to indygreg release tags:
+# translate from uname output to astral release tags:
 # e.g. https://github.com/astral-sh/python-build-standalone/releases
-indygreg_os() {
+astral_os() {
   case "$OSTYPE" in
     darwin) echo apple-darwin ;;
     linux|linux-gnu) echo unknown-linux-gnu ;;
     *) echo '??' ;;
   esac
 }
-indygreg_cpu() {
+astral_cpu() {
   case "$CPUTYPE" in
     aarch64|arm64)
       echo aarch64 ;;
@@ -139,20 +139,20 @@ install_python() {
   release="$1"
   version="$2"
   platform="$OSTYPE-$CPUTYPE"
-  indygreg_platform="$(indygreg_cpu)-$(indygreg_os)"
+  astral_platform="$(astral_cpu)-$(astral_os)"
 
-  case "$indygreg_platform" in
+  case "$astral_platform" in
     aarch64-apple-darwin)      sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
     x86_64-apple-darwin)       sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
     x86_64-unknown-linux-gnu)  sha256=e26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
     aarch64-unknown-linux-gnu) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
     *)
-      error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $indygreg_platform)"
+      error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $astral_platform)"
       ;;
   esac
 
 
-  tarball="cpython-$version+$release-$indygreg_platform-install_only.tar.gz"
+  tarball="cpython-$version+$release-$astral_platform-install_only.tar.gz"
   src="https://github.com/astral-sh/python-build-standalone/releases/download/$release/$tarball" \
   dst="$SNTY_DEVENV_CACHE/${tarball}"
   if check_checksum "$sha256" "$dst"; then
