@@ -42,7 +42,7 @@ jobs:
   bootstrap-macos-13:
     # This job takes half an hour and costs a lot of money.
     # Let's just run on main commits.
-    # if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: macos-13
     timeout-minutes: 60
     env:
@@ -56,7 +56,7 @@ jobs:
           sudo rm -rf \
               /usr/local/var/homebrew \
               /usr/local/bin/brew /usr/local/Homebrew /usr/local/Cellar /usr/local/Caskroom \
-              /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/2to3* /usr/local/bin/idle3* \
+              /usr/local/bin/pydoc* /usr/local/bin/python* /usr/local/bin/pip* /usr/local/bin/2to3* /usr/local/bin/idle3* \
               /usr/local/bin/chromedriver
       - name: install
         run: |
