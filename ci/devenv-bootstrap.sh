@@ -81,7 +81,6 @@ linux_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-
 linux_x86_64_sha256 = efc0f295dd878e510ab12ea36bbadc3db03c687ab30c07e86c7cdba7eed879a9
 # used for autoupdate
 version = v20.13.1
-yarn_version = 1.22.22
 
 [colima]
 darwin_x86_64 = https://github.com/abiosoft/colima/releases/download/v0.7.5/colima-Darwin-x86_64
@@ -117,26 +116,11 @@ if [[ "$got" != "$expected" ]]; then
     exit 1
 fi
 
-expected="${HOME}/code/sentry/.devenv/bin/yarn"
-got=$(command -v yarn)
-if [[ "$got" != "$expected" ]]; then
-    echo "unexpected yarn location ${got}, expected ${expected}"
-    exit 1
-fi
-
 # devenv-bootstrap.sh overrides sentry devenv config.ini with this version
 expected="v20.13.1"
 # more rigorous check than node --version
 got=$(node -e 'console.log(process.version);')
 if [[ "$got" != "$expected" ]]; then
     echo "unexpected node version ${got}, expected ${expected}"
-    exit 1
-fi
-
-# devenv-bootstrap.sh overrides sentry devenv config.ini with this version
-expected="1.22.22"
-got=$(yarn --version)
-if [[ "$got" != "$expected" ]]; then
-    echo "unexpected yarn version ${got}, expected ${expected}"
     exit 1
 fi
