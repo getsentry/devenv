@@ -174,6 +174,9 @@ def start(restart: bool = False) -> ColimaStatus:
     if platform.machine() == "arm64":
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
 
+    # removing all docker contexts to ensure only colima context is created
+    shutil.rmtree(f"{home}/.docker/contexts", ignore_errors=True)
+
     proc.run(
         (
             # we share the "default" machine across repositories
