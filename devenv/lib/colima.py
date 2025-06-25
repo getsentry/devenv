@@ -174,6 +174,9 @@ def start(restart: bool = False) -> ColimaStatus:
     if platform.machine() == "arm64":
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
 
+    print("removing all docker contexts...")
+    proc.run(("rm", "-rf", f"{home}/.docker/contexts"))
+
     proc.run(
         (
             # we share the "default" machine across repositories
