@@ -57,15 +57,6 @@ def sync(
     bins: Optional[tuple[str, ...]] = None,
 ) -> None:
     cmd: tuple[str, ...] = ()
-    pip_args: tuple[str, ...] = (
-        "--disable-pip-version-check",
-        "--no-color",
-        "--quiet",
-        "--require-virtualenv",
-        "install",
-        "-r",
-        requirements,
-    )
     if shutil.which("uv"):
         # with uv.lock, we'll assume projects are configured to be editable
         # so we can just call uv sync
@@ -74,9 +65,20 @@ def sync(
             cmd = ("uv", "sync", "--frozen", "--quiet")
         else:
             # otherwise, use pip compatibility mode
-            cmd = ("uv", "pip", *pip_args)
+            cmd = ("uv", "pip", "install", "-r", requirements)
     else:
-        cmd = (f"{venv_dir}/bin/python", "-m", "pip", *pip_args)
+        cmd = (
+            f"{venv_dir}/bin/python",
+            "-m",
+            "pip",
+            "--disable-pip-version-check",
+            "--no-color",
+            "--quiet",
+            "--require-virtualenv",
+            "install",
+            "-r",
+            requirements,
+        )
         if editable_paths is not None:
             for path in editable_paths:
                 cmd = (*cmd, "-e", path)
