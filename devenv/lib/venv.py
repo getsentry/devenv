@@ -56,10 +56,8 @@ def sync(
     editable_paths: Optional[tuple[str, ...]] = None,
     bins: Optional[tuple[str, ...]] = None,
 ) -> None:
-    cmd: tuple[str, ...] = (
-        f"{venv_dir}/bin/python",
-        "-m",
-        "pip",
+    cmd: tuple[str, ...] = ()
+    pip_args: tuple[str, ...] = (
         "--disable-pip-version-check",
         "--no-color",
         "--quiet",
@@ -68,9 +66,21 @@ def sync(
         "-r",
         requirements,
     )
-    if editable_paths is not None:
-        for path in editable_paths:
-            cmd = (*cmd, "-e", path)
+    if shutil.which("uv"):
+        # with uv.lock, we'll assume projects are configured to be editable
+        # so we can just call uv sync
+        # https://docs.astral.sh/uv/concepts/projects/dependencies/#path
+        if not os.path.exists(requirements):
+            cmd = ("uv", "sync", "--frozen", "--quiet")
+        else:
+            # otherwise, use pip compatibility mode
+            cmd = ("uv", "pip", *pip_args)
+    else:
+        cmd = (f"{venv_dir}/bin/python", "-m", "pip", *pip_args)
+        if editable_paths is not None:
+            for path in editable_paths:
+                cmd = (*cmd, "-e", path)
+
     proc.run(cmd)
 
     if bins is not None:
