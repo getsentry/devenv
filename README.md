@@ -170,9 +170,9 @@ def main(context: dict[str, str]) -> int:
         reporoot,
     )
 
-    # reporoot/.venv is uv's default
+    # reporoot/.venv is the default venv location
     print(f"syncing .venv ...")
-    proc.run(("uv", "sync", "--frozen"))
+    proc.run(("uv", "sync", "--frozen", "--quiet"))
 
     return 0
 ```
