@@ -153,6 +153,59 @@ export VIRTUAL_ENV="${PWD}/.venv"
 PATH_add "${PWD}/.venv/bin"
 ```
 
+if using uv:
+
+`[reporoot]/devenv/sync.py`
+```py
+from devenv.lib import uv
+
+def main(context: dict[str, str]) -> int:
+    reporoot = context["reporoot"]
+    cfg = config.get_repo(reporoot)
+
+    uv.install(
+        cfg["uv"]["version"],
+        cfg["uv"][constants.SYSTEM_MACHINE],
+        cfg["uv"][f"{constants.SYSTEM_MACHINE}_sha256"],
+        reporoot,
+    )
+
+    # reporoot/.venv is the default venv location
+    print(f"syncing .venv ...")
+    proc.run(("uv", "sync", "--frozen", "--quiet"))
+
+    return 0
+```
+
+`[reporoot]/devenv/config.ini`
+```ini
+[uv]
+darwin_arm64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-aarch64-apple-darwin.tar.gz
+darwin_arm64_sha256 = c73af7a4e0bcea9b5b593a0c7e5c025ee78d8be3f7cd60bfeadc8614a16c92ef
+darwin_x86_64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-x86_64-apple-darwin.tar.gz
+darwin_x86_64_sha256 = f8a9b4f4a80a44653344d36b53e148134176e8f7cc99f8e823676a57c884595e
+linux_arm64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-aarch64-unknown-linux-gnu.tar.gz
+linux_arm64_sha256 = 1dae18211605b9d00767d913da5108aea50200a88372bf8a2e1f56abdbe509f0
+linux_x86_64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-x86_64-unknown-linux-gnu.tar.gz
+linux_x86_64_sha256 = ca3e8898adfce5fcc891d393a079013fa4bd0d9636cef11aded8a7485bcba312
+# used for autoupdate
+version = 0.7.21
+```
+
+`[reporoot]/.python-version`
+```
+3.13.3
+```
+
+`[reporoot]/pyproject.toml`
+```
+[project]
+name = "foo"
+version = "0.0.0"
+```
+
+or classic pip:
+
 `[reporoot]/devenv/sync.py`
 ```py
 from devenv.lib import config, venv
