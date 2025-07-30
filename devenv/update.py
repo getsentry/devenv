@@ -55,7 +55,7 @@ Updating global tools (at {constants.root}/bin).
         if args.version is None:
             version = "sentry-devenv"
         else:
-            version = "sentry-devenv=={args.version}"
+            version = f"sentry-devenv=={args.version}"
 
         proc.run(
             (f"{constants.root}/venv/bin/pip", "install", "-U", version),

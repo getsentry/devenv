@@ -157,7 +157,7 @@ if using uv:
 
 `[reporoot]/devenv/sync.py`
 ```py
-from devenv.lib import uv
+from devenv.lib import config, uv
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
@@ -179,6 +179,9 @@ def main(context: dict[str, str]) -> int:
 
 `[reporoot]/devenv/config.ini`
 ```ini
+[devenv]
+minimum_version = 1.22.1
+
 [uv]
 darwin_arm64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-aarch64-apple-darwin.tar.gz
 darwin_arm64_sha256 = c73af7a4e0bcea9b5b593a0c7e5c025ee78d8be3f7cd60bfeadc8614a16c92ef
