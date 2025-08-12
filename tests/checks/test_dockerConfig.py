@@ -24,12 +24,12 @@ def fake_config(tmp_path: pathlib.Path) -> Generator[pathlib.Path]:
 
 
 def test_no_credsStore_ok(fake_config: pathlib.Path) -> None:
-    fake_config.write_text("{}")
+    fake_config.write_text('{"currentContext": "colima"}')
     assert dockerConfig.check() == (True, "")
 
 
 def test_binary_ok(fake_config: pathlib.Path) -> None:
-    fake_config.write_text('{"credsStore": "example"}')
+    fake_config.write_text('{"credsStore": "example", "currentContext": "colima"}')
     with mock.patch.object(shutil, "which", return_value="/fake/exe"):
         assert dockerConfig.check() == (True, "")
 
