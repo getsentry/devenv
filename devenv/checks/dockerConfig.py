@@ -32,6 +32,14 @@ def check() -> tuple[bool, str]:
             "cliPluginsExtraDirs exists, which overshadows the default plugin path",
         )
 
+    # Ensure the current context is set to colima
+    current_context = config.get("currentContext", "")
+    if current_context != "colima":
+        return (
+            False,
+            f"currentContext is '{current_context}', should be 'colima'",
+        )
+
     return True, ""
 
 
@@ -43,6 +51,7 @@ def fix() -> tuple[bool, str]:
 
         config.pop("credsStore", None)
         config.pop("cliPluginsExtraDirs", None)
+        config["currentContext"] = "colima"
 
         with open(os.path.expanduser("~/.docker/config.json"), "w") as f:
             json.dump(config, f)
