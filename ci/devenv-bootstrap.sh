@@ -91,7 +91,7 @@ if [[ "$got" != "$expected" ]]; then
 fi
 
 # devenv-bootstrap.sh overrides sentry devenv config.ini with this version
-expected="v20.13.1"
+expected="v22.16.0"
 # more rigorous check than node --version
 got=$(node -e 'console.log(process.version);')
 if [[ "$got" != "$expected" ]]; then
