@@ -36,7 +36,7 @@ def check() -> tuple[bool, str]:
     current_context = config.get("currentContext", "")
     if current_context != "colima":
         return (
-            False, 
+            False,
             f"currentContext is '{current_context}', should be 'colima'",
         )
 
