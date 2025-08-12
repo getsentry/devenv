@@ -58,12 +58,18 @@ def test_fix_cliPluginsExtraDirs(fake_config: pathlib.Path) -> None:
 
 def test_currentContext_missing(fake_config: pathlib.Path) -> None:
     fake_config.write_text('{"auths": {}}')
-    assert dockerConfig.check() == (False, "currentContext is '', should be 'colima'")
+    assert dockerConfig.check() == (
+        False,
+        "currentContext is '', should be 'colima'",
+    )
 
 
 def test_currentContext_wrong(fake_config: pathlib.Path) -> None:
     fake_config.write_text('{"currentContext": "desktop"}')
-    assert dockerConfig.check() == (False, "currentContext is 'desktop', should be 'colima'")
+    assert dockerConfig.check() == (
+        False,
+        "currentContext is 'desktop', should be 'colima'",
+    )
 
 
 def test_currentContext_correct(fake_config: pathlib.Path) -> None:
@@ -74,7 +80,9 @@ def test_currentContext_correct(fake_config: pathlib.Path) -> None:
 def test_fix_currentContext_missing(fake_config: pathlib.Path) -> None:
     fake_config.write_text('{"auths": {}}')
     assert dockerConfig.fix() == (True, "")
-    assert fake_config.read_text() == '{"auths": {}, "currentContext": "colima"}'
+    assert (
+        fake_config.read_text() == '{"auths": {}, "currentContext": "colima"}'
+    )
 
 
 def test_fix_currentContext_wrong(fake_config: pathlib.Path) -> None:
