@@ -72,6 +72,14 @@ Global devenv at {constants.root}/bin/devenv updated.
 """
         )
 
+    # install-devenv.sh originally creates this symlink
+    # but we should make sure it exists no matter what
+    # in case it's accidentally deleted by the user
+    if not global_devenv_exists:
+        os.symlink(
+            f"{constants.root}/venv/bin/devenv", f"{constants.root}/bin/devenv"
+        )
+
     proc.run((sys.executable, "-P", "-m", "devenv", "update", "--post-update"))
 
     if not is_global_devenv:
