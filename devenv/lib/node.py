@@ -9,7 +9,7 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 
-_shims = ("node", "npm", "npx", "yarn", "pnpm")
+_shims = ("node", "npm", "npx", "yarn")
 
 
 def _install(url: str, sha256: str, into: str) -> None:
