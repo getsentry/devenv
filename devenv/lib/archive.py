@@ -48,7 +48,7 @@ def download(
     if os.path.exists(dest):
         return dest
 
-    headers = {}
+    headers: dict[str, str] = {}
     if url.startswith("https://ghcr.io/v2/homebrew"):
         # downloading homebrew blobs requires auth
         # you can get an anonymous token from https://ghcr.io/token?service=ghcr.io&scope=repository%3Ahomebrew/core/go%3Apull
@@ -87,8 +87,8 @@ def download(
         if not secrets.compare_digest(checksum.hexdigest(), sha256):
             raise RuntimeError(
                 f"checksum mismatch for {url}:\n"
-                f"- got: {checksum.hexdigest()}\n"
-                f"- expected: {sha256}\n"
+                + f"- got: {checksum.hexdigest()}\n"
+                + f"- expected: {sha256}\n"
             )
 
         atomic_replace(tmpf.name, dest)
