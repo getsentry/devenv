@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 import shutil
-import tempfile
 import stat
+import tempfile
 from zipfile import ZipFile
 
 from devenv.lib import archive
@@ -16,7 +16,9 @@ def _install(url: str, sha256: str, into: str) -> None:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/bun.zip")
         os.makedirs(into, exist_ok=True)
         with ZipFile(archive_file, mode="r") as zipf:
-            bun_member = next(m for m in zipf.filelist if m.filename.endswith("/bun"))
+            bun_member = next(
+                m for m in zipf.filelist if m.filename.endswith("/bun")
+            )
             zipf.extract(bun_member, path=f"{tmpd}")
 
             target = f"{into}/bun"
