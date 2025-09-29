@@ -37,18 +37,23 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     ]:
         fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
 
-        print("Installing sentry's brew dependencies...")
-        if CI:
-            if DARWIN:
+        if DARWIN:
+            print("Installing sentry's brew dependencies...")
+            if CI:
                 # Installing everything from brew takes too much time,
                 # and chromedriver cask flakes occasionally. Really all we need to
                 # set up the devenv is colima and docker-cli.
                 # This is also required for arm64 macOS GHA runners.
                 # We manage colima, so just need to install docker + qemu here.
                 proc.run(("brew", "install", "docker", "qemu"))
+            else:
+                proc.run(
+                    (f"{homebrew_bin}/brew", "bundle"),
+                    cwd=f"{code_root}/sentry",
+                )
         else:
-            proc.run(
-                (f"{homebrew_bin}/brew", "bundle"), cwd=f"{code_root}/sentry"
+            print(
+                "Not on MacOS; assuming you have a docker cli and runtime installed."
             )
 
         proc.run(
