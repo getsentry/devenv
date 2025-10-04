@@ -112,7 +112,7 @@ def check() -> ColimaStatus:
     docker_executable = shutil.which("docker")
     if not docker_executable:
         raise SystemExit(
-            "docker executable not found, you might want to run devenv sync"
+            "docker executable not found, run `devenv update` to install"
         )
 
     colima_executable = shutil.which("colima")
@@ -127,6 +127,11 @@ def check() -> ColimaStatus:
     # if colima's up, we should be able to communicate with that docker socket
     # at the most basic level
     try:
+        # this also covers the case that if colima is running
+        # but ~/.docker/contexts/meta/somehexthing/meta.json doesn't exist
+        # then `colima status` will still report it's running.
+        # but things won't be able to find the colima context which
+        # contains info on where the docker socket is
         proc.run(
             (docker_executable, "--context=colima", "version"), stdout=True
         )
@@ -152,7 +157,7 @@ def start(restart: bool = False) -> ColimaStatus:
         pass
     elif status == ColimaStatus.UNHEALTHY:
         print("colima seems to be unhealthy, stopping it")
-        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+        stop()
 
     # colima start will only WARN if rosetta is unavailable and keep going without it,
     # so we need to ensure it's installed and running ourselves
@@ -215,5 +220,9 @@ def restart() -> ColimaStatus:
 
 def stop() -> ColimaStatus:
     proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+    # if colima start was ^C'd it'll orphan some limactl and colima/colima-bin procs
+    # sometimes these procs aren't cleaned up on `colima stop` so we
+    # need to do it ourselves
+    # TODO: killall limactl and colima and colima-bin
     status = check()
     return status
