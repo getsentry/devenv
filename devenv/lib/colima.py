@@ -7,7 +7,11 @@ import tempfile
 from enum import Enum
 
 from devenv.constants import SYSTEM_MACHINE, home, root
-from devenv.lib import archive, docker, fs, proc, rosetta
+from devenv.lib import archive
+from devenv.lib import docker
+from devenv.lib import fs
+from devenv.lib import proc
+from devenv.lib import rosetta
 
 ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
 
