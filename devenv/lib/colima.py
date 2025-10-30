@@ -6,7 +6,9 @@ import shutil
 import tempfile
 from enum import Enum
 
-from devenv.constants import SYSTEM_MACHINE, home, root
+from devenv.constants import SYSTEM_MACHINE
+from devenv.constants import home
+from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import docker
 from devenv.lib import fs
