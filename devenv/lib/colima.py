@@ -6,15 +6,8 @@ import shutil
 import tempfile
 from enum import Enum
 
-from devenv.constants import home
-from devenv.constants import root
-from devenv.constants import SYSTEM_MACHINE
-from devenv.lib import archive
-from devenv.lib import docker
-from devenv.lib import fs
-from devenv.lib import proc
-from devenv.lib import rosetta
-
+from devenv.constants import SYSTEM_MACHINE, home, root
+from devenv.lib import archive, docker, fs, proc, rosetta
 
 ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
 
@@ -196,7 +189,7 @@ def start(restart: bool = False) -> ColimaStatus:
             "1.1.1.1",
             # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
-            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
+            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/:w",
             *args,
         ),
         pathprepend=f"{root}/bin",
