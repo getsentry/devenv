@@ -196,7 +196,7 @@ def start(restart: bool = False) -> ColimaStatus:
             "1.1.1.1",
             # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
-            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
+            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/:w",
             *args,
         ),
         pathprepend=f"{root}/bin",
