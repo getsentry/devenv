@@ -62,6 +62,9 @@ def _install(url: str, sha256: str, into: str) -> None:
 
 
 def install_global() -> None:
+    # note: we cannot upgrade to >= 1.0.5 yet because we want to be able
+    #       to mount /tmp and that is disallowed here:
+    #       https://github.com/lima-vm/lima/commit/9de6d51415b4cabaed7f836487ff588516f144a8
     version = "1.0.3"
     cfg = {
         # upstream github releases aren't built for macOS 14, so for now

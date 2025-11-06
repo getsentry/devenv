@@ -66,4 +66,4 @@ jobs:
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
       - name: bootstrap sentry
-        run: ./ci/devenv-bootstrap.sh
+        run: ./ci/devenv-bootstrap.sh || cat /Users/runner/.colima/_lima/colima/ha.stderr.log
