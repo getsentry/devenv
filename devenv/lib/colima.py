@@ -104,9 +104,9 @@ def check() -> ColimaStatus:
     if not os.getenv("CI"):
         macos_version = platform.mac_ver()[0]
         macos_major_version = int(macos_version.split(".")[0])
-        if macos_major_version < 14:
+        if macos_major_version < 15:
             raise SystemExit(
-                f"macos >= 14 is required to use colima, found {macos_version}"
+                f"macos >= 15 is required to use colima, found {macos_version}"
             )
 
     docker_executable = shutil.which("docker")
@@ -196,7 +196,8 @@ def start(restart: bool = False) -> ColimaStatus:
             "1.1.1.1",
             # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
-            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/:w",
+            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w",
+            # note: it is not allowed by lima to add top-level root directories like /tmp!
             *args,
         ),
         pathprepend=f"{root}/bin",
