@@ -177,56 +177,31 @@ def start(restart: bool = False) -> ColimaStatus:
     # removing all docker contexts to ensure only colima context is created
     shutil.rmtree(f"{home}/.docker/contexts", ignore_errors=True)
 
-    if not os.getenv("CI"):
-        proc.run(
-            (
-                # we share the "default" machine across repositories
-                "colima",
-                "start",
-                "--verbose",
-                # this effectively makes the vm's resolvectl status use:
-                # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
-                # https://lima-vm.io/docs/config/network/user/
-                # 192.168.5.2 is the host, accessible from the vm
-                # sometimes using only the host will result in dns breaking
-                # for any number of reasons (public wifi that gives you some weird dns server,
-                # tethering, vpn, what have you)
-                "--dns",
-                "8.8.8.8",
-                "--dns",
-                "1.1.1.1",
-                # ideally we keep ~ ro, but currently the "default" vm
-                # is shared across repositories, so for ease of use we'll let home rw
-                f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/:w",
-                *args,
-            ),
-            pathprepend=f"{root}/bin",
-        )
-    else:
-        proc.run(
-            (
-                # we share the "default" machine across repositories
-                "colima",
-                "start",
-                "--verbose",
-                # this effectively makes the vm's resolvectl status use:
-                # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
-                # https://lima-vm.io/docs/config/network/user/
-                # 192.168.5.2 is the host, accessible from the vm
-                # sometimes using only the host will result in dns breaking
-                # for any number of reasons (public wifi that gives you some weird dns server,
-                # tethering, vpn, what have you)
-                "--dns",
-                "8.8.8.8",
-                "--dns",
-                "1.1.1.1",
-                # ideally we keep ~ ro, but currently the "default" vm
-                # is shared across repositories, so for ease of use we'll let home rw
-                f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
-                *args,
-            ),
-            pathprepend=f"{root}/bin",
-        )
+    proc.run(
+        (
+            # we share the "default" machine across repositories
+            "colima",
+            "start",
+            "--verbose",
+            # this effectively makes the vm's resolvectl status use:
+            # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
+            # https://lima-vm.io/docs/config/network/user/
+            # 192.168.5.2 is the host, accessible from the vm
+            # sometimes using only the host will result in dns breaking
+            # for any number of reasons (public wifi that gives you some weird dns server,
+            # tethering, vpn, what have you)
+            "--dns",
+            "8.8.8.8",
+            "--dns",
+            "1.1.1.1",
+            # ideally we keep ~ ro, but currently the "default" vm
+            # is shared across repositories, so for ease of use we'll let home rw
+            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w",
+            # note: it is not allowed by lima to add top-level root directories like /tmp!
+            *args,
+        ),
+        pathprepend=f"{root}/bin",
+    )
 
     proc.run(("docker", "context", "use", "colima"))
 
