@@ -38,7 +38,7 @@ jobs:
   #     - name: bootstrap sentry
   #       run: ./ci/devenv-bootstrap.sh
 
-  bootstrap-macos-13:
+  bootstrap-macos:
     # This job takes half an hour and costs a lot of money.
     # Let's just run on main commits.
     #if: ${{ github.ref == 'refs/heads/main' }}

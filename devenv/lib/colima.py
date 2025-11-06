@@ -203,8 +203,6 @@ def start(restart: bool = False) -> ColimaStatus:
             pathprepend=f"{root}/bin",
         )
     else:
-        proc.run(("command", "-v", "limactl"), pathprepend=f"{root}/bin")
-        proc.run(("limactl", "--version"), pathprepend=f"{root}/bin")
         proc.run(
             (
                 # we share the "default" machine across repositories
@@ -224,7 +222,7 @@ def start(restart: bool = False) -> ColimaStatus:
                 "1.1.1.1",
                 # ideally we keep ~ ro, but currently the "default" vm
                 # is shared across repositories, so for ease of use we'll let home rw
-                f"--mount=/private/tmp/colima:w,{home}:w,/tmp/:w",
+                f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w",
                 *args,
             ),
             pathprepend=f"{root}/bin",
