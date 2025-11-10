@@ -20,7 +20,7 @@ env:
 jobs:
   bootstrap:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     env:
       DEVENV_FETCH_BRANCH: master
       SNTY_DEVENV_BRANCH:
@@ -38,13 +38,9 @@ jobs:
       - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh
 
-  # macos-14 doesn't support the virtualization needed for colima... yet
-  bootstrap-macos-13:
-    # This job takes half an hour and costs a lot of money.
-    # Let's just run on main commits.
-    if: ${{ github.ref == 'refs/heads/main' }}
-    runs-on: macos-13
-    timeout-minutes: 60
+  bootstrap-macos:
+    runs-on: macos-15
+    timeout-minutes: 30
     env:
       DEVENV_FETCH_BRANCH: master
       SNTY_DEVENV_BRANCH:
@@ -67,4 +63,4 @@ jobs:
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
       - name: bootstrap sentry
-        run: ./ci/devenv-bootstrap.sh
+        run: ./ci/devenv-bootstrap.sh || cat /Users/runner/.colima/_lima/colima/ha.stderr.log
