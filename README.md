@@ -106,7 +106,7 @@ coderoot = ~/code
 ```ini
 [devenv]
 # optionally require a minimum version to run sync.py
-minimum_version = 1.11.0
+minimum_version = 1.22.1
 ```
 
 There are plenty more sections, their use is best seen in the [examples](#examples).
@@ -144,7 +144,11 @@ PATH_add "${PWD}/.devenv/bin"
 
 ### python
 
-Need a single virtualenv (or have one already at `.venv` you want devenv to manage?)
+We have support for, and we standardize on [uv](https://github.com/astral-sh/uv)
+to manage python environments.
+
+More details (beyond a bare minimum example which is detailed here) about the standard is
+[here](https://www.notion.so/sentry/Standard-Spec-python-uv-2248b10e4b5d8045b8fff30f8b8b67ca).
 
 `[reporoot]/.envrc`
 ```bash
@@ -152,8 +156,6 @@ export VIRTUAL_ENV="${PWD}/.venv"
 
 PATH_add "${PWD}/.venv/bin"
 ```
-
-if using uv:
 
 `[reporoot]/devenv/sync.py`
 ```py
@@ -177,22 +179,27 @@ def main(context: dict[str, str]) -> int:
     return 0
 ```
 
+We pin the uv version to avoid any surprises.
+(As opposed to a solution like `brew`, which always puts you on latest software.)
+If you want to update the version then you'll have to update these urls and checksums.
+
 `[reporoot]/devenv/config.ini`
 ```ini
 [devenv]
 minimum_version = 1.22.1
 
 [uv]
-darwin_arm64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-aarch64-apple-darwin.tar.gz
-darwin_arm64_sha256 = c73af7a4e0bcea9b5b593a0c7e5c025ee78d8be3f7cd60bfeadc8614a16c92ef
-darwin_x86_64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-x86_64-apple-darwin.tar.gz
-darwin_x86_64_sha256 = f8a9b4f4a80a44653344d36b53e148134176e8f7cc99f8e823676a57c884595e
-linux_arm64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-aarch64-unknown-linux-gnu.tar.gz
-linux_arm64_sha256 = 1dae18211605b9d00767d913da5108aea50200a88372bf8a2e1f56abdbe509f0
-linux_x86_64 = https://github.com/astral-sh/uv/releases/download/0.7.21/uv-x86_64-unknown-linux-gnu.tar.gz
-linux_x86_64_sha256 = ca3e8898adfce5fcc891d393a079013fa4bd0d9636cef11aded8a7485bcba312
+darwin_arm64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-aarch64-apple-darwin.tar.gz
+darwin_arm64_sha256 = 954d24634d5f37fa26c7af75eb79893d11623fc81b4de4b82d60d1ade4bfca22
+darwin_x86_64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-x86_64-apple-darwin.tar.gz
+darwin_x86_64_sha256 = ae755df53c8c2c1f3dfbee6e3d2e00be0dfbc9c9b4bdffdb040b96f43678b7ce
+linux_arm64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-aarch64-unknown-linux-gnu.tar.gz
+linux_arm64_sha256 = 27da35ef54e9131c2e305de67dd59a07c19257882c6b1f3cf4d8d5fbb8eaf4ca
+linux_x86_64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-x86_64-unknown-linux-gnu.tar.gz
+linux_x86_64_sha256 = 6dcb28a541868a455aefb2e8d4a1283dd6bf888605a2db710f0530cec888b0ad
 # used for autoupdate
-version = 0.7.21
+# NOTE: if using uv-build as a build backend, you'll have to make sure the versions match
+version = 0.8.2
 ```
 
 `[reporoot]/.python-version`
@@ -207,98 +214,6 @@ name = "foo"
 version = "0.0.0"
 ```
 
-or classic pip:
-
-`[reporoot]/devenv/sync.py`
-```py
-from devenv.lib import config, venv
-
-def main(context: dict[str, str]) -> int:
-    reporoot = context["reporoot"]
-
-    venv_dir, python_version, requirements, editable_paths, bins = venv.get(reporoot, "venv")
-    url, sha256 = config.get_python(reporoot, python_version)
-    print(f"ensuring venv at {venv_dir}...")
-    venv.ensure(venv_dir, python_version, url, sha256)
-
-    print(f"syncing venv with {requirements}...")
-    venv.sync(reporoot, venv_dir, requirements, editable_paths, bins)
-
-    return 0
-```
-
-`[reporoot]/devenv/config.ini`
-```ini
-[venv.venv]
-python = 3.12.3
-path = .venv
-requirements = requirements-dev.txt
-editable =
-  .
-
-[python3.12.3]
-darwin_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-apple-darwin-install_only.tar.gz
-darwin_x86_64_sha256 = c37a22fca8f57d4471e3708de6d13097668c5f160067f264bb2b18f524c890c8
-darwin_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-apple-darwin-install_only.tar.gz
-darwin_arm64_sha256 = ccc40e5af329ef2af81350db2a88bbd6c17b56676e82d62048c15d548401519e
-linux_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-unknown-linux-gnu-install_only.tar.gz
-linux_x86_64_sha256 = a73ba777b5d55ca89edef709e6b8521e3f3d4289581f174c8699adfb608d09d6
-linux_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-unknown-linux-gnu-install_only.tar.gz
-linux_arm64_sha256 = ec8126de97945e629cca9aedc80a29c4ae2992c9d69f2655e27ae73906ba187d
-```
-
-You can also have multiple virtualenvs, which is useful if you rely on a python tool
-that has a bunch of dependencies that may conflict with others.
-
-`[reporoot]/.envrc`
-```bash
-export VIRTUAL_ENV="${PWD}/.exampleproject"
-
-PATH_add "${PWD}/.venv-exampleproject/bin"
-PATH_add "${PWD}/.venv-inhouse-tool/bin"
-```
-
-`[reporoot]/devenv/sync.py`
-```py
-from devenv.lib import config, venv
-
-def main(context: dict[str, str]) -> int:
-    reporoot = context["reporoot"]
-
-    for name in ("exampleproject", "inhouse-tool"):
-        venv_dir, python_version, requirements, editable_paths, bins = venv.get(reporoot, name)
-        url, sha256 = config.get_python(reporoot, python_version)
-        print(f"ensuring {name} venv at {venv_dir}...")
-        venv.ensure(venv_dir, python_version, url, sha256)
-
-        print(f"syncing {name} with {requirements}...")
-        venv.sync(reporoot, venv_dir, requirements, editable_paths, bins)
-
-    return 0
-```
-
-`[reporoot]/devenv/config.ini`
-```ini
-[venv.exampleproject]
-python = 3.12.3
-requirements = requirements-dev.txt
-editable =
-  .
-
-[venv.inhouse-tool]
-python = 3.12.3
-requirements = inhouse-tool/requirements-dev.txt
-
-[python3.12.3]
-darwin_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-apple-darwin-install_only.tar.gz
-darwin_x86_64_sha256 = c37a22fca8f57d4471e3708de6d13097668c5f160067f264bb2b18f524c890c8
-darwin_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-apple-darwin-install_only.tar.gz
-darwin_arm64_sha256 = ccc40e5af329ef2af81350db2a88bbd6c17b56676e82d62048c15d548401519e
-linux_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-x86_64-unknown-linux-gnu-install_only.tar.gz
-linux_x86_64_sha256 = a73ba777b5d55ca89edef709e6b8521e3f3d4289581f174c8699adfb608d09d6
-linux_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20240415/cpython-3.12.3+20240415-aarch64-unknown-linux-gnu-install_only.tar.gz
-linux_arm64_sha256 = ec8126de97945e629cca9aedc80a29c4ae2992c9d69f2655e27ae73906ba187d
-```
 
 ### node
 
