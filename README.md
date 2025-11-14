@@ -322,16 +322,16 @@ def main(context: dict[str, str]) -> int:
         cfg["node"][f"{constants.SYSTEM_MACHINE}_sha256"],
         reporoot,
     )
-    node.install_yarn(cfg["node"]["yarn_version"], reporoot)
+
+    node.install_pnpm(reporoot)
 
     print("installing node dependencies...")
     proc.run(
         (
-            ".devenv/bin/yarn",
+            f"{reporoot}/.devenv/bin/pnpm",
             "install",
             "--frozen-lockfile",
-            "--no-progress",
-            "--non-interactive",
+            "--reporter=append-only",
         ),
     )
 
@@ -353,7 +353,6 @@ linux_x86_64 = https://storage.googleapis.com/sentry-dev-infra-assets/node/node-
 linux_x86_64_sha256 = efc0f295dd878e510ab12ea36bbadc3db03c687ab30c07e86c7cdba7eed879a9
 # used for autoupdate
 version = v20.13.1
-yarn_version = 1.22.22
 ```
 
 ### brew
