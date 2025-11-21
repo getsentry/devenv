@@ -159,7 +159,8 @@ PATH_add "${PWD}/.venv/bin"
 
 `[reporoot]/devenv/sync.py`
 ```py
-from devenv.lib import config, uv
+from devenv import constants
+from devenv.lib import config, proc, uv
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
