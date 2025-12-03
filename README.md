@@ -34,10 +34,6 @@ To update this installation, run `devenv update`.
 
 This is intended for initial setup of a new machine.
 
-`devenv colima start`
-
-If you are using colima instead of docker desktop, run this to set up colima on a new machine. The default `colima start` may underprovision resources. Run this command after `colima delete` to reset.
-
 `devenv fetch [repository name]`
 
 Any repository on github in the form of `[org]/[reponame]`
@@ -74,6 +70,10 @@ This updates the global devenv installation, and global tools.
 
 If you're upgrading from a particularly old devenv, it won't have `update` so you need to:
 `~/.local/share/sentry-devenv/venv/bin/pip install -U sentry-devenv`
+
+`devenv colima start`
+
+If you are using colima instead of docker desktop, run this to set up colima on a new machine. The default `colima start` may underprovision resources. Run this command after `colima delete` to reset.
 
 
 ## technical overview
