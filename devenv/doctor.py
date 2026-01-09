@@ -245,7 +245,8 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
             skip.append(check)
 
     print("\nChecking that fixes worked as expected...")
-    results = run_checks(failing_checks, executor, skip=skip)
+    # re-run all checks since fixing one issue can cause another to fail
+    results = run_checks(checks, executor, skip=skip)
 
     executor.shutdown()
 
