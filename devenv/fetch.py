@@ -58,8 +58,10 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
             # Parse Brewfile and check for apt equivalents
             brewfile_path = f"{code_root}/sentry/Brewfile"
             if os.path.exists(brewfile_path):
-                brew_packages = brewfile.parse_brewfile(brewfile_path)
-                apt_packages, unmapped = brewfile.get_apt_equivalents(brew_packages)
+                brew_pkgs, cask_pkgs = brewfile.parse_brewfile(brewfile_path)
+                apt_packages, unmapped = brewfile.get_apt_equivalents(
+                    brew_pkgs, cask_pkgs
+                )
                 if unmapped:
                     print(
                         f"Note: No apt mapping for brew packages: {', '.join(unmapped)}"
