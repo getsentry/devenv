@@ -129,14 +129,11 @@ def test_create_dirs() -> None:
     INTEL_MAC = False
 
     # Mock the proc.run function
-    with (
-        patch("devenv.lib.brew.proc.run") as mock_run,
-        patch.multiple(
-            "devenv.lib.brew",
-            user=user,
-            homebrew_repo=homebrew_repo,
-            INTEL_MAC=INTEL_MAC,
-        ),
+    with patch("devenv.lib.brew.proc.run") as mock_run, patch.multiple(
+        "devenv.lib.brew",
+        user=user,
+        homebrew_repo=homebrew_repo,
+        INTEL_MAC=INTEL_MAC,
     ):
         create_dirs()
 
@@ -162,14 +159,11 @@ def test_create_dirs_intel_mac() -> None:
     INTEL_MAC = True
 
     # Mock the proc.run function
-    with (
-        patch("devenv.lib.brew.proc.run") as mock_run,
-        patch.multiple(
-            "devenv.lib.brew",
-            user=user,
-            homebrew_repo=homebrew_repo,
-            INTEL_MAC=INTEL_MAC,
-        ),
+    with patch("devenv.lib.brew.proc.run") as mock_run, patch.multiple(
+        "devenv.lib.brew",
+        user=user,
+        homebrew_repo=homebrew_repo,
+        INTEL_MAC=INTEL_MAC,
     ):
         create_dirs()
 

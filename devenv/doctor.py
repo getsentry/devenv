@@ -155,7 +155,7 @@ def run_checks(
 
 
 def filter_failing_checks(
-    results: Dict[Check, tuple[bool, str]],
+    results: Dict[Check, tuple[bool, str]]
 ) -> List[Check]:
     """Print a report of the results, and return a list of failing checks."""
     failing_checks: list[Check] = []

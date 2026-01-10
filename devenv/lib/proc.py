@@ -41,7 +41,8 @@ def run(
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
     stdout: Literal[False] = False,
-) -> None: ...
+) -> None:
+    ...
 
 
 @overload
@@ -53,7 +54,8 @@ def run(
     env: dict[str, str] | None = None,
     cwd: Path | str | None = None,
     stdout: Literal[True],
-) -> str: ...
+) -> str:
+    ...
 
 
 def run(
