@@ -15,13 +15,19 @@ def test_install_pnpm(tmp_path: pathlib.Path) -> None:
     os.makedirs(binroot)
     open(f"{binroot}/node", "w").close()
 
-    with patch("devenv.lib.archive.download"), patch(
-        "devenv.lib.archive.unpack",
-        side_effect=lambda archive_file, tmpd, perform_strip1, strip1_new_prefix: os.makedirs(
-            f"{tmpd}/{strip1_new_prefix}"
+    with (
+        patch("devenv.lib.archive.download"),
+        patch(
+            "devenv.lib.archive.unpack",
+            side_effect=lambda archive_file, tmpd, perform_strip1, strip1_new_prefix: os.makedirs(
+                f"{tmpd}/{strip1_new_prefix}"
+            ),
         ),
-    ), patch("devenv.lib.node.os.path.exists"), patch(
-        "devenv.lib.direnv.proc.run", side_effect=["0.0.0"]  # node --version
+        patch("devenv.lib.node.os.path.exists"),
+        patch(
+            "devenv.lib.direnv.proc.run",
+            side_effect=["0.0.0"],  # node --version
+        ),
     ):
         node.install("0.0.0", "bar", "baz", repo.path)
 

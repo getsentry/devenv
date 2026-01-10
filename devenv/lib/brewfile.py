@@ -35,17 +35,10 @@ BREW_TO_APT: dict[str, str] = {
 }
 
 # Mapping of Homebrew casks to Ubuntu apt equivalents
-CASK_TO_APT: dict[str, str] = {
-    "chromedriver": "chromium-chromedriver",
-}
+CASK_TO_APT: dict[str, str] = {"chromedriver": "chromium-chromedriver"}
 
 # Packages we intentionally skip (user provides their own or we handle separately)
-SKIP_PACKAGES = {
-    "docker",
-    "docker-buildx",
-    "colima",
-    "lima",
-}
+SKIP_PACKAGES = {"docker", "docker-buildx", "colima", "lima"}
 
 
 def parse_brewfile(path: str) -> tuple[list[str], list[str]]:

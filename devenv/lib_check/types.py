@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 
 def checker(
-    f: Callable[[], tuple[bool, str]]
+    f: Callable[[], tuple[bool, str]],
 ) -> Callable[[], tuple[bool, str]]:
     return f
 

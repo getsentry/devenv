@@ -178,7 +178,9 @@ def start(restart: bool = False) -> ColimaStatus:
         # Apple Silicon: use Apple's Virtualization framework
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
 
-    mount_paths = f"/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w"
+    mount_paths = (
+        f"/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w"
+    )
 
     # removing all docker contexts to ensure only colima context is created
     shutil.rmtree(f"{home}/.docker/contexts", ignore_errors=True)

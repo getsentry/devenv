@@ -31,5 +31,7 @@ def print_install_command(packages: list[str]) -> None:
 
     pkg_list = " ".join(packages)
     print(f"\nMissing apt packages: {pkg_list}")
-    print(f"Please run: sudo apt-get update && sudo apt-get install -y {pkg_list}")
+    print(
+        f"Please run: sudo apt-get update && sudo apt-get install -y {pkg_list}"
+    )
     print("Then re-run the devenv command.\n")

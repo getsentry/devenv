@@ -67,7 +67,9 @@ def test_currentContext_missing_with_colima(fake_config: pathlib.Path) -> None:
     """When colima is installed but context is missing and Docker doesn't work, fail."""
     fake_config.write_text('{"auths": {}}')
     with mock.patch.object(shutil, "which", return_value="/fake/colima"):
-        with mock.patch.object(docker, "is_docker_available", return_value=False):
+        with mock.patch.object(
+            docker, "is_docker_available", return_value=False
+        ):
             assert dockerConfig.check() == (
                 False,
                 "currentContext is '', should be 'colima'",
@@ -78,7 +80,9 @@ def test_currentContext_missing_docker_works(fake_config: pathlib.Path) -> None:
     """When colima is installed but Docker works anyway, that's fine (native Docker)."""
     fake_config.write_text('{"auths": {}}')
     with mock.patch.object(shutil, "which", return_value="/fake/colima"):
-        with mock.patch.object(docker, "is_docker_available", return_value=True):
+        with mock.patch.object(
+            docker, "is_docker_available", return_value=True
+        ):
             assert dockerConfig.check() == (True, "")
 
 
@@ -86,7 +90,9 @@ def test_currentContext_wrong_with_colima(fake_config: pathlib.Path) -> None:
     """When colima is installed, context is wrong, and Docker doesn't work, fail."""
     fake_config.write_text('{"currentContext": "desktop"}')
     with mock.patch.object(shutil, "which", return_value="/fake/colima"):
-        with mock.patch.object(docker, "is_docker_available", return_value=False):
+        with mock.patch.object(
+            docker, "is_docker_available", return_value=False
+        ):
             assert dockerConfig.check() == (
                 False,
                 "currentContext is 'desktop', should be 'colima'",
@@ -97,7 +103,9 @@ def test_currentContext_wrong_docker_works(fake_config: pathlib.Path) -> None:
     """When colima is installed, context is wrong, but Docker works, that's fine."""
     fake_config.write_text('{"currentContext": "desktop"}')
     with mock.patch.object(shutil, "which", return_value="/fake/colima"):
-        with mock.patch.object(docker, "is_docker_available", return_value=True):
+        with mock.patch.object(
+            docker, "is_docker_available", return_value=True
+        ):
             assert dockerConfig.check() == (True, "")
 
 
@@ -111,7 +119,8 @@ def test_fix_currentContext_missing(fake_config: pathlib.Path) -> None:
     with mock.patch.object(dockerConfig, "is_using_colima", return_value=True):
         assert dockerConfig.fix() == (True, "")
         assert (
-            fake_config.read_text() == '{"auths": {}, "currentContext": "colima"}'
+            fake_config.read_text()
+            == '{"auths": {}, "currentContext": "colima"}'
         )
 
 

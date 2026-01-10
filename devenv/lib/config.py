@@ -55,9 +55,9 @@ def initialize_config(config_path: str, defaults: Config) -> None:
             val: str = config.get(
                 section,
                 var,
-                fallback=(opts.default() if opts else "")
-                if _val is None
-                else _val,
+                fallback=(
+                    (opts.default() if opts else "") if _val is None else _val
+                ),
             )
 
             if not CI:

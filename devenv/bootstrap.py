@@ -55,7 +55,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
             except RuntimeError:
                 return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
         elif not shutil.which("git"):
-            return "Failed to find git. Please install git and re-run bootstrap."
+            return (
+                "Failed to find git. Please install git and re-run bootstrap."
+            )
 
     # even though this is called before colima starts,
     # better to try and potentially (although unlikely) fail earlier rather than later

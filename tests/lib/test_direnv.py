@@ -13,17 +13,18 @@ from devenv.lib.direnv import install
 # imo this is enough coverage (as in just keeping it to bash + darwin-arm64)
 # we just want to verify that the important functions were called like fs_idempotent_add
 def test_install() -> None:
-    with patch("devenv.lib.direnv.MACHINE", "arm64"), patch(
-        "devenv.lib.direnv.sys.platform", "darwin"
-    ), patch("devenv.lib.archive.download") as mock_archive_download, patch(
-        "devenv.lib.fs.idempotent_add"
-    ) as mock_lib_fs_idempotent_add, patch(
-        "os.chmod"
-    ), patch(
-        "shutil.which", return_value=False
-    ), patch(
-        "devenv.lib.direnv.proc.run", side_effect=[_version]  # direnv version
-    ) as mock_proc_run:
+    with (
+        patch("devenv.lib.direnv.MACHINE", "arm64"),
+        patch("devenv.lib.direnv.sys.platform", "darwin"),
+        patch("devenv.lib.archive.download") as mock_archive_download,
+        patch("devenv.lib.fs.idempotent_add") as mock_lib_fs_idempotent_add,
+        patch("os.chmod"),
+        patch("shutil.which", return_value=False),
+        patch(
+            "devenv.lib.direnv.proc.run",
+            side_effect=[_version],  # direnv version
+        ) as mock_proc_run,
+    ):
         install()
         assert mock_lib_fs_idempotent_add.mock_calls == [
             # SHELL is set in conftest.py
