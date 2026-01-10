@@ -55,27 +55,34 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
                     cwd=f"{code_root}/sentry",
                 )
         elif LINUX:
-            # Parse Brewfile and check for apt equivalents
-            brewfile_path = f"{code_root}/sentry/Brewfile"
-            if os.path.exists(brewfile_path):
-                brew_pkgs, cask_pkgs = brewfile.parse_brewfile(brewfile_path)
-                apt_packages, unmapped = brewfile.get_apt_equivalents(
-                    brew_pkgs, cask_pkgs
-                )
-                if unmapped:
-                    print(
-                        f"Note: No apt mapping for brew packages: {', '.join(unmapped)}"
+            if CI:
+                # In CI, we don't check for apt packages - the CI environment
+                # is expected to have what it needs or handle it separately
+                print("Skipping apt package check in CI environment.")
+            else:
+                # Parse Brewfile and check for apt equivalents
+                brewfile_path = f"{code_root}/sentry/Brewfile"
+                if os.path.exists(brewfile_path):
+                    brew_pkgs, cask_pkgs = brewfile.parse_brewfile(
+                        brewfile_path
                     )
-                    print(
-                        "You may need to install these manually if required.\n"
+                    apt_packages, unmapped = brewfile.get_apt_equivalents(
+                        brew_pkgs, cask_pkgs
                     )
-                if apt_packages:
-                    missing = apt.check_packages_installed(apt_packages)
-                    if missing:
-                        apt.print_install_command(missing)
-                        raise SystemExit(
-                            "Please install the packages above and re-run."
+                    if unmapped:
+                        print(
+                            f"Note: No apt mapping for brew packages: {', '.join(unmapped)}"
                         )
+                        print(
+                            "You may need to install these manually if required.\n"
+                        )
+                    if apt_packages:
+                        missing = apt.check_packages_installed(apt_packages)
+                        if missing:
+                            apt.print_install_command(missing)
+                            raise SystemExit(
+                                "Please install the packages above and re-run."
+                            )
         else:
             print(
                 "Unsupported platform; assuming you have a docker cli and runtime installed."
