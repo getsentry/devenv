@@ -36,11 +36,33 @@ Updating global tools (at {constants.root}/bin).
 """
         )
         os.makedirs(f"{constants.root}/bin", exist_ok=True)
-        brew.install()
-        docker.install_global()
-        direnv.install()
-        colima.install_global()
-        limactl.install_global()
+
+        if constants.LINUX:
+            # On Linux, we don't install tools - just check what's available
+            if not docker.is_docker_available():
+                print(
+                    "Docker is not available. Please install Docker:\n"
+                    "  sudo apt-get update && sudo apt-get install -y docker.io\n"
+                    "  sudo usermod -aG docker $USER\n"
+                    "Then log out and back in, and re-run update."
+                )
+            direnv.install()
+        else:
+            # On macOS, install brew and tools
+            brew.install()
+            direnv.install()
+
+            # Only install Colima/Lima if Docker is not already available
+            if docker.is_docker_available():
+                print(
+                    "Docker is already available, skipping Colima installation."
+                )
+            else:
+                print("Docker not found, installing Colima...")
+                docker.install_global()
+                colima.install_global()
+                limactl.install_global()
+
         return 0
 
     is_global_devenv = sys.executable.startswith(

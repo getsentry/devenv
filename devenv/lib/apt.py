@@ -6,8 +6,18 @@ from devenv.constants import LINUX
 
 
 def check_packages_installed(packages: list[str]) -> list[str]:
-    """Check which packages are not installed. Returns list of missing packages."""
+    """Check which packages are not installed. Returns list of missing packages.
+
+    Only works on Debian-based systems with dpkg. On other systems, returns
+    empty list (assumes packages are installed).
+    """
     if not LINUX:
+        return []
+
+    import shutil
+
+    # Only check on Debian-based systems that have dpkg
+    if not shutil.which("dpkg"):
         return []
 
     missing = []
