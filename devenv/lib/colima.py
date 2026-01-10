@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from enum import Enum
 
+from devenv.constants import DARWIN
 from devenv.constants import home
 from devenv.constants import root
 from devenv.constants import SYSTEM_MACHINE
@@ -86,7 +87,7 @@ def install_global() -> None:
     install_shim(binroot)
 
     if SYSTEM_MACHINE == "darwin_x86_64":
-        if not shutil.which("qemu"):
+        if not shutil.which("qemu-system-x86_64"):
             print(
                 "WARNING: you're on darwin_x86_64, but QEMU isn't installed. Run: `brew install qemu`."
             )
@@ -101,7 +102,7 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
 
 
 def check() -> ColimaStatus:
-    if not os.getenv("CI"):
+    if DARWIN and not os.getenv("CI"):
         macos_version = platform.mac_ver()[0]
         macos_major_version = int(macos_version.split(".")[0])
         if macos_major_version < 15:
@@ -171,8 +172,13 @@ def start(restart: bool = False) -> ColimaStatus:
     memsize_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
 
     args = ["--cpu", f"{cpus//2}", "--memory", f"{memsize_bytes//(2*1024**3)}"]
+
+    # Platform-specific VM and mount configuration (macOS only - we don't manage Colima on Linux)
     if platform.machine() == "arm64":
+        # Apple Silicon: use Apple's Virtualization framework
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
+
+    mount_paths = f"/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w"
 
     # removing all docker contexts to ensure only colima context is created
     shutil.rmtree(f"{home}/.docker/contexts", ignore_errors=True)
@@ -196,7 +202,7 @@ def start(restart: bool = False) -> ColimaStatus:
             "1.1.1.1",
             # ideally we keep ~ ro, but currently the "default" vm
             # is shared across repositories, so for ease of use we'll let home rw
-            f"--mount=/var/folders:w,/private/tmp/colima:w,{home}:w,/tmp/sentry-profiles:w",
+            f"--mount={mount_paths}",
             # note: it is not allowed by lima to add top-level root directories like /tmp!
             *args,
         ),

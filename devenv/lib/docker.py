@@ -20,6 +20,43 @@ def _accept_and_close(sock: socket.socket) -> None:
     conn.close()
 
 
+def is_docker_available() -> bool:
+    """Check if Docker daemon is available and working."""
+    if not shutil.which("docker"):
+        return False
+    try:
+        subprocess.run(
+            ("docker", "info"),
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def ensure_docker() -> None:
+    """Ensure docker is available, starting colima if needed."""
+    if is_docker_available():
+        return
+
+    # Docker not available, try starting colima if installed
+    if shutil.which("colima"):
+        # Import here to avoid circular dependency
+        from devenv.lib import colima
+
+        colima.start()
+        if is_docker_available():
+            return
+
+    raise SystemExit(
+        "Docker is not available. Please either:\n"
+        "  - Install and start Docker (Docker Engine or Docker Desktop), or\n"
+        "  - Run 'devenv bootstrap' to install Colima"
+    )
+
+
 def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import shutil
 import sys
 
 from devenv.lib import colima
+from devenv.lib import docker
 from devenv.lib import proc
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
@@ -11,8 +13,26 @@ tags: set[str] = {"builtin"}
 name = "colima's DNS isn't working"
 
 
+def is_using_colima() -> bool:
+    """Check if we're using Colima."""
+    if not shutil.which("colima"):
+        return False
+    # If Docker works without colima, we're not using Colima
+    if docker.is_docker_available():
+        try:
+            stdout = proc.run(("docker", "context", "show"), stdout=True)
+            return stdout.strip() == "colima"
+        except RuntimeError:
+            return False
+    return False
+
+
 @checker
 def check() -> tuple[bool, str]:
+    # Skip this check if not using Colima
+    if not is_using_colima():
+        return True, ""
+
     # dns resolution can... stop working if colima's running
     # and wifi changes to some other network that gives macos some
     # weird nameservers

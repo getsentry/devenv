@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 
 from devenv import constants
@@ -19,7 +20,16 @@ def only_owner_can_rw(path: str) -> bool:
 
 @checker
 def check() -> tuple[bool, str]:
+    # Only check if colima is installed (even if not currently running)
+    # Bad SSH permissions prevent colima from starting, so check proactively
+    if not shutil.which("colima"):
+        return True, ""
+
     lima_ssh_creds = f"{constants.home}/.colima/_lima/_config/user"
+
+    # If the file doesn't exist, colima hasn't been started yet
+    if not os.path.exists(lima_ssh_creds):
+        return True, ""
 
     if not only_owner_can_rw(lima_ssh_creds):
         return (

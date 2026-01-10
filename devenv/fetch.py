@@ -10,6 +10,9 @@ from devenv.constants import CI
 from devenv.constants import DARWIN
 from devenv.constants import EXTERNAL_CONTRIBUTOR
 from devenv.constants import homebrew_bin
+from devenv.constants import LINUX
+from devenv.lib import apt
+from devenv.lib import brewfile
 from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -51,9 +54,29 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
                     (f"{homebrew_bin}/brew", "bundle"),
                     cwd=f"{code_root}/sentry",
                 )
+        elif LINUX:
+            # Parse Brewfile and check for apt equivalents
+            brewfile_path = f"{code_root}/sentry/Brewfile"
+            if os.path.exists(brewfile_path):
+                brew_packages = brewfile.parse_brewfile(brewfile_path)
+                apt_packages, unmapped = brewfile.get_apt_equivalents(brew_packages)
+                if unmapped:
+                    print(
+                        f"Note: No apt mapping for brew packages: {', '.join(unmapped)}"
+                    )
+                    print(
+                        "You may need to install these manually if required.\n"
+                    )
+                if apt_packages:
+                    missing = apt.check_packages_installed(apt_packages)
+                    if missing:
+                        apt.print_install_command(missing)
+                        raise SystemExit(
+                            "Please install the packages above and re-run."
+                        )
         else:
             print(
-                "Not on MacOS; assuming you have a docker cli and runtime installed."
+                "Unsupported platform; assuming you have a docker cli and runtime installed."
             )
 
         proc.run(

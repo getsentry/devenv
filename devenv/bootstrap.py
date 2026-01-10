@@ -42,17 +42,20 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
     default_config: Config = {"devenv": configs}
     initialize_config(context["config_path"], default_config)
 
-    if not constants.CI and shutil.which("xcrun"):
-        # xcode-select --install will take a while,
-        # and involves elevated permissions with a GUI,
-        # so best to just let the user go through that separately then retrying,
-        # rather than waiting for it.
-        # There is a way to perform a headless install but it's more complex
-        # (refer to how homebrew does it).
-        try:
-            _ = proc.run(("xcrun", "-f", "git"), stdout=True)
-        except RuntimeError:
-            return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+    if not constants.CI:
+        if constants.DARWIN and shutil.which("xcrun"):
+            # xcode-select --install will take a while,
+            # and involves elevated permissions with a GUI,
+            # so best to just let the user go through that separately then retrying,
+            # rather than waiting for it.
+            # There is a way to perform a headless install but it's more complex
+            # (refer to how homebrew does it).
+            try:
+                _ = proc.run(("xcrun", "-f", "git"), stdout=True)
+            except RuntimeError:
+                return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
+        elif not shutil.which("git"):
+            return "Failed to find git. Please install git and re-run bootstrap."
 
     # even though this is called before colima starts,
     # better to try and potentially (although unlikely) fail earlier rather than later
@@ -103,11 +106,30 @@ Updating global tools (at {constants.root}/bin).
 """
     )
     os.makedirs(f"{constants.root}/bin", exist_ok=True)
-    brew.install()
-    docker.install_global()
-    direnv.install()
-    colima.install_global()
-    limactl.install_global()
+
+    if constants.LINUX:
+        # On Linux, we don't install tools - just check what's available
+        if not docker.is_docker_available():
+            print(
+                "Docker is not available. Please install Docker:\n"
+                "  sudo apt-get update && sudo apt-get install -y docker.io\n"
+                "  sudo usermod -aG docker $USER\n"
+                "Then log out and back in, and re-run bootstrap."
+            )
+        direnv.install()
+    else:
+        # On macOS, install brew and tools
+        brew.install()
+        direnv.install()
+
+        # Only install Colima/Lima if Docker is not already available
+        if docker.is_docker_available():
+            print("Docker is already available, skipping Colima installation.")
+        else:
+            print("Docker not found, installing Colima...")
+            docker.install_global()
+            colima.install_global()
+            limactl.install_global()
 
     os.makedirs(context["code_root"], exist_ok=True)
 
