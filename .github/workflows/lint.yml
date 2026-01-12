@@ -15,7 +15,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3 # v3 # v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
