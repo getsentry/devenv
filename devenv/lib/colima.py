@@ -186,6 +186,10 @@ def start(restart: bool = False) -> ColimaStatus:
             "colima",
             "start",
             "--verbose",
+            # default 60GiB disk is generally not enough over time
+            # since devs work with a lot of images
+            "--disk",
+            "128",
             # this effectively makes the vm's resolvectl status use:
             # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
             # https://lima-vm.io/docs/config/network/user/

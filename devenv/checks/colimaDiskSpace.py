@@ -43,15 +43,19 @@ def check() -> tuple[bool, str]:
 def fix() -> tuple[bool, str]:
     return (
         False,
-        """To resize the Colima VM disk:
+        """
+First you should try to cleanup unused Docker resources:
+   docker system prune -a
+
+Failing that, you can resize the Colima VM's disk:
 
 1. Stop colima:
    colima stop
 
-2. Start with a larger disk (e.g., 200GB):
-   colima start --disk 200
+2. Install qemu:
+   brew install qemu
 
-Alternatively, clean up unused Docker resources:
-   docker system prune -a
+2. Restart colima, resizing to a larger disk (e.g., 200GB):
+   colima start --disk 200
 """,
     )
