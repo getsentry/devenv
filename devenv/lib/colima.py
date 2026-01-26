@@ -142,17 +142,23 @@ def check() -> ColimaStatus:
 
 
 def start(restart: bool = False) -> ColimaStatus:
+    # switch to default context to avoid broken contexts (e.g., desktop-linux)
+    try:
+        proc.run(("docker", "context", "use", "default"))
+    except RuntimeError as e:
+        print(f"Failed to switch docker context: {e}")
+
     status = check()
 
     if status == ColimaStatus.UP:
         if not restart:
             return ColimaStatus.UP
-        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
-    elif status == ColimaStatus.DOWN:
-        pass
-    elif status == ColimaStatus.UNHEALTHY:
-        print("colima seems to be unhealthy, stopping it")
-        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+
+    # always stop first (colima's internal state can get out of sync)
+    try:
+        proc.run(("colima", "stop", "-f"), pathprepend=f"{root}/bin")
+    except RuntimeError as e:
+        print(f"Failed to stop colima: {e}")
 
     # colima start will only WARN if rosetta is unavailable and keep going without it,
     # so we need to ensure it's installed and running ourselves
@@ -173,9 +179,6 @@ def start(restart: bool = False) -> ColimaStatus:
     args = ["--cpu", f"{cpus//2}", "--memory", f"{memsize_bytes//(2*1024**3)}"]
     if platform.machine() == "arm64":
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
-
-    # removing all docker contexts to ensure only colima context is created
-    shutil.rmtree(f"{home}/.docker/contexts", ignore_errors=True)
 
     proc.run(
         (
