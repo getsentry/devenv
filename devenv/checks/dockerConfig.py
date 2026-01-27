@@ -7,8 +7,8 @@ import shutil
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
-tags: set[str] = {"builtin"}
-name = "correct docker configuration"
+tags: set[str] = {"builtin", "colima"}
+name = "correct docker configuration for colima"
 
 
 @checker

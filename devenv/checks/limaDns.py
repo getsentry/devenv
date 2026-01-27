@@ -7,7 +7,7 @@ from devenv.lib import proc
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
-tags: set[str] = {"builtin"}
+tags: set[str] = {"builtin", "colima"}
 name = "colima's DNS isn't working"
 
 
