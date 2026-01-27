@@ -186,6 +186,10 @@ def start(restart: bool = False) -> ColimaStatus:
             "colima",
             "start",
             "--verbose",
+            # we're overprovisioning a 512 GiB disk here which is fine because
+            # the disk doesn't reserve space and is copy-on-write
+            "--disk",
+            "512",
             # this effectively makes the vm's resolvectl status use:
             # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
             # https://lima-vm.io/docs/config/network/user/
