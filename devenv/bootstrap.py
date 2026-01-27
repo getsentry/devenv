@@ -103,11 +103,15 @@ Updating global tools (at {constants.root}/bin).
 """
     )
     os.makedirs(f"{constants.root}/bin", exist_ok=True)
-    brew.install()
-    docker.install_global()
+
+    if not constants.LINUX:
+        # we don't install brew or colima-related stuff on linux
+        brew.install()
+        docker.install_global()
+        colima.install_global()
+        limactl.install_global()
+
     direnv.install()
-    colima.install_global()
-    limactl.install_global()
 
     os.makedirs(context["code_root"], exist_ok=True)
 
