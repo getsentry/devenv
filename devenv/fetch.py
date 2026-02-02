@@ -68,25 +68,24 @@ def fetch(
 
     if os.path.exists(reporoot):
         print(f"{reporoot} already exists")
-        return
+    else:
+        print(f"fetching {repo} into {reporoot}")
 
-    print(f"fetching {repo} into {reporoot}")
-
-    additional_args = (
-        # git@ clones forces the use of cloning through SSH which is what we want,
-        # though CI must clone open source repos via https (no git authentication)
-        (f"git@github.com:{repo}",)
-        if auth
-        else (
-            "--depth",
-            "1",
-            "--single-branch",
-            f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
-            f"https://github.com/{repo}",
+        additional_args = (
+            # git@ clones forces the use of cloning through SSH which is what we want,
+            # though CI must clone open source repos via https (no git authentication)
+            (f"git@github.com:{repo}",)
+            if auth
+            else (
+                "--depth",
+                "1",
+                "--single-branch",
+                f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
+                f"https://github.com/{repo}",
+            )
         )
-    )
 
-    proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
+        proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
 
     context_post_fetch = {
         "reporoot": reporoot,
@@ -97,6 +96,7 @@ def fetch(
     # optional post-fetch, meant for recommended but not required defaults
     fp = f"{reporoot}/devenv/post_fetch.py"
     if os.path.exists(fp):
+        print(f"running {fp}")
         spec = importlib.util.spec_from_file_location("post_fetch", fp)
 
         module = importlib.util.module_from_spec(spec)  # type: ignore
@@ -107,6 +107,7 @@ def fetch(
             print(f"warning! failed running {fp} (code {rc})")
 
     if sync:
+        print("running devenv sync")
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=reporoot)
 
 
