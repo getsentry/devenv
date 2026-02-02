@@ -7,7 +7,6 @@ import sys
 from collections.abc import Sequence
 
 from devenv import constants
-from devenv.lib import apt
 from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -36,33 +35,6 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         fetch(
             code_root, "getsentry/sentry", auth=constants.CI is None, sync=False
         )
-
-        if constants.DARWIN:
-            print("Installing sentry's brew dependencies...")
-            if constants.CI:
-                # Installing everything from brew takes too much time,
-                # and chromedriver cask flakes occasionally. Really all we need to
-                # set up the devenv is colima and docker-cli.
-                # This is also required for arm64 macOS GHA runners.
-                # We manage colima, so just need to install docker + qemu here.
-                proc.run(("brew", "install", "docker", "qemu"))
-            else:
-                proc.run(
-                    (f"{constants.homebrew_bin}/brew", "bundle"),
-                    cwd=f"{code_root}/sentry",
-                )
-        elif constants.LINUX:
-            if not constants.CI:
-                required_pkgs = ["watchman", "chromium-chromedriver"]
-                not_installed = apt.dpkgs_not_installed(required_pkgs)
-                if not_installed:
-                    raise SystemExit(
-                        f"Please install the following apt packages: {' '.join(required_pkgs)}"
-                    )
-        else:
-            print(
-                "Unsupported platform; assuming you have a docker cli and runtime installed."
-            )
 
         proc.run(
             (sys.executable, "-P", "-m", "devenv", "sync"),
