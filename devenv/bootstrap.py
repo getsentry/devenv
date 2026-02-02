@@ -104,8 +104,8 @@ Updating global tools (at {constants.root}/bin).
     )
     os.makedirs(f"{constants.root}/bin", exist_ok=True)
 
-    if not constants.LINUX:
-        # we don't install brew or colima-related stuff on linux
+    if constants.DARWIN:
+        # we only install brew and colima-related stuff on macos
         brew.install()
         docker.install_global()
         colima.install_global()
