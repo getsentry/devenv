@@ -6,10 +6,8 @@ import os
 import sys
 from collections.abc import Sequence
 
-from devenv.constants import CI
-from devenv.constants import DARWIN
-from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.constants import homebrew_bin
+from devenv import constants
+from devenv.lib import apt
 from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -35,11 +33,13 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "getsentry/sentry",
         "getsentry/getsentry",
     ]:
-        fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
+        fetch(
+            code_root, "getsentry/sentry", auth=constants.CI is None, sync=False
+        )
 
-        if DARWIN:
+        if constants.DARWIN:
             print("Installing sentry's brew dependencies...")
-            if CI:
+            if constants.CI:
                 # Installing everything from brew takes too much time,
                 # and chromedriver cask flakes occasionally. Really all we need to
                 # set up the devenv is colima and docker-cli.
@@ -48,12 +48,20 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
                 proc.run(("brew", "install", "docker", "qemu"))
             else:
                 proc.run(
-                    (f"{homebrew_bin}/brew", "bundle"),
+                    (f"{constants.homebrew_bin}/brew", "bundle"),
                     cwd=f"{code_root}/sentry",
                 )
+        elif constants.LINUX:
+            if not constants.CI:
+                required_pkgs = ["watchman", "chromium-chromedriver"]
+                not_installed = apt.dpkgs_not_installed(required_pkgs)
+                if not_installed:
+                    raise SystemExit(
+                        f"Please install the following apt packages: {' '.join(required_pkgs)}"
+                    )
         else:
             print(
-                "Not on MacOS; assuming you have a docker cli and runtime installed."
+                "Unsupported platform; assuming you have a docker cli and runtime installed."
             )
 
         proc.run(
@@ -61,7 +69,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
             cwd=f"{code_root}/sentry",
         )
 
-        if not CI and not EXTERNAL_CONTRIBUTOR:
+        if not constants.CI and not constants.EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
 
         print(
