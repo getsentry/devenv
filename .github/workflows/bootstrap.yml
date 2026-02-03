@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      DEVENV_FETCH_BRANCH: devenv-post-fetch-linux-apt-packages
+      DEVENV_FETCH_BRANCH: master
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
