@@ -82,9 +82,7 @@ def test_load_checks_test_tag() -> None:
 
 def test_load_checks_exclude_passing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        Repository(os.path.join(os.path.dirname(__file__))),
-        {"test"},
-        {"pass"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"test"}, {"pass"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 4
@@ -95,9 +93,7 @@ def test_load_checks_exclude_passing_tag() -> None:
 
 def test_load_checks_exclude_failing_tag() -> None:
     loaded_checks = doctor.load_checks(
-        Repository(os.path.join(os.path.dirname(__file__))),
-        {"test"},
-        {"fail"},
+        Repository(os.path.join(os.path.dirname(__file__))), {"test"}, {"fail"}
     )
     loaded_check_names = [check.name for check in loaded_checks]
     assert len(loaded_check_names) == 3
