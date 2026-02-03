@@ -54,9 +54,15 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         except RuntimeError:
             return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
 
+    if constants.LINUX and not (
+        shutil.which("docker") and shutil.which("dockerd")
+    ):
+        raise SystemExit("docker engine not installed; required on linux")
+
     # even though this is called before colima starts,
     # better to try and potentially (although unlikely) fail earlier rather than later
-    rosetta.ensure()
+    if constants.DARWIN:
+        rosetta.ensure()
 
     github.add_to_known_hosts()
 
