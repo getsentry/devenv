@@ -38,6 +38,8 @@ def _version(binpath: str) -> str:
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    print("!!! devenv-managed uv is deprecated! run `brew install uv` !!!")
+
     binroot = fs.ensure_binroot(reporoot)
     binpath = f"{binroot}/uv"
 
