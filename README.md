@@ -148,11 +148,11 @@ PATH_add "${PWD}/.devenv/bin"
 
 ### python
 
-We have support for, and we standardize on [uv](https://github.com/astral-sh/uv)
-to manage python environments.
+devenv does not manage uv installations, simply run `brew install uv`.
 
-More details (beyond a bare minimum example which is detailed here) about the standard is
-[here](https://www.notion.so/sentry/Standard-Spec-python-uv-2248b10e4b5d8045b8fff30f8b8b67ca).
+Guidelines on how to configure `uv` are [here](https://www.notion.so/sentry/Standard-Spec-python-uv-2248b10e4b5d8045b8fff30f8b8b67ca).
+
+To activate the virtualenv with direnv and run `uv sync` as part of `devenv sync`:
 
 `[reporoot]/.envrc`
 ```bash
@@ -164,18 +164,11 @@ PATH_add "${PWD}/.venv/bin"
 `[reporoot]/devenv/sync.py`
 ```py
 from devenv import constants
-from devenv.lib import config, proc, uv
+from devenv.lib import config, proc
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
     cfg = config.get_repo(reporoot)
-
-    uv.install(
-        cfg["uv"]["version"],
-        cfg["uv"][constants.SYSTEM_MACHINE],
-        cfg["uv"][f"{constants.SYSTEM_MACHINE}_sha256"],
-        reporoot,
-    )
 
     # reporoot/.venv is the default venv location
     print(f"syncing .venv ...")
@@ -184,39 +177,9 @@ def main(context: dict[str, str]) -> int:
     return 0
 ```
 
-We pin the uv version to avoid any surprises.
-(As opposed to a solution like `brew`, which always puts you on latest software.)
-If you want to update the version then you'll have to update these urls and checksums.
-
-`[reporoot]/devenv/config.ini`
-```ini
-[devenv]
-minimum_version = 1.22.1
-
-[uv]
-darwin_arm64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-aarch64-apple-darwin.tar.gz
-darwin_arm64_sha256 = 954d24634d5f37fa26c7af75eb79893d11623fc81b4de4b82d60d1ade4bfca22
-darwin_x86_64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-x86_64-apple-darwin.tar.gz
-darwin_x86_64_sha256 = ae755df53c8c2c1f3dfbee6e3d2e00be0dfbc9c9b4bdffdb040b96f43678b7ce
-linux_arm64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-aarch64-unknown-linux-gnu.tar.gz
-linux_arm64_sha256 = 27da35ef54e9131c2e305de67dd59a07c19257882c6b1f3cf4d8d5fbb8eaf4ca
-linux_x86_64 = https://github.com/astral-sh/uv/releases/download/0.8.2/uv-x86_64-unknown-linux-gnu.tar.gz
-linux_x86_64_sha256 = 6dcb28a541868a455aefb2e8d4a1283dd6bf888605a2db710f0530cec888b0ad
-# used for autoupdate
-# NOTE: if using uv-build as a build backend, you'll have to make sure the versions match
-version = 0.8.2
-```
-
-`[reporoot]/.python-version`
+Use `[reporoot]/.python-version` to pin a python version for uv:
 ```
 3.13.3
-```
-
-`[reporoot]/pyproject.toml`
-```
-[project]
-name = "foo"
-version = "0.0.0"
 ```
 
 
