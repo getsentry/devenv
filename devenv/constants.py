@@ -4,6 +4,7 @@ import importlib.metadata
 import os
 import platform
 import pwd
+import shutil
 import typing
 
 troubleshooting_help = """\
@@ -27,6 +28,8 @@ CI = os.getenv("CI")
 SYSTEM = platform.system().lower()
 MACHINE = platform.machine()
 DARWIN = SYSTEM == "darwin"
+# we only support apt-based linuxes
+LINUX = shutil.which("dpkg") is not None
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 SHELL_UNSET = "(SHELL unset)"
 DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))

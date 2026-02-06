@@ -113,8 +113,6 @@ def install_global() -> None:
         "darwin_x86_64_sha256": "1b621d4c9a57ff361811cf29754aafb0c28bc113c70011927af8d73c2c162186",
         "darwin_arm64": f"https://download.docker.com/mac/static/stable/aarch64/docker-{version}.tgz",
         "darwin_arm64_sha256": "9dae125282116146b06eb777c2125ddda6c0468c0b9ad6c72a82edbc6783a77b",
-        "linux_x86_64": f"https://download.docker.com/linux/static/stable/x86_64/docker-{version}.tgz",
-        "linux_x86_64_sha256": "9b4f6fe406e50f9085ee474c451e2bb5adb119a03591f467922d3b4e2ddf31d3",
     }
 
     version_buildx = "v0.22.0"
@@ -123,8 +121,6 @@ def install_global() -> None:
         "darwin_x86_64_sha256": "5221ad6b8acd2283f8fbbeebc79ae4b657e83519ca1c1e4cfbb9405230b3d933",
         "darwin_arm64": f"https://github.com/docker/buildx/releases/download/{version_buildx}/buildx-{version_buildx}.darwin-arm64",
         "darwin_arm64_sha256": "5898c338abb1f673107bc087997dc3cb63b4ea66d304ce4223472f57bd8d616e",
-        "linux_x86_64": f"https://github.com/docker/buildx/releases/download/{version_buildx}/buildx-{version_buildx}.linux-amd64",
-        "linux_x86_64_sha256": "805195386fba0cea5a1487cf0d47da82a145ea0a792bd3fb477583e2dbcdcc2f",
     }
 
     binroot = f"{root}/bin"

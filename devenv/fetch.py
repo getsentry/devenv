@@ -6,10 +6,7 @@ import os
 import sys
 from collections.abc import Sequence
 
-from devenv.constants import CI
-from devenv.constants import DARWIN
-from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.constants import homebrew_bin
+from devenv import constants
 from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -35,33 +32,16 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         "getsentry/sentry",
         "getsentry/getsentry",
     ]:
-        fetch(code_root, "getsentry/sentry", auth=CI is None, sync=False)
-
-        if DARWIN:
-            print("Installing sentry's brew dependencies...")
-            if CI:
-                # Installing everything from brew takes too much time,
-                # and chromedriver cask flakes occasionally. Really all we need to
-                # set up the devenv is colima and docker-cli.
-                # This is also required for arm64 macOS GHA runners.
-                # We manage colima, so just need to install docker + qemu here.
-                proc.run(("brew", "install", "docker", "qemu"))
-            else:
-                proc.run(
-                    (f"{homebrew_bin}/brew", "bundle"),
-                    cwd=f"{code_root}/sentry",
-                )
-        else:
-            print(
-                "Not on MacOS; assuming you have a docker cli and runtime installed."
-            )
+        fetch(
+            code_root, "getsentry/sentry", auth=constants.CI is None, sync=False
+        )
 
         proc.run(
             (sys.executable, "-P", "-m", "devenv", "sync"),
             cwd=f"{code_root}/sentry",
         )
 
-        if not CI and not EXTERNAL_CONTRIBUTOR:
+        if not constants.CI and not constants.EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
 
         print(
@@ -88,25 +68,24 @@ def fetch(
 
     if os.path.exists(reporoot):
         print(f"{reporoot} already exists")
-        return
+    else:
+        print(f"fetching {repo} into {reporoot}")
 
-    print(f"fetching {repo} into {reporoot}")
-
-    additional_args = (
-        # git@ clones forces the use of cloning through SSH which is what we want,
-        # though CI must clone open source repos via https (no git authentication)
-        (f"git@github.com:{repo}",)
-        if auth
-        else (
-            "--depth",
-            "1",
-            "--single-branch",
-            f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
-            f"https://github.com/{repo}",
+        additional_args = (
+            # git@ clones forces the use of cloning through SSH which is what we want,
+            # though CI must clone open source repos via https (no git authentication)
+            (f"git@github.com:{repo}",)
+            if auth
+            else (
+                "--depth",
+                "1",
+                "--single-branch",
+                f"--branch={os.environ['DEVENV_FETCH_BRANCH']}",
+                f"https://github.com/{repo}",
+            )
         )
-    )
 
-    proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
+        proc.run(("git", "-C", coderoot, "clone", *additional_args), exit=True)
 
     context_post_fetch = {
         "reporoot": reporoot,
@@ -117,6 +96,7 @@ def fetch(
     # optional post-fetch, meant for recommended but not required defaults
     fp = f"{reporoot}/devenv/post_fetch.py"
     if os.path.exists(fp):
+        print(f"running {fp}")
         spec = importlib.util.spec_from_file_location("post_fetch", fp)
 
         module = importlib.util.module_from_spec(spec)  # type: ignore
@@ -127,6 +107,7 @@ def fetch(
             print(f"warning! failed running {fp} (code {rc})")
 
     if sync:
+        print("running devenv sync")
         proc.run((sys.executable, "-P", "-m", "devenv", "sync"), cwd=reporoot)
 
 

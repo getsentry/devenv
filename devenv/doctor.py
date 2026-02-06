@@ -14,6 +14,7 @@ from typing import Dict
 from typing import List
 
 import devenv.checks
+from devenv import constants
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 from devenv.lib.repository import Repository
@@ -78,7 +79,9 @@ class Check:
         super().__init__()
 
 
-def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
+def load_checks(
+    repo: Repository, match_tags: set[str], exclude_tags: set[str]
+) -> List[Check]:
     """
     Load all checks from the checks directory.
     Optionally filter by tags.
@@ -104,11 +107,15 @@ def load_checks(repo: Repository, match_tags: set[str]) -> List[Check]:
             continue
         if match_tags and not check.tags.issuperset(match_tags):
             continue
+        if check.tags & exclude_tags:
+            continue
         checks.append(check)
     return checks
 
 
-def load_builtin_checks(match_tags: set[str]) -> List[Check]:
+def load_builtin_checks(
+    match_tags: set[str], exclude_tags: set[str]
+) -> List[Check]:
     """
     Loads builtin checks.
     Optionally filter by tags.
@@ -125,6 +132,8 @@ def load_builtin_checks(match_tags: set[str]) -> List[Check]:
             print(f"⚠️ Skipping {module_name}: {e}")
             continue
         if match_tags and not check.tags.issuperset(match_tags):
+            continue
+        if check.tags & exclude_tags:
             continue
         checks.append(check)
     return checks
@@ -194,22 +203,32 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         help="Used to match a subset of checks.",
     )
     parser.add_argument(
+        "--exclude-tag",
+        type=str,
+        action="append",
+        help="Used to unmatch checks.",
+    )
+    parser.add_argument(
         "--check-only", action="store_true", help="Do not run fixers."
     )
     args = parser.parse_args(argv)
 
     match_tags: set[str] = set(args.tag if args.tag else ())
+    exclude_tags: set[str] = set(args.exclude_tag if args.exclude_tag else ())
+
+    if not constants.DARWIN:
+        exclude_tags.add("colima")
 
     # First, we load builtin checks. These are not repo specific.
-    checks = load_builtin_checks(match_tags)
+    checks = load_builtin_checks(match_tags, exclude_tags)
 
     # Then we load any repo specific checks if any.
     repo = context.get("repo")
     if repo is not None:
-        checks.extend(load_checks(repo, match_tags))
+        checks.extend(load_checks(repo, match_tags, exclude_tags))
 
     if not checks:
-        print(f"No checks found for tags: {args.tag}")
+        print("No checks found.")
         return 1
 
     # We run every check on a separate thread, aggregate the results,

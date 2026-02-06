@@ -37,10 +37,7 @@ def _install(url: str, sha256: str, into: str) -> None:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
 
         # the archive from homebrew has a lima/version prefix
-        if url.startswith("https://ghcr.io/v2/homebrew"):
-            archive.unpack_strip_n(archive_file, tmpd, n=2)
-        else:
-            archive.unpack(archive_file, tmpd)
+        archive.unpack_strip_n(archive_file, tmpd, n=2)
 
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
@@ -75,10 +72,6 @@ def install_global() -> None:
         # arm64_sonoma
         "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
         "darwin_arm64_sha256": "8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
-        # on linux we use github releases since most people are probably not using
-        # linuxbrew and the go binary in homebrew links to linuxbrew's ld.so
-        "linux_x86_64": f"https://github.com/lima-vm/lima/releases/download/v{version}/lima-{version}-Linux-x86_64.tar.gz",
-        "linux_x86_64_sha256": "b109cac29569a4aacab01c588f922ea6c7e2ef06ce9260bbc4c382e475bc3b98",
     }
 
     binroot = f"{root}/bin"

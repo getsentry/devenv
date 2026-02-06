@@ -6,8 +6,8 @@ from devenv.lib import proc
 from devenv.lib_check.types import checker
 from devenv.lib_check.types import fixer
 
-tags: set[str] = {"builtin"}
-name = "docker desktop shouldn't be running"
+tags: set[str] = {"builtin", "colima"}
+name = "docker desktop shouldn't be running if you're trying to use colima"
 
 
 def docker_desktop_is_running() -> bool:
@@ -20,7 +20,7 @@ def check() -> tuple[bool, str]:
     if docker_desktop_is_running():
         return (
             False,
-            "Docker Desktop is running. We don't support it, and it conflicts with colima.",
+            "Docker Desktop is running. It cannot be running at the same time as colima.",
         )
 
     return True, ""

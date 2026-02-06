@@ -18,7 +18,7 @@ def check() -> tuple[bool, str]:
         return (
             False,
             f"You have less than 10 GiB disk free ({disk_gib_free} GiB free). "
-            "You might start to encounter various problems when using colima.",
+            "You might start to encounter various problems when using docker.",
         )
 
     return True, ""

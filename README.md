@@ -85,7 +85,7 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
     - `direnv`
       - we currently rely on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH
       - see [examples](#examples) for .envrc suggestions
-    - global tools: `docker` (cli), `colima`
+    - global tools (macos only; you are otherwise expected to install docker yourself): `docker` (cli), `colima`
 
 
 ### runtime
