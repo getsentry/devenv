@@ -350,8 +350,9 @@ version = v1.3.0
 
 ## develop
 
-We use `tox`. The easiest way to run devenv locally is just using the tox venv's executable:
+We use `uv`. The easiest way to run devenv locally:
 
 ```
-~/code/sentry $  ~/code/devenv/.tox/py311/bin/devenv sync
+~/code/devenv $ uv sync
+~/code/sentry $ uv run --project ~/code/devenv devenv sync
 ```

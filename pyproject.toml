@@ -12,8 +12,7 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-# only tested on 3.11+, this is so internal pypi is happy
-requires-python = ">=3.10"
+requires-python = "==3.11.4"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -77,3 +76,17 @@ reportMissingParameterType = "none"
 reportUnknownParameterType = "error"
 #### don't flag missing typestubs, as long as everything is typed
 ###reportMissingTypeStubs = false
+
+[dependency-groups]
+dev = [
+  "black",
+  "coverage",
+  "covdefaults",
+  "flake8",
+  "mypy",
+  "pre-commit",
+  "pytest",
+  "re-assert",
+  "reorder-python-imports",
+  "shellcheck-py",
+]
