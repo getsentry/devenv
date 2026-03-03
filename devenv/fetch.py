@@ -44,15 +44,13 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
         if not constants.CI and not constants.EXTERNAL_CONTRIBUTOR:
             fetch(code_root, "getsentry/getsentry")
 
-        print(
-            f"""
+        print(f"""
 
     All done! Please close this terminal window and start a fresh one.
     Sentry has been set up in {code_root}/sentry.
     cd into it and you should be able to run `sentry devserver`.
 
-"""
-        )
+""")
     else:
         fetch(code_root, args.repo)
 

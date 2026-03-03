@@ -67,14 +67,12 @@ def fix() -> tuple[bool, str]:
             stdout=True,
         )
     except RuntimeError as e:
-        print(
-            f"""
+        print(f"""
 failed to restart the vm's resolved:
 {e}
 
 we're going to try restarting colima
-"""
-        )
+""")
         try:
             proc.run(
                 (sys.executable, "-P", "-m", "devenv", "colima", "restart")

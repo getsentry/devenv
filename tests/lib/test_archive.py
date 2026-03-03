@@ -122,7 +122,7 @@ def tar4(tmp_path: pathlib.Path) -> pathlib.Path:
         # /foo
         # /foo/bar
         for member in tarf.getmembers():
-            member.path = f"/{member.path}"
+            member.name = f"/{member.name}"
 
     return tar
 

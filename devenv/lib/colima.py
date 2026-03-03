@@ -6,15 +6,14 @@ import shutil
 import tempfile
 from enum import Enum
 
+from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import home
 from devenv.constants import root
-from devenv.constants import SYSTEM_MACHINE
 from devenv.lib import archive
 from devenv.lib import docker
 from devenv.lib import fs
 from devenv.lib import proc
 from devenv.lib import rosetta
-
 
 ColimaStatus = Enum("ColimaStatus", ("UP", "DOWN", "UNHEALTHY"))
 
@@ -174,7 +173,12 @@ def start(restart: bool = False) -> ColimaStatus:
         raise SystemExit("failed to determine memsize_bytes")
     memsize_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
 
-    args = ["--cpu", f"{cpus//2}", "--memory", f"{memsize_bytes//(2*1024**3)}"]
+    args = [
+        "--cpu",
+        f"{cpus // 2}",
+        "--memory",
+        f"{memsize_bytes // (2 * 1024**3)}",
+    ]
     if platform.machine() == "arm64":
         args = [*args, "--vm-type=vz", "--vz-rosetta", "--mount-type=virtiofs"]
 

@@ -28,9 +28,10 @@ def test_run_without_stdout() -> None:
 def test_run_with_debug() -> None:
     cmd = ("echo", "Hello, World!")
 
-    with patch("devenv.lib.proc.constants.DEBUG", True), patch(
-        "devenv.lib.proc.xtrace"
-    ) as mock_xtrace:
+    with (
+        patch("devenv.lib.proc.constants.DEBUG", True),
+        patch("devenv.lib.proc.xtrace") as mock_xtrace,
+    ):
         run(cmd)
 
     mock_xtrace.assert_called_once_with(cmd)

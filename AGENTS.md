@@ -24,9 +24,9 @@ With coverage: `uv run coverage erase && uv run coverage run -m pytest && uv run
 ## Code Style
 
 - Python 3.11+
-- Black formatter, 80 char line length
+- Ruff formatter/linter, 80 char line length
 - Strict mypy/pyright typing
-- Run `black .` and `mypy .` before committing
+- Run `ruff check --fix .`, `ruff format .`, and `mypy .` before committing
 
 ## Project Structure
 

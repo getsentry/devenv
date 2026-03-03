@@ -7,7 +7,6 @@ from devenv.constants import CI
 from devenv.constants import root
 from devenv.lib import archive
 
-
 # Forces download of the python interpreter even if the system interpreter is
 # compatible with the requested version. By default, devenv uses system python
 # on CI.

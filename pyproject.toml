@@ -29,9 +29,19 @@ dependencies = [
 [tool.setuptools.packages]
 find = {}
 
-[tool.black]
+[tool.ruff]
+target-version = "py311"
 line-length = 80
-target-version = ['py311']
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.format]
 skip-magic-trailing-comma = true
 
 
@@ -79,14 +89,12 @@ reportUnknownParameterType = "error"
 
 [dependency-groups]
 dev = [
-  "black",
   "coverage",
   "covdefaults",
-  "flake8",
   "mypy",
   "pre-commit",
   "pytest",
   "re-assert",
-  "reorder-python-imports",
+  "ruff",
   "shellcheck-py",
 ]

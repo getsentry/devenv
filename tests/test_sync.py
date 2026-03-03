@@ -17,14 +17,12 @@ def test(tmp_path: str) -> None:
     with open(f"{reporoot}/devenv/config.ini", "w") as f:
         pass
     with open(f"{reporoot}/devenv/sync.py", "w") as f:
-        f.write(
-            """
+        f.write("""
 import devenv
 
 def main(context: dict[str, str]) -> int:
     return 123
-"""
-        )
+""")
 
     # devenv sync should be able to be run from places other than reporoot...
     os.chdir(f"{reporoot}/devenv")

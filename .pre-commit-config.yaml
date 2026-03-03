@@ -1,20 +1,14 @@
 repos:
   - repo: local
     hooks:
-      - id: reorder-python-imports
-        name: reorder-python-imports
-        entry: .venv/bin/reorder-python-imports
+      - id: ruff-check
+        name: ruff check
+        entry: .venv/bin/ruff check --fix
         language: system
         types: [python]
-        args: [--py311-plus, --add-import, "from __future__ import annotations"]
-      - id: black
-        name: black
-        entry: .venv/bin/black
-        language: system
-        types: [python]
-      - id: flake8
-        name: flake8
-        entry: .venv/bin/flake8
+      - id: ruff-format
+        name: ruff format
+        entry: .venv/bin/ruff format
         language: system
         types: [python]
       - id: mypy

@@ -7,9 +7,9 @@ import subprocess
 import tempfile
 from threading import Thread
 
+from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import home
 from devenv.constants import root
-from devenv.constants import SYSTEM_MACHINE
 from devenv.lib import archive
 from devenv.lib import proc
 

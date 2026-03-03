@@ -30,11 +30,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     # This is so that people don't have to run update twice.
     if args.post_update:
         # Mirror this in bootstrap.py.
-        print(
-            f"""\
+        print(f"""\
 Updating global tools (at {constants.root}/bin).
-"""
-        )
+""")
         os.makedirs(f"{constants.root}/bin", exist_ok=True)
 
         if constants.DARWIN:
@@ -70,12 +68,10 @@ Updating global tools (at {constants.root}/bin).
             },
         )
 
-        print(
-            f"""\
+        print(f"""\
 
 Global devenv at {constants.root}/bin/devenv updated.
-"""
-        )
+""")
 
     # install-devenv.sh originally creates this symlink
     # but we should make sure it exists no matter what
@@ -88,11 +84,9 @@ Global devenv at {constants.root}/bin/devenv updated.
     proc.run((sys.executable, "-P", "-m", "devenv", "update", "--post-update"))
 
     if not is_global_devenv:
-        print(
-            """\
+        print("""\
 To update the local devenv, you'll want to run `devenv sync`.
-"""
-        )
+""")
 
     return 0
 

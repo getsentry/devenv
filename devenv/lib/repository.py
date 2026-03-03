@@ -46,8 +46,7 @@ class Repository:
         parsed_minimum_version = tuple(map(int, minimum_version.split(".")))
 
         if parsed_version < parsed_minimum_version:
-            raise SystemExit(
-                f"""
+            raise SystemExit(f"""
 Your devenv version ({version}) doesn't meet the
 minimum version ({minimum_version}) defined in the repo config.
 
@@ -56,5 +55,4 @@ and use it to run this repo's sync.
 
 {constants.root}/bin/devenv update {minimum_version}
 {constants.root}/bin/devenv sync
-"""
-            )
+""")
