@@ -68,6 +68,8 @@ def uninstall(binroot: str) -> None:
 
 
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
+    print("!!! devenv-managed gcloud is deprecated! run `brew install gcloud` !!!")
+
     binroot = fs.ensure_binroot(reporoot)
 
     if (
