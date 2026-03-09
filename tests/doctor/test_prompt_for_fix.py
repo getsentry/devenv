@@ -8,7 +8,6 @@ import pytest
 from devenv import doctor
 from tests.doctor.devenv.checks import passing_check
 
-
 prompts_for_fix_yes: list[str] = [
     "y",
     "Y",

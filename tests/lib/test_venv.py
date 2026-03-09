@@ -56,9 +56,13 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
 
     url, sha256 = config.get_python(repo.path, python_version)
 
-    with patch("devenv.lib.venv.proc.run") as mock_run, patch(
-        "devenv.lib.venv.pythons.get", return_value="python"
-    ) as mock_pythons_get, patch("shutil.rmtree"):
+    with (
+        patch("devenv.lib.venv.proc.run") as mock_run,
+        patch(
+            "devenv.lib.venv.pythons.get", return_value="python"
+        ) as mock_pythons_get,
+        patch("shutil.rmtree"),
+    ):
         venv.ensure(venv_dir, python_version, url, sha256)
         assert mock_pythons_get.mock_calls == [
             call(python_version, url, sha256)

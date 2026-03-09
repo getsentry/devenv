@@ -12,8 +12,7 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-# only tested on 3.11+, this is so internal pypi is happy
-requires-python = ">=3.10"
+requires-python = "==3.11.4"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -30,9 +29,19 @@ dependencies = [
 [tool.setuptools.packages]
 find = {}
 
-[tool.black]
+[tool.ruff]
+target-version = "py311"
 line-length = 80
-target-version = ['py311']
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.format]
 skip-magic-trailing-comma = true
 
 
@@ -77,3 +86,15 @@ reportMissingParameterType = "none"
 reportUnknownParameterType = "error"
 #### don't flag missing typestubs, as long as everything is typed
 ###reportMissingTypeStubs = false
+
+[dependency-groups]
+dev = [
+  "coverage",
+  "covdefaults",
+  "mypy",
+  "pre-commit",
+  "pytest",
+  "re-assert",
+  "ruff",
+  "shellcheck-py",
+]

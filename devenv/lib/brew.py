@@ -4,9 +4,9 @@ import os
 from shutil import which
 
 from devenv.constants import DARWIN
+from devenv.constants import INTEL_MAC
 from devenv.constants import homebrew_bin
 from devenv.constants import homebrew_repo
-from devenv.constants import INTEL_MAC
 from devenv.constants import user
 from devenv.lib import fs
 from devenv.lib import proc

@@ -10,26 +10,23 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ## Setup
 
 ```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.in -e .
+uv sync
 ```
 
 ## Running Tests
 
 ```bash
-source .venv/bin/activate
-pytest tests/
+uv run pytest tests/
 ```
 
-Or with tox: `tox -e py311`
+With coverage: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
 
 ## Code Style
 
 - Python 3.11+
-- Black formatter, 80 char line length
+- Ruff formatter/linter, 80 char line length
 - Strict mypy/pyright typing
-- Run `black .` and `mypy .` before committing
+- Run `ruff check --fix .`, `ruff format .`, and `mypy .` before committing
 
 ## Project Structure
 

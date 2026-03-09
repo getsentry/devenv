@@ -30,8 +30,7 @@ def install() -> None:
     machine = "arm64" if MACHINE == "arm64" else "amd64"
     name = f"direnv.{sys.platform}-{machine}"
     url = (
-        "https://github.com/direnv/direnv/releases/download"
-        f"/v{_version}/{name}"
+        f"https://github.com/direnv/direnv/releases/download/v{_version}/{name}"
     )
 
     archive.download(url, _sha256[name], dest=direnv_path)

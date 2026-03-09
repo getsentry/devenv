@@ -34,6 +34,6 @@ def test_filter_failing_checks_no_duplicate_checks() -> None:
         {
             first_check: (True, ""),
             second_check: (False, ""),
-            second_check: (False, ""),
+            second_check: (False, ""),  # noqa: F602
         }
     ) == [second_check]

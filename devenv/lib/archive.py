@@ -103,15 +103,15 @@ def strip1(
     members: Sequence[tarfile.TarInfo],
 ) -> Generator[tarfile.TarInfo, None, None]:
     for member in members:
-        i = member.path.find("/")
+        i = member.name.find("/")
         if i == -1:
             continue
         elif i == 0:
-            i = member.path[1:].find("/") + 1
+            i = member.name[1:].find("/") + 1
             if i == 0:
                 continue
 
-        member.path = member.path[i + 1 :]  # noqa: E203
+        member.name = member.name[i + 1 :]  # noqa: E203
 
         # hardlink target (linkname) is relative to the root of the
         # archive and must also be stripped
@@ -135,7 +135,7 @@ def unpack(
 
         if strip1_new_prefix:
             for member in members:
-                member.path = f"{strip1_new_prefix}/{member.path}"
+                member.name = f"{strip1_new_prefix}/{member.name}"
 
         tarf.extractall(into, members=members, filter="tar")
 
@@ -150,6 +150,6 @@ def unpack_strip_n(path: str, into: str, n: int, new_prefix: str = "") -> None:
 
         if new_prefix:
             for member in members:
-                member.path = f"{new_prefix}/{member.path}"
+                member.name = f"{new_prefix}/{member.name}"
 
         tarf.extractall(into, members=members, filter="tar")

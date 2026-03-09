@@ -97,6 +97,7 @@ def main() -> ExitCode:
         raise SystemExit("You shouldn't be running devenv as root.")
 
     import sys
+
     import sentry_sdk
 
     sentry_sdk.init(

@@ -83,8 +83,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
             return 1
         pubkey = github.generate_and_configure_ssh_keypair()
         if not constants.CI:
-            input(
-                f"""
+            input(f"""
 Failed to authenticate with an ssh key to GitHub.
 We've generated and configured one for you at ~/.ssh/sentry-github.
 Visit https://github.com/settings/ssh/new and add the following Authentication key:
@@ -95,19 +94,16 @@ Then, you need to go to https://github.com/settings/keys, find your key,
 and click Configure SSO, for the getsentry organization.
 
 When done, hit ENTER to continue.
-"""
-            )
+""")
         while not github.check_ssh_access():
             input(
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
             )
 
     # Mirror this in bootstrap.py.
-    print(
-        f"""\
+    print(f"""\
 Updating global tools (at {constants.root}/bin).
-"""
-    )
+""")
     os.makedirs(f"{constants.root}/bin", exist_ok=True)
 
     if constants.DARWIN:
@@ -121,14 +117,12 @@ Updating global tools (at {constants.root}/bin).
 
     os.makedirs(context["code_root"], exist_ok=True)
 
-    print(
-        """
+    print("""
 All done! Please close this terminal window and start a fresh one.
 
 Afterward, start working on your project using the devenv fetch command
 e.g., devenv fetch sentry or devenv fetch ops
-"""
-    )
+""")
 
     return 0
 

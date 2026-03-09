@@ -36,7 +36,8 @@ def shellrc() -> str:
 
 
 def gitroot(cd: str = "") -> str:
-    from os.path import normpath, join
+    from os.path import join
+    from os.path import normpath
 
     if not cd:
         cd = os.getcwd()
@@ -74,11 +75,9 @@ def ensure_binroot(reporoot: str) -> str:
     os.makedirs(binroot, exist_ok=True)
     if not os.path.exists(f"{binroot}/.gitignore"):
         with open(f"{binroot}/.gitignore", "w") as f:
-            f.write(
-                """*
+            f.write("""*
 # automatically written by devenv ensure_binroot! feel free to modify.
-"""
-            )
+""")
     return binroot
 
 
