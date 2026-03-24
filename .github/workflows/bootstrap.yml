@@ -26,7 +26,7 @@ jobs:
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       # devenv no longer manages uv; linux users need to install it themselves
       - uses: astral-sh/setup-uv@884ad927a57e558e7a70b92f2bccf9198a4be546 # v6
@@ -52,7 +52,7 @@ jobs:
       SNTY_DEVENV_BRANCH:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: remove homebrew
         run: |
           sudo rm -rf \
