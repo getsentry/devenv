@@ -10,7 +10,7 @@ manage a repository's dev environment.
 
 Are you a Sentry employee? Make sure your GitHub account has been added to a [`getsentry/engineering` team](https://github.com/orgs/getsentry/teams/engineering). If not, open an IT Ticket before continuing.
 
-Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable.
+Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable. You'll need this set for both `devenv bootstrap` and `devenv fetch`.
 
 ## install
 
