@@ -57,7 +57,7 @@ def uninstall(binroot: str) -> None:
     for d in (f"{binroot}/google-cloud-sdk",):
         shutil.rmtree(d, ignore_errors=True)
 
-    for fp in (f"{binroot}/gcloud", f"{binroot}/gsutil"):
+    for fp in (f"{binroot}/gcloud", f"{binroot}/gsutil", f"{binroot}/docker-credential-gcloud"):
         try:
             os.remove(fp)
         except FileNotFoundError:
