@@ -9,6 +9,17 @@ from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
 
+# Wrapper scripts written by _install().
+_WRAPPER_BINS = ("gcloud", "gsutil", "docker-credential-gcloud")
+# All binaries we own in binroot: wrapper scripts + the gke-gcloud-auth-plugin symlink.
+_ALL_BINS = _WRAPPER_BINS + ("gke-gcloud-auth-plugin",)
+
+_WRAPPER_SCRIPT = """#!/bin/sh
+export CLOUDSDK_PYTHON={root}/python/bin/python3 \
+       PATH={into}/google-cloud-sdk/bin:"${{PATH}}"
+exec {name} "$@"
+"""
+
 
 def _install(url: str, sha256: str, into: str) -> None:
     os.makedirs(into, exist_ok=True)
@@ -24,46 +35,20 @@ def _install(url: str, sha256: str, into: str) -> None:
     # change to be more flexible in the future.
     # We run gcloud on 3.11 in gocd prod and it's been great,
     # and we may as well reuse devenv's internal python.
-    fs.write_script(
-        f"{into}/gcloud",
-        """#!/bin/sh
-export CLOUDSDK_PYTHON={root}/python/bin/python3 \
-       PATH={into}/google-cloud-sdk/bin:"${{PATH}}"
-exec gcloud "$@"
-""",
-        shell_escape={"root": root, "into": into},
-    )
-    fs.write_script(
-        f"{into}/gsutil",
-        """#!/bin/sh
-export CLOUDSDK_PYTHON={root}/python/bin/python3 \
-       PATH={into}/google-cloud-sdk/bin:"${{PATH}}"
-exec gsutil "$@"
-""",
-        shell_escape={"root": root, "into": into},
-    )
-    fs.write_script(
-        f"{into}/docker-credential-gcloud",
-        """#!/bin/sh
-export CLOUDSDK_PYTHON={root}/python/bin/python3 \
-       PATH={into}/google-cloud-sdk/bin:"${{PATH}}"
-exec docker-credential-gcloud "$@"
-""",
-        shell_escape={"root": root, "into": into},
-    )
+    for name in _WRAPPER_BINS:
+        fs.write_script(
+            f"{into}/{name}",
+            _WRAPPER_SCRIPT,
+            shell_escape={"root": root, "into": into, "name": name},
+        )
 
 
 def uninstall(binroot: str) -> None:
-    for d in (f"{binroot}/google-cloud-sdk",):
-        shutil.rmtree(d, ignore_errors=True)
+    shutil.rmtree(f"{binroot}/google-cloud-sdk", ignore_errors=True)
 
-    for fp in (
-        f"{binroot}/gcloud",
-        f"{binroot}/gsutil",
-        f"{binroot}/docker-credential-gcloud",
-    ):
+    for name in _ALL_BINS:
         try:
-            os.remove(fp)
+            os.remove(f"{binroot}/{name}")
         except FileNotFoundError:
             # it's better to do this than to guard with
             # os.path.exists(fp) because if it's an invalid or circular
@@ -78,13 +63,9 @@ def install(version: str, url: str, sha256: str, reporoot: str) -> None:
 
     binroot = fs.ensure_binroot(reporoot)
 
-    if (
-        shutil.which("gcloud", path=binroot) == f"{binroot}/gcloud"
-        and shutil.which("gsutil", path=binroot) == f"{binroot}/gsutil"
-        and shutil.which("gke-gcloud-auth-plugin", path=binroot)
-        == f"{binroot}/gke-gcloud-auth-plugin"
-        and shutil.which("docker-credential-gcloud", path=binroot)
-        == f"{binroot}/docker-credential-gcloud"
+    if all(
+        shutil.which(name, path=binroot) == f"{binroot}/{name}"
+        for name in _ALL_BINS
     ):
         with open(f"{binroot}/google-cloud-sdk/VERSION", "r") as f:
             installed_version = f.read().strip()
