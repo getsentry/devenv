@@ -21,6 +21,7 @@ def _install(url: str, sha256: str, into: str) -> None:
         # these are on the same fs and can be atomically moved too
         os.replace(f"{tmpd}/terraform", f"{TENV_ROOT}/bin/terraform")
         os.replace(f"{tmpd}/tf", f"{TENV_ROOT}/bin/tf")
+        os.replace(f"{tmpd}/tofu", f"{TENV_ROOT}/bin/tofu")
         os.replace(f"{tmpd}/terragrunt", f"{TENV_ROOT}/bin/terragrunt")
         os.replace(f"{tmpd}/tenv", f"{TENV_ROOT}/bin/tenv")
 
@@ -47,6 +48,14 @@ exec {TENV_ROOT}/bin/terraform "$@"
         shell_escape={"TENV_ROOT": TENV_ROOT},
     )
     fs.write_script(
+        f"{into}/tofu",
+        """#!/bin/sh
+export TENV_ROOT={TENV_ROOT}
+exec {TENV_ROOT}/bin/tofu "$@"
+""",
+        shell_escape={"TENV_ROOT": TENV_ROOT},
+    )
+    fs.write_script(
         f"{into}/terragrunt",
         """#!/bin/sh
 export TENV_ROOT={TENV_ROOT}
@@ -63,6 +72,7 @@ def uninstall(binroot: str) -> None:
     for fp in (
         f"{binroot}/tenv",
         f"{binroot}/terraform",
+        f"{binroot}/tofu",
         f"{binroot}/terragrunt",
     ):
         try:
