@@ -24,7 +24,7 @@ _sha256 = {
 def install() -> None:
     direnv_path = f"{root}/bin/direnv"
 
-    if shutil.which("direnv") == direnv_path:
+    if shutil.which("direnv") is not None:
         return
 
     machine = "arm64" if MACHINE == "arm64" else "amd64"
