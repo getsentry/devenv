@@ -2,10 +2,9 @@
 
 ## Commit Attribution
 
-AI-generated commits MUST include:
-```
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-```
+AI-generated commits MUST include a `Co-Authored-By` trailer naming the
+actual model and version that contributed to the commit, with an appropriate
+email address for that model.
 
 ## Setup
 
