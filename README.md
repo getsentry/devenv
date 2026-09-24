@@ -36,7 +36,8 @@ This is intended for initial setup of a new machine.
 
 `devenv fetch [repository name]`
 
-Any repository on github in the form of `[org]/[reponame]`
+Any repository on GitHub in the form of `[org]/[reponame]`. If the organization
+is omitted, it defaults to `getsentry`.
 
 Repositories are cloned to a "coderoot" directory which is specified in the [global configuration](#configuration).
 
