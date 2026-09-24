@@ -1,12 +1,5 @@
 # Agent Instructions
 
-## Commit Attribution
-
-AI-generated commits MUST include:
-```
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-```
-
 ## Setup
 
 ```bash
