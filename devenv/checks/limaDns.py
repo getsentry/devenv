@@ -47,6 +47,26 @@ except socket.gaierror as e:
     return True, ""
 
 
+def _resolver_service() -> str:
+    # VMs created since colima 0.9 use dnsmasq instead of systemd-resolved
+    try:
+        proc.run(
+            (
+                "colima",
+                "exec",
+                "--",
+                "systemctl",
+                "is-active",
+                "--quiet",
+                "dnsmasq.service",
+            ),
+            stdout=True,
+        )
+    except RuntimeError:
+        return "systemd-resolved.service"
+    return "dnsmasq.service"
+
+
 @fixer
 def fix() -> tuple[bool, str]:
     status = colima.start()
@@ -62,13 +82,13 @@ def fix() -> tuple[bool, str]:
                 "sudo",
                 "systemctl",
                 "restart",
-                "systemd-resolved.service",
+                _resolver_service(),
             ),
             stdout=True,
         )
     except RuntimeError as e:
         print(f"""
-failed to restart the vm's resolved:
+failed to restart the vm's dns resolver:
 {e}
 
 we're going to try restarting colima

@@ -10,9 +10,19 @@ from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import proc
 
+# lima >= 2 looks for its guest agents and drivers relative to limactl,
+# in ../share/lima and ../libexec/lima
+_DATA_DIRS = ("share/lima", "libexec/lima")
+
 
 def uninstall(binroot: str) -> None:
-    for d in (f"{home}/.lima",):
+    prefix = os.path.dirname(binroot)
+    for d in (
+        f"{home}/.lima",
+        *(f"{prefix}/{d}" for d in _DATA_DIRS),
+        # lima < 2 kept its templates and guest agents next to limactl
+        f"{binroot}/templates",
+    ):
         shutil.rmtree(d, ignore_errors=True)
 
     for fp in (
@@ -20,7 +30,6 @@ def uninstall(binroot: str) -> None:
         f"{binroot}/limactl",
         f"{binroot}/lima-guestagent.Linux-aarch64",
         f"{binroot}/lima-guestagent.Linux-x86_64",
-        f"{binroot}/templates/default.yaml",
     ):
         try:
             os.remove(fp)
@@ -32,46 +41,28 @@ def uninstall(binroot: str) -> None:
 
 
 def _install(url: str, sha256: str, into: str) -> None:
+    prefix = os.path.dirname(into)
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
-
-        # the archive from homebrew has a lima/version prefix
-        archive.unpack_strip_n(archive_file, tmpd, n=2)
+        archive.unpack(archive_file, tmpd)
 
         # the archive was atomically placed into tmpd so
         # these are on the same fs and can be atomically moved too
+        for d in _DATA_DIRS:
+            os.makedirs(os.path.dirname(f"{prefix}/{d}"), exist_ok=True)
+            os.replace(f"{tmpd}/{d}", f"{prefix}/{d}")
         os.replace(f"{tmpd}/bin/lima", f"{into}/lima")
         os.replace(f"{tmpd}/bin/limactl", f"{into}/limactl")
-        os.replace(
-            f"{tmpd}/share/lima/lima-guestagent.Linux-aarch64",
-            f"{into}/lima-guestagent.Linux-aarch64",
-        )
-        os.replace(
-            f"{tmpd}/share/lima/lima-guestagent.Linux-x86_64",
-            f"{into}/lima-guestagent.Linux-x86_64",
-        )
-        os.makedirs(f"{into}/templates", exist_ok=True)
-        os.replace(
-            f"{tmpd}/share/lima/templates/default.yaml",
-            f"{into}/templates/default.yaml",
-        )
 
 
 def install_global() -> None:
-    version = "1.0.3"
+    version = "2.2.1"
     cfg = {
-        # upstream github releases aren't built for macOS 14, so for now
-        # we use homebrew binaries from https://formulae.brew.sh/api/formula/lima.json
-        # unfortunately there's no way to view previous versions of a formula
-        # so if we ever need to upgrade to a specific non-latest version we'll
-        # have to build it ourselves
-        # sonoma
-        "darwin_x86_64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:f675abee28d0f10f335f7a04dc6ad3de12434c83c2f0f32c913061204c137a94",
-        "darwin_x86_64_sha256": "f675abee28d0f10f335f7a04dc6ad3de12434c83c2f0f32c913061204c137a94",
-        # arm64_sonoma
-        "darwin_arm64": "https://ghcr.io/v2/homebrew/core/lima/blobs/sha256:8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
-        "darwin_arm64_sha256": "8aeb0a3b7295f0c3e0c2a7a92a798a44397936e5bb732db825aee6da5e762d7a",
+        "darwin_x86_64": f"https://github.com/lima-vm/lima/releases/download/v{version}/lima-{version}-Darwin-x86_64.tar.gz",
+        "darwin_x86_64_sha256": "6b776e4bc41f358e6ee01fefcc78e2eb26f11635a0fcff632234af77a566c6c4",
+        "darwin_arm64": f"https://github.com/lima-vm/lima/releases/download/v{version}/lima-{version}-Darwin-arm64.tar.gz",
+        "darwin_arm64_sha256": "9e9eacce88f37e185c346bad73aa6136f738d8cdf8c3bb23cd42b071824bc66e",
     }
 
     binroot = f"{root}/bin"
@@ -82,7 +73,10 @@ def install_global() -> None:
     ):
         stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]
-        if version == installed_version:
+        # an interrupted install can leave limactl without its guest agents
+        if version == installed_version and all(
+            os.path.isdir(f"{root}/{d}") for d in _DATA_DIRS
+        ):
             return
         print(f"installed limactl {installed_version} is unexpected!")
 

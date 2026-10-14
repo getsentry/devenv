@@ -56,12 +56,12 @@ exec {binroot}/colima-bin "$@"
 
 
 def install_global() -> None:
-    version = "v0.8.1"
+    version = "v0.10.3"
     cfg = {
         "darwin_x86_64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Darwin-x86_64",
-        "darwin_x86_64_sha256": "791330c62c60389f70e5e1c33a56c35502a9e36e544a418daea0273e539acbf4",
+        "darwin_x86_64_sha256": "3082737fe8a98afda11cba7d9a20b6e56fe80c6153464beda04bec630758770b",
         "darwin_arm64": f"https://github.com/abiosoft/colima/releases/download/{version}/colima-Darwin-arm64",
-        "darwin_arm64_sha256": "c266fcb272b39221ef6152d2093bb02a1ebadc26042233ad359e1ae52d5d5922",
+        "darwin_arm64_sha256": "980ad8bf61a4ca370243f4cb41401a61276dcd2c2502bee7b9b86f9250169f34",
     }
 
     binroot = f"{root}/bin"
@@ -178,7 +178,7 @@ def start(restart: bool = False) -> ColimaStatus:
     memsize_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
 
     args = [
-        "--cpu",
+        "--cpus",
         f"{cpus // 2}",
         "--memory",
         f"{memsize_bytes // (2 * 1024**3)}",
@@ -194,10 +194,17 @@ def start(restart: bool = False) -> ColimaStatus:
             "--verbose",
             # we're overprovisioning a 512 GiB disk here which is fine because
             # the disk doesn't reserve space and is copy-on-write
+            # (VMs created since colima 0.9 keep container data on a separate
+            # disk of this size, which survives `colima delete` without --data)
             "--disk",
             "512",
+            # colima 0.10.2 stopped propagating file events by default;
+            # keep VMs created now behaving like the ones created before
+            "--mount-inotify",
             # this effectively makes the vm's resolvectl status use:
             # DNS Servers: 8.8.8.8 1.1.1.1 192.168.5.2
+            # (VMs created since colima 0.9 use dnsmasq instead, with only
+            # 8.8.8.8 and 1.1.1.1 as upstreams)
             # https://lima-vm.io/docs/config/network/user/
             # 192.168.5.2 is the host, accessible from the vm
             # sometimes using only the host will result in dns breaking
