@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 from unittest.mock import patch
 
@@ -116,3 +117,16 @@ bar
 
 """
         )
+
+
+def test_run_flushes_prints_before_the_command(
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    # like stdout in CI logs or when piped: not a tty, so block buffered
+    stdout = io.TextIOWrapper(os.fdopen(os.dup(1), "wb"))
+    with patch("sys.stdout", stdout):
+        print("before")
+        run(("echo", "during"))
+        stdout.flush()
+
+    assert capfd.readouterr().out == "before\nduring\n"

@@ -24,11 +24,12 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     if args.command == "start":
         status = colima.start()
         if status == colima.ColimaStatus.UNHEALTHY:
+            # Colima can report the VM unhealthy right after a start that worked.
             # https://github.com/abiosoft/colima/issues/949
             print("colima seems unhealthy, we'll try restarting once")
-            status = colima.restart()
-            if status != colima.ColimaStatus.UP:
-                return 1
+            status = colima.relaunch()
+            if status == colima.ColimaStatus.UP:
+                status = colima.start()
         if status != colima.ColimaStatus.UP:
             return 1
     elif args.command == "restart":
