@@ -10,8 +10,6 @@ from devenv.lib.direnv import _version
 from devenv.lib.direnv import install
 
 
-# imo this is enough coverage (as in just keeping it to bash + darwin-arm64)
-# we just want to verify that the important functions were called like fs_idempotent_add
 def test_install() -> None:
     with (
         patch("devenv.lib.direnv.MACHINE", "arm64"),
@@ -19,10 +17,9 @@ def test_install() -> None:
         patch("devenv.lib.archive.download") as mock_archive_download,
         patch("devenv.lib.fs.idempotent_add") as mock_lib_fs_idempotent_add,
         patch("os.chmod"),
-        patch("shutil.which", return_value=False),
+        patch("devenv.lib.direnv.shutil.which", return_value=None),
         patch(
-            "devenv.lib.direnv.proc.run",
-            side_effect=[_version],  # direnv version
+            "devenv.lib.direnv.proc.run", side_effect=[_version]
         ) as mock_proc_run,
     ):
         install()
@@ -40,3 +37,15 @@ def test_install() -> None:
         assert mock_proc_run.mock_calls == [
             call((f"{root}/bin/direnv", "version"), stdout=True)
         ]
+
+
+def test_install_skips_when_direnv_is_already_on_path() -> None:
+    with (
+        patch("devenv.lib.direnv.shutil.which", return_value="/usr/bin/direnv"),
+        patch("devenv.lib.archive.download") as download,
+        patch("devenv.lib.fs.idempotent_add") as add,
+    ):
+        install()
+
+    download.assert_not_called()
+    add.assert_not_called()
