@@ -339,8 +339,7 @@ def test_start_warns_if_colima_doesnt_come_back_after_the_upgrade(
 def test_start_only_selects_colima_context_when_up() -> None:
     with (
         mock.patch(
-            "devenv.lib.colima.check",
-            return_value=colima.ColimaStatus.UP,
+            "devenv.lib.colima.check", return_value=colima.ColimaStatus.UP
         ),
         mock.patch("devenv.lib.colima.proc.run") as mock_run,
         mock.patch(
