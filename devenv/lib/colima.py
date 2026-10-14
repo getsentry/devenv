@@ -247,8 +247,8 @@ def _upgrade_kernel_if_sve_misreported() -> bool:
         print(f"""
 WARNING: colima's VM is running Linux {running}, which misreports SVE
 support on this CPU, but Linux {newest} is already installed.
-Run `devenv colima restart` to boot it. If that doesn't help,
-ask for help in #discuss-dev-infra.
+Run `devenv colima restart` to boot it. If the VM still runs
+Linux {running} after that, ask for help in #discuss-dev-infra.
 """)
         return False
 
@@ -303,6 +303,10 @@ def start(restart: bool = False) -> ColimaStatus:
 
     status = _start(restart=True)
     if status != ColimaStatus.UP:
+        print("""
+WARNING: colima isn't healthy after restarting to boot the VM's upgraded
+kernel. Ask for help in #discuss-dev-infra.
+""")
         return status
 
     # only ever upgrade and restart once: if that didn't work,

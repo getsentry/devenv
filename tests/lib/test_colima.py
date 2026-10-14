@@ -314,3 +314,23 @@ def test_start_doesnt_probe_an_unhealthy_vm() -> None:
         assert colima.start() == colima.ColimaStatus.UNHEALTHY
 
     assert vm.cmds == []
+
+
+@pytest.mark.usefixtures("m4_mac")
+def test_start_warns_if_colima_doesnt_come_back_after_the_upgrade(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    vm = FakeVM()
+    statuses = iter((colima.ColimaStatus.UP, colima.ColimaStatus.UNHEALTHY))
+
+    def start(restart: bool) -> colima.ColimaStatus:
+        vm.start(restart)
+        return next(statuses)
+
+    with (
+        mock.patch("devenv.lib.colima.proc.run", side_effect=vm.run),
+        mock.patch.object(colima, "_start", side_effect=start),
+    ):
+        assert colima.start() == colima.ColimaStatus.UNHEALTHY
+
+    assert "isn't healthy after restarting" in capsys.readouterr().out
