@@ -33,4 +33,12 @@ def fix() -> tuple[bool, str]:
     if status != colima.ColimaStatus.UP:
         return False, "colima is unhealthy"
 
+    # start only warns if it couldn't upgrade the kernel
+    try:
+        misreported = colima.vm_misreports_sve()
+    except RuntimeError as e:
+        return False, f"{e}"
+    if misreported:
+        return False, "colima's VM still misreports SVE, see above"
+
     return True, ""
