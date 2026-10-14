@@ -2,9 +2,9 @@
 
 ## Commit Attribution
 
-AI-generated commits MUST include:
+AI-generated commits MUST include a `Co-Authored-By:` trailer crediting the agent and model that actually wrote them, e.g. the attribution your tooling provides:
 ```
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: <agent and model> <email>
 ```
 
 ## Setup

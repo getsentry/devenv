@@ -312,7 +312,7 @@ version = 490.0.0
 
 ### terraform
 
-Our responsibility ends at installing `tenv` and containing `TENV_ROOT` at  `[reporoot]/.devenv/bin/tenv-root`. We install `terraform` and `terragrunt` shims which use that `TENV_ROOT`.
+Our responsibility ends at installing `tenv` and containing `TENV_ROOT` at  `[reporoot]/.devenv/bin/tenv-root`. We install `terraform`, `tofu` and `terragrunt` shims which use that `TENV_ROOT`.
 
 Define `[reporoot]/.terraform-version` and `[reporoot]/.terragrunt-version` (if you want it) and after running sync, you should be able to just type `terraform` and `tenv` takes care of the rest.
 
