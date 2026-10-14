@@ -47,7 +47,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
     files: list[str] = args.files
 
     ACTION_VERSION_RE = re.compile(
-        r"(?<=uses: )(?P<action>.*)@(?P<ref>[^#\s]+)"
+        r"""(?<=uses: )["']?(?P<action>[^@\s"']+)@(?P<ref>[^#\s"']+)["']?"""
     )
 
     for fp in files:
@@ -59,6 +59,9 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
                     newlines.append(line)
                     continue
                 d = m.groupdict()
+                if d["action"].startswith("getsentry/"):
+                    newlines.append(line)
+                    continue
                 sha = get_sha(extract_repo(d["action"]), ref=d["ref"])
                 if sha != d["ref"]:
                     line = ACTION_VERSION_RE.sub(rf"\1@{sha} # \2", line)
