@@ -134,7 +134,7 @@ def check() -> ColimaStatus:
         return ColimaStatus.UNHEALTHY
 
     # https://github.com/abiosoft/colima/issues/949
-    healthy = docker.check_docker_to_host_connectivity()
+    healthy = docker.check_docker_to_host_connectivity(context="colima")
     if not healthy:
         return ColimaStatus.UNHEALTHY
 
@@ -330,17 +330,21 @@ Linux {running}. Ask for help in #discuss-dev-infra.
 
 
 def _start(restart: bool) -> ColimaStatus:
-    # switch to default context to avoid broken contexts (e.g., desktop-linux)
-    try:
-        proc.run(("docker", "context", "use", "default"))
-    except RuntimeError as e:
-        print(f"Failed to switch docker context: {e}")
-
     status = check()
 
     if status == ColimaStatus.UP:
         if not restart:
+            # an interrupted start may have left docker on the default context
+            proc.run(("docker", "context", "use", "colima"))
             return ColimaStatus.UP
+
+    # switch to default context to avoid broken contexts (e.g., desktop-linux)
+    # only once we're actually (re)starting, so that a healthy colima is left
+    # alone and docker isn't left pointing at the default context
+    try:
+        proc.run(("docker", "context", "use", "default"))
+    except RuntimeError as e:
+        print(f"Failed to switch docker context: {e}")
 
     # always stop first (colima's internal state can get out of sync)
     try:

@@ -15,15 +15,19 @@ from devenv.lib import proc
 
 
 def _accept_and_close(sock: socket.socket) -> None:
-    sock.listen()
     conn, addr = sock.accept()
     conn.close()
 
 
-def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
+def check_docker_to_host_connectivity(
+    timeout: int = 3, context: str = "colima"
+) -> bool:
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
+    # listen before anything can connect, rather than in the listener thread
+    # which might not have run yet
+    sock.listen()
 
     listener = Thread(target=_accept_and_close, args=(sock,))
     listener.start()
@@ -31,6 +35,9 @@ def check_docker_to_host_connectivity(timeout: int = 3) -> bool:
     rc = subprocess.call(
         (
             "docker",
+            # pinned so the result doesn't depend on the current context,
+            # which colima.start temporarily switches to "default"
+            f"--context={context}",
             "run",
             "--rm",
             "--add-host=host.docker.internal:host-gateway",

@@ -334,3 +334,68 @@ def test_start_warns_if_colima_doesnt_come_back_after_the_upgrade(
         assert colima.start() == colima.ColimaStatus.UNHEALTHY
 
     assert "isn't healthy after restarting" in capsys.readouterr().out
+
+
+def test_start_only_selects_colima_context_when_up() -> None:
+    with (
+        mock.patch(
+            "devenv.lib.colima.check",
+            return_value=colima.ColimaStatus.UP,
+        ),
+        mock.patch("devenv.lib.colima.proc.run") as mock_run,
+        mock.patch(
+            "devenv.lib.colima._upgrade_kernel_if_sve_misreported",
+            return_value=False,
+        ),
+    ):
+        assert colima.start() == colima.ColimaStatus.UP
+
+    # no restart, but a previously interrupted start may have left docker
+    # on the "default" context
+    mock_run.assert_called_once_with(("docker", "context", "use", "colima"))
+
+
+def test_start_switches_context_around_starting() -> None:
+    with (
+        mock.patch(
+            "devenv.lib.colima.check",
+            side_effect=[colima.ColimaStatus.DOWN, colima.ColimaStatus.UP],
+        ),
+        mock.patch("devenv.lib.colima.rosetta.ensure"),
+        mock.patch("devenv.lib.colima.proc.run") as mock_run,
+        mock.patch(
+            "devenv.lib.colima._upgrade_kernel_if_sve_misreported",
+            return_value=False,
+        ),
+    ):
+        assert colima.start() == colima.ColimaStatus.UP
+
+    cmds = [c.args[0][:3] for c in mock_run.call_args_list]
+    assert cmds == [
+        ("docker", "context", "use"),
+        ("colima", "stop", "-f"),
+        ("colima", "start", "--verbose"),
+        ("docker", "context", "use"),
+    ]
+    assert mock_run.call_args_list[0].args[0][3] == "default"
+    assert mock_run.call_args_list[-1].args[0][3] == "colima"
+
+
+def test_restart_when_up() -> None:
+    with (
+        mock.patch(
+            "devenv.lib.colima.check",
+            side_effect=[colima.ColimaStatus.UP, colima.ColimaStatus.UP],
+        ),
+        mock.patch("devenv.lib.colima.rosetta.ensure"),
+        mock.patch("devenv.lib.colima.proc.run") as mock_run,
+        mock.patch(
+            "devenv.lib.colima._upgrade_kernel_if_sve_misreported",
+            return_value=False,
+        ),
+    ):
+        assert colima.restart() == colima.ColimaStatus.UP
+
+    cmds = [c.args[0][:2] for c in mock_run.call_args_list]
+    assert ("colima", "stop") in cmds
+    assert ("colima", "start") in cmds
