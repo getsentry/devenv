@@ -75,6 +75,8 @@ If you're upgrading from a particularly old devenv, it won't have `update` so yo
 
 If you are using colima instead of docker desktop, run this to set up colima on a new machine. The default `colima start` may underprovision resources. Run this command after `colima delete` to reset.
 
+On Apple M4 and newer, this (and `devenv colima restart`) also checks that the VM's kernel doesn't report SVE support the CPU doesn't have, which crashes some arm64 programs (e.g. Python's `cryptography` >= 47, numba) with "Illegal instruction". If it does, devenv upgrades the VM's kernel and restarts colima once; containers and volumes are kept. `devenv doctor` checks for this too.
+
 
 ## technical overview
 
