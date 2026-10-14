@@ -15,7 +15,6 @@ from devenv.lib import proc
 
 
 def _accept_and_close(sock: socket.socket) -> None:
-    sock.listen()
     conn, addr = sock.accept()
     conn.close()
 
@@ -26,6 +25,9 @@ def check_docker_to_host_connectivity(
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
+    # listen before anything can connect, rather than in the listener thread
+    # which might not have run yet
+    sock.listen()
 
     listener = Thread(target=_accept_and_close, args=(sock,))
     listener.start()
