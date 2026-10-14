@@ -6,15 +6,16 @@ from devenv.lib import colima
 from devenv.lib.colima import ColimaStatus
 
 
-def test_start_is_a_noop_when_up() -> None:
+def test_start_only_selects_colima_context_when_up() -> None:
     with (
         patch("devenv.lib.colima.check", return_value=ColimaStatus.UP),
         patch("devenv.lib.colima.proc.run") as mock_run,
     ):
         assert colima.start() == ColimaStatus.UP
 
-    # neither restart a healthy vm nor leave docker on the "default" context
-    mock_run.assert_not_called()
+    # no restart, but a previously interrupted start may have left docker
+    # on the "default" context
+    mock_run.assert_called_once_with(("docker", "context", "use", "colima"))
 
 
 def test_start_switches_context_around_starting() -> None:

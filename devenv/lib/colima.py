@@ -143,6 +143,8 @@ def start(restart: bool = False) -> ColimaStatus:
 
     if status == ColimaStatus.UP:
         if not restart:
+            # an interrupted start may have left docker on the default context
+            proc.run(("docker", "context", "use", "colima"))
             return ColimaStatus.UP
 
     # switch to default context to avoid broken contexts (e.g., desktop-linux)
