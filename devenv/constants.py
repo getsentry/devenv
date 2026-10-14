@@ -1,14 +1,35 @@
 from __future__ import annotations
 
+import importlib.metadata
 import os
 import platform
 import pwd
+import shutil
 import typing
+
+troubleshooting_help = """\
+===============
+Troubleshooting
+===============
+
+Problem? First try running `devenv doctor`.
+If that doesn't help, then proceed:
+
+Internal living doc (more up-to-date):
+https://www.notion.so/sentry/devenv-troubleshooting-1448b10e4b5d8080ba04f452e33de48d
+
+Public doc:
+https://develop.sentry.dev/development-infrastructure/environment/#troubleshooting
+"""
+
+version = importlib.metadata.version("sentry_devenv")
 
 CI = os.getenv("CI")
 SYSTEM = platform.system().lower()
 MACHINE = platform.machine()
 DARWIN = SYSTEM == "darwin"
+# we only support apt-based linuxes
+LINUX = shutil.which("dpkg") is not None
 INTEL_MAC = DARWIN and (MACHINE == "x86_64")
 SHELL_UNSET = "(SHELL unset)"
 DEBUG = os.getenv("SNTY_DEVENV_DEBUG", os.getenv("DEBUG", ""))
@@ -26,22 +47,10 @@ user = struct_passwd.pw_name
 user_environ: typing.Mapping[str, str] = os.environ.copy()
 
 home = user_environ["HOME"] if CI else struct_passwd.pw_dir
-cache_root = f"{home}/.cache/sentry-devenv"
-config_root = f"{home}/.config/sentry-devenv"
 root = f"{home}/.local/share/sentry-devenv"
-bin_root = f"{root}/bin"
-src_root = f"{root}/devenv"
-pythons_root = f"{root}/pythons"
-venvs_root = f"{root}/venvs"
-
-# TODO: makedirs everything but change to a dict
-# root = {"cache": "...", ...}
-os.makedirs(venvs_root, exist_ok=True)
 
 homebrew_repo = "/opt/homebrew"
 homebrew_bin = f"{homebrew_repo}/bin"
 if INTEL_MAC:
     homebrew_repo = "/usr/local/Homebrew"
     homebrew_bin = "/usr/local/bin"
-
-VOLTA_HOME = f"{root}/volta"

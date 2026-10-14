@@ -4,43 +4,45 @@ import argparse
 import os
 import shutil
 from collections.abc import Sequence
-from typing import TypeAlias
 
-from devenv.constants import CI
-from devenv.constants import DARWIN
-from devenv.constants import EXTERNAL_CONTRIBUTOR
-from devenv.constants import home
-from devenv.constants import homebrew_bin
-from devenv.constants import VOLTA_HOME
+from devenv import constants
 from devenv.lib import brew
+from devenv.lib import colima
 from devenv.lib import direnv
+from devenv.lib import docker
 from devenv.lib import github
+from devenv.lib import limactl
 from devenv.lib import proc
-from devenv.lib import volta
+from devenv.lib import rosetta
+from devenv.lib.config import Config
+from devenv.lib.config import initialize_config
+from devenv.lib.context import Context
+from devenv.lib.modules import DevModuleInfo
+from devenv.lib.modules import ExitCode
 
-help = "Bootstraps the development environment."
-ExitCode: TypeAlias = "str | int | None"
 
-
-def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
-    parser = argparse.ArgumentParser(description=help)
+def main(context: Context, argv: Sequence[str] | None = None) -> ExitCode:
+    parser = argparse.ArgumentParser()
     parser.add_argument(
-        "repo",
-        type=str,
-        nargs="?",
-        default="sentry",
-        choices=("sentry", "getsentry"),
+        "-d",
+        "--default-config",
+        action="append",
+        help="Provide a default config value. e.g., -d coderoot:path/to/root",
     )
+
     args = parser.parse_args(argv)
 
-    if args.repo == "getsentry":
-        # Setting up sentry means we're setting up both repos.
-        args.repo = "sentry"
+    configs = {
+        k: v for k, v in [i.split(":", 1) for i in args.default_config or []]
+    }
 
-    if args.repo not in {"sentry"}:
-        return f"repo {args.repo} not supported yet!"
+    if "coderoot" not in configs and "code_root" in context:
+        configs["coderoot"] = context["code_root"]
 
-    if not CI and shutil.which("xcrun"):
+    default_config: Config = {"devenv": configs}
+    initialize_config(context["config_path"], default_config)
+
+    if not constants.CI and shutil.which("xcrun"):
         # xcode-select --install will take a while,
         # and involves elevated permissions with a GUI,
         # so best to just let the user go through that separately then retrying,
@@ -52,24 +54,36 @@ def main(coderoot: str, argv: Sequence[str] | None = None) -> ExitCode:
         except RuntimeError:
             return "Failed to find git. Run xcode-select --install, then re-run bootstrap when done."
 
+    if constants.LINUX and not (
+        shutil.which("docker") and shutil.which("dockerd")
+    ):
+        raise SystemExit("docker engine not installed; required on linux")
+
+    # even though this is called before colima starts,
+    # better to try and potentially (although unlikely) fail earlier rather than later
+    if constants.DARWIN:
+        rosetta.ensure()
+
     github.add_to_known_hosts()
 
-    if not EXTERNAL_CONTRIBUTOR and not github.check_ssh_access():
+    if not constants.EXTERNAL_CONTRIBUTOR and not github.check_ssh_access(
+        # silence the error the first time since it's expected to happen
+        silent=True
+    ):
         is_employee = (
             False
-            if CI
+            if constants.CI
             else input("Are you a Sentry employee? (Y/n): ").lower()
             in {"y", "yes", ""}
         )
-        if not CI and not is_employee:
+        if not constants.CI and not is_employee:
             print(
                 "Please set the SENTRY_EXTERNAL_CONTRIBUTOR environment variable and re-run bootstrap."
             )
             return 1
         pubkey = github.generate_and_configure_ssh_keypair()
-        if not CI:
-            input(
-                f"""
+        if not constants.CI:
+            input(f"""
 Failed to authenticate with an ssh key to GitHub.
 We've generated and configured one for you at ~/.ssh/sentry-github.
 Visit https://github.com/settings/ssh/new and add the following Authentication key:
@@ -80,118 +94,42 @@ Then, you need to go to https://github.com/settings/keys, find your key,
 and click Configure SSO, for the getsentry organization.
 
 When done, hit ENTER to continue.
-"""
-            )
+""")
         while not github.check_ssh_access():
             input(
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
             )
 
-    brew.install()
-    volta.install()
+    # Mirror this in bootstrap.py.
+    print(f"""\
+Updating global tools (at {constants.root}/bin).
+""")
+    os.makedirs(f"{constants.root}/bin", exist_ok=True)
+
+    if constants.DARWIN:
+        # we only install brew and colima-related stuff on macos
+        brew.install()
+        docker.install_global()
+        colima.install_global()
+        limactl.install_global()
+
     direnv.install()
 
-    os.makedirs(coderoot, exist_ok=True)
+    os.makedirs(context["code_root"], exist_ok=True)
 
-    if args.repo == "sentry":
-        if not os.path.exists(f"{coderoot}/sentry"):
-            # git@ clones forces the use of cloning through SSH which is what we want,
-            # though CI must clone open source repos via https (no git authentication)
-            additional_flags = (
-                (
-                    "--depth",
-                    "1",
-                    "--single-branch",
-                    f"--branch={os.environ['SENTRY_BRANCH']}",
-                    "https://github.com/getsentry/sentry",
-                )
-                if CI
-                else ("git@github.com:getsentry/sentry",)
-            )
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    # Download all reachable commits and trees while fetching blobs on-demand
-                    # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
-                    "--filter=blob:none",
-                    *additional_flags,
-                ),
-                exit=True,
-            )
-        if (
-            not CI
-            and not EXTERNAL_CONTRIBUTOR
-            and not os.path.exists(f"{coderoot}/getsentry")
-        ):
-            proc.run(
-                (
-                    "git",
-                    "-C",
-                    coderoot,
-                    "clone",
-                    "--filter=blob:none",
-                    "git@github.com:getsentry/getsentry",
-                ),
-                exit=True,
-            )
-
-        print("Installing sentry's brew dependencies...")
-        if CI:
-            if DARWIN:
-                # Installing everything from brew takes too much time,
-                # and chromedriver cask flakes occasionally. Really all we need to
-                # set up the devenv is colima and docker-cli.
-                # This is also required for arm64 macOS GHA runners.
-                # We manage colima, so just need to install docker + qemu here.
-                proc.run(("brew", "install", "docker", "qemu"))
-        else:
-            proc.run(
-                (f"{homebrew_bin}/brew", "bundle"), cwd=f"{coderoot}/sentry"
-            )
-
-        # this'll create the virtualenv if it doesn't exist
-        proc.run(("devenv", "sync"), cwd=f"{coderoot}/sentry")
-
-        # HACK: devenv sync created the config files earlier, but make bootstrap will
-        #       fail because of an interactive prompt asking if user wants to clobber it...
-        #       i'll follow-up with fixing that in sentry
-        shutil.rmtree(f"{home}/.sentry")
-
-        # make bootstrap should be ported over to devenv sync,
-        # as it applies new migrations as well and so would need to ensure
-        # the appropriate devservices are running
-        proc.run(
-            ("make", "bootstrap"),
-            env={"VIRTUAL_ENV": f"{coderoot}/sentry/.venv"},
-            pathprepend=f"{coderoot}/sentry/.venv/bin",
-            cwd=f"{coderoot}/sentry",
-        )
-
-        if not CI:
-            # HACK: see above
-            shutil.rmtree(f"{home}/.sentry")
-
-            # we don't have permissions to clone getsentry which is a good thing
-            # eventually we should move this bootstrap testing over to getsentry repo
-            proc.run(
-                ("make", "bootstrap"),
-                env={
-                    "VIRTUAL_ENV": f"{coderoot}/getsentry/.venv",
-                    "VOLTA_HOME": VOLTA_HOME,
-                },
-                pathprepend=f"{coderoot}/getsentry/.venv/bin",
-                cwd=f"{coderoot}/getsentry",
-            )
-
-    print(
-        f"""
+    print("""
 All done! Please close this terminal window and start a fresh one.
 
-Sentry has been set up in {coderoot}/sentry. cd into it and you should
-be able to run `sentry devserver`.
-"""
-    )
+Afterward, start working on your project using the devenv fetch command
+e.g., devenv fetch sentry or devenv fetch ops
+""")
+
     return 0
+
+
+module_info = DevModuleInfo(
+    action=main,
+    name=__name__,
+    command="bootstrap",
+    help="Bootstraps the development environment.",
+)

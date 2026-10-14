@@ -6,8 +6,6 @@ from enum import Enum
 from typing import Optional
 
 from devenv import pythons
-from devenv.constants import bin_root
-from devenv.constants import venvs_root
 from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
@@ -17,32 +15,6 @@ VenvStatus = Enum(
 )
 
 
-# example venv configuration section:
-#
-# [venv.sentry-kube]
-# python = 3.11.6
-# requirements = k8s/cli/requirements.txt
-# path = optional
-# editable =
-#   k8s/cli
-#   k8s/cli/libsentrykube
-# bins =
-#   sentry-kube
-#   sentry-kube-pop
-#
-# [venv.salt]
-# python = 3.10.13
-# requirements = salt/requirements.txt
-# bins =
-#   salt-ssh
-#   ...
-#
-# example usage:
-#
-# venv_dir, python_version, requirements, editable_paths, bins = get(reporoot, "sentry-kube")
-# url, sha256 = config.get_python(reporoot, python_version)
-# ensure(path, python_version, url, sha256)
-# sync(venv_dir, requirements, editable_paths, bins)
 def get(
     reporoot: str, name: str
 ) -> tuple[str, str, str, Optional[tuple[str, ...]], Optional[tuple[str, ...]]]:
@@ -52,17 +24,21 @@ def get(
         raise KeyError(f"section venv.{name} not found in repo config")
 
     venv = cfg[f"venv.{name}"]
-    reponame = os.path.basename(reporoot)
-    venv_dir = venv.get("path", f"{venvs_root}/{reponame}-{name}")
-    editable_paths = venv.get("editable", None)
-    if editable_paths is not None:
+    venv_dir = venv.get("path", f"{reporoot}/.venv-{name}")
+    editable_paths_s = venv.get("editable", None)
+    if editable_paths_s is not None:
         editable_paths = tuple(
-            f"{reporoot}/{path}" for path in editable_paths.strip().split("\n")
+            f"{reporoot}/{path}"
+            for path in editable_paths_s.strip().split("\n")
         )
+    else:
+        editable_paths = None
 
-    bins = venv.get("bins", None)
-    if bins is not None:
-        bins = tuple(bins.strip().split("\n"))
+    bins_s = venv.get("bins", None)
+    if bins_s is not None:
+        bins = tuple(bins_s.strip().split("\n"))
+    else:
+        bins = None
 
     return (
         venv_dir,
@@ -74,6 +50,7 @@ def get(
 
 
 def sync(
+    reporoot: str,
     venv_dir: str,
     requirements: str,
     editable_paths: Optional[tuple[str, ...]] = None,
@@ -97,13 +74,19 @@ def sync(
     proc.run(cmd)
 
     if bins is not None:
+        binroot = fs.ensure_binroot(reporoot)
         for name in bins:
             fs.ensure_symlink(
-                expected_src=f"{venv_dir}/bin/{name}", dest=f"{bin_root}/{name}"
+                expected_src=f"{venv_dir}/bin/{name}", dest=f"{binroot}/{name}"
             )
 
 
 def check(venv: str, python_version: str) -> VenvStatus:
+    try:
+        os.stat(f"{venv}/bin/python")
+    except FileNotFoundError:
+        return VenvStatus.NOT_PRESENT
+
     if not os.path.exists(f"{venv}/pyvenv.cfg"):
         return VenvStatus.NOT_PRESENT
 
@@ -123,7 +106,7 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         return
 
     print(
-        f"virtualenv doesn't exist or is using an outdated python, recreating at {venv}..."
+        f"virtualenv doesn't exist or is using an unexpected python, recreating at {venv}..."
     )
     if os.path.exists(venv):
         shutil.rmtree(venv)
@@ -132,3 +115,8 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         (pythons.get(python_version, url, sha256), "-m", "venv", venv),
         exit=True,
     )
+
+    with open(f"{venv}/.gitignore", "w") as f:
+        f.write("""*
+# automatically written by devenv
+""")

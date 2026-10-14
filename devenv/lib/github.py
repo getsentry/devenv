@@ -17,14 +17,15 @@ github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+V
 """  # noqa
 
 
-def check_ssh_authentication() -> bool:
+def check_ssh_authentication(silent: bool = False) -> bool:
     try:
-        # The remote prints to stderr and exits with code 1 in all cases.
+        # The remote prints to stderr and exits with code 1 in all cases
         proc.run(("sh", "-c", "ssh -T git@github.com 2>&1"), stdout=True)
     except RuntimeError as e:
         # https://docs.github.com/en/authentication/connecting-to-github-with-ssh/testing-your-ssh-connection
         if "You've successfully authenticated" not in str(e):
-            print(e)
+            if not silent:
+                print(e)
             return False
     return True
 
@@ -51,10 +52,10 @@ def check_sso_configuration() -> bool:
     return False
 
 
-def check_ssh_access() -> bool:
+def check_ssh_access(silent: bool = False) -> bool:
     if CI:
         return True
-    ssh_auth = check_ssh_authentication()
+    ssh_auth = check_ssh_authentication(silent=silent)
     return (
         ssh_auth
         if EXTERNAL_CONTRIBUTOR

@@ -28,9 +28,10 @@ def test_run_without_stdout() -> None:
 def test_run_with_debug() -> None:
     cmd = ("echo", "Hello, World!")
 
-    with patch("devenv.lib.proc.constants.DEBUG", True), patch(
-        "devenv.lib.proc.xtrace"
-    ) as mock_xtrace:
+    with (
+        patch("devenv.lib.proc.constants.DEBUG", True),
+        patch("devenv.lib.proc.xtrace") as mock_xtrace,
+    ):
         run(cmd)
 
     mock_xtrace.assert_called_once_with(cmd)
@@ -97,3 +98,21 @@ def test_run_command_failed_with_exit() -> None:
 
     with pytest.raises(SystemExit):
         run(cmd, exit=True)
+
+
+def test_run_command_failed_capture_combined_output() -> None:
+    cmd = ("sh", "-c", "echo foo && echo >&2 err && echo bar && false")
+
+    try:
+        run(cmd, stdout=True, exit=False)
+    except RuntimeError as e:
+        assert (
+            f"{e}"
+            == """Command `sh -c 'echo foo && echo >&2 err && echo bar && false'` failed! (code 1)
+combined out:
+foo
+err
+bar
+
+"""
+        )

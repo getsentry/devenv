@@ -1,50 +1,38 @@
 from __future__ import annotations
 
 import os
-import subprocess
-from unittest.mock import call
 from unittest.mock import patch
 
+from devenv import constants
 from devenv import main
-from tests.utils import chdir
+from devenv.lib.config import read_config
 
 
 def test(tmp_path: str) -> None:
-    coderoot = f"{tmp_path}/coderoot"
-    configroot = f"{tmp_path}/configroot"
+    with (
+        patch("devenv.constants.CI", True),
+        # these download and install global tools, which this doesn't test
+        patch("devenv.bootstrap.brew.install"),
+        patch("devenv.bootstrap.docker.install_global"),
+        patch("devenv.bootstrap.colima.install_global"),
+        patch("devenv.bootstrap.limactl.install_global"),
+        patch("devenv.bootstrap.direnv.install"),
+    ):
+        config_path = f"{tmp_path}/.config/sentry-devenv/config.ini"
+        coderoot = f"{tmp_path}/code"
 
-    with patch("devenv.main.CI", True), patch("sentry_sdk.init"), patch(
-        "devenv.main.config_root", configroot
-    ), patch("devenv.bootstrap.main") as mock_bootstrap, patch(
-        "devenv.sync.main"
-    ) as mock_sync:
-        main.DEFAULT_CONFIG["devenv"]["coderoot"] = coderoot
-        main.devenv(("/path/to/argv0", "bootstrap"))
-        with open(f"{configroot}/config.ini", "r") as f:
-            assert (
-                f.read()
-                == f"""[devenv]
-# please enter the root directory you want to work in
-coderoot = {coderoot}
+        assert not os.path.exists(config_path)
+        main.devenv(
+            ("/path/to/argv0", "bootstrap", "-d", f"coderoot:{coderoot}"),
+            config_path,
+        )
+        assert os.path.exists(config_path)
 
-"""
-            )
-            assert mock_bootstrap.mock_calls == [call(coderoot, [])]
+        config = read_config(config_path)
+        assert config.get("devenv", "coderoot") == coderoot
 
-        # with our config written, let's mock a repo then call sync
-        repo = "repo"
-        reporoot = f"{coderoot}/repo"
-        os.makedirs(reporoot)
-        subprocess.run(("git", "init", "--quiet", "--bare", reporoot))
-        with chdir(reporoot), patch(
-            "os.makedirs", wraps=os.makedirs
-        ) as os_makedirs:
-            main.devenv(("/path/to/argv0", "sync"))
 
-            # this time, we should have early returned from initialize_config
-            # so only the os.makedirs call to coderoot should have happened
-            # otherwise we would also have a call(configroot, exist_ok=True)
-            assert os_makedirs.mock_calls == [call(coderoot, exist_ok=True)]
-            assert mock_sync.mock_calls == [
-                call({"repo": repo, "reporoot": reporoot}, [])
-            ]
+def test_home_is_not_the_developers() -> None:
+    # tests that run real devenv commands rely on this
+    assert constants.home == os.environ["HOME"]
+    assert not os.path.exists(f"{constants.root}/bin/colima")

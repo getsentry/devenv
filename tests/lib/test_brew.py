@@ -8,15 +8,14 @@ from devenv.lib.brew import install
 
 
 def test_install_brew_already_installed() -> None:
-    with patch(
-        "devenv.lib.brew.which", return_value="/usr/local/bin/brew"
-    ), patch(
-        "devenv.lib.brew.add_brew_to_shellrc"
-    ) as mock_add_brew_to_shellrc, patch(
-        "devenv.lib.brew.proc.run"
-    ) as mock_run, patch(
-        "os.symlink"
-    ) as mock_symlink:
+    with (
+        patch("devenv.lib.brew.which", return_value="/usr/local/bin/brew"),
+        patch(
+            "devenv.lib.brew.add_brew_to_shellrc"
+        ) as mock_add_brew_to_shellrc,
+        patch("devenv.lib.brew.proc.run") as mock_run,
+        patch("os.symlink") as mock_symlink,
+    ):
         install()
         mock_run.assert_not_called()
         mock_run.assert_not_called()
@@ -29,22 +28,21 @@ def test_install_brew_not_installed_intel_mac() -> None:
     homebrew_repo = "/path/to/homebrew_repo"
     homebrew_bin = "/path/to/homebrew/bin"
 
-    with patch("devenv.lib.brew.which", return_value=None), patch(
-        "devenv.lib.brew.create_dirs"
-    ) as mock_create_dirs, patch(
-        "devenv.lib.brew.add_brew_to_shellrc"
-    ) as mock_add_brew_to_shellrc, patch(
-        "devenv.lib.brew.INTEL_MAC", True
-    ), patch(
-        "devenv.lib.brew.DARWIN", True
-    ), patch(
-        "devenv.lib.brew.proc.run"
-    ) as mock_run, patch(
-        "os.symlink"
-    ) as mock_symlink, patch.multiple(
-        "devenv.lib.brew",
-        homebrew_repo=homebrew_repo,
-        homebrew_bin=homebrew_bin,
+    with (
+        patch("devenv.lib.brew.which", return_value=None),
+        patch("devenv.lib.brew.create_dirs") as mock_create_dirs,
+        patch(
+            "devenv.lib.brew.add_brew_to_shellrc"
+        ) as mock_add_brew_to_shellrc,
+        patch("devenv.lib.brew.INTEL_MAC", True),
+        patch("devenv.lib.brew.DARWIN", True),
+        patch("devenv.lib.brew.proc.run") as mock_run,
+        patch("os.symlink") as mock_symlink,
+        patch.multiple(
+            "devenv.lib.brew",
+            homebrew_repo=homebrew_repo,
+            homebrew_bin=homebrew_bin,
+        ),
     ):
         install()
         mock_create_dirs.assert_called_once()
@@ -70,22 +68,21 @@ def test_install_brew_not_installed_non_intel_mac() -> None:
     homebrew_repo = "/path/to/homebrew_repo"
     homebrew_bin = "/path/to/homebrew/bin"
 
-    with patch("devenv.lib.brew.which", return_value=None), patch(
-        "devenv.lib.brew.create_dirs"
-    ) as mock_create_dirs, patch(
-        "devenv.lib.brew.add_brew_to_shellrc"
-    ) as mock_add_brew_to_shellrc, patch(
-        "devenv.lib.brew.INTEL_MAC", False
-    ), patch(
-        "devenv.lib.brew.DARWIN", True
-    ), patch(
-        "devenv.lib.brew.proc.run"
-    ) as mock_run, patch(
-        "os.symlink"
-    ) as mock_symlink, patch.multiple(
-        "devenv.lib.brew",
-        homebrew_repo=homebrew_repo,
-        homebrew_bin=homebrew_bin,
+    with (
+        patch("devenv.lib.brew.which", return_value=None),
+        patch("devenv.lib.brew.create_dirs") as mock_create_dirs,
+        patch(
+            "devenv.lib.brew.add_brew_to_shellrc"
+        ) as mock_add_brew_to_shellrc,
+        patch("devenv.lib.brew.INTEL_MAC", False),
+        patch("devenv.lib.brew.DARWIN", True),
+        patch("devenv.lib.brew.proc.run") as mock_run,
+        patch("os.symlink") as mock_symlink,
+        patch.multiple(
+            "devenv.lib.brew",
+            homebrew_repo=homebrew_repo,
+            homebrew_bin=homebrew_bin,
+        ),
     ):
         install()
         mock_create_dirs.assert_called_once()
@@ -110,12 +107,12 @@ def test_add_brew_to_shellrc() -> None:
     shellrc_path = "/path/to/shellrc"
     homebrew_bin = "/path/to/homebrew/bin"
 
-    with patch(
-        "devenv.lib.brew.fs.shellrc", return_value=shellrc_path
-    ) as mock_shellrc, patch(
-        "devenv.lib.brew.fs.idempotent_add"
-    ) as mock_idempotent_add, patch(
-        "devenv.lib.brew.homebrew_bin", homebrew_bin
+    with (
+        patch(
+            "devenv.lib.brew.fs.shellrc", return_value=shellrc_path
+        ) as mock_shellrc,
+        patch("devenv.lib.brew.fs.idempotent_add") as mock_idempotent_add,
+        patch("devenv.lib.brew.homebrew_bin", homebrew_bin),
     ):
         add_brew_to_shellrc()
 
@@ -132,11 +129,14 @@ def test_create_dirs() -> None:
     INTEL_MAC = False
 
     # Mock the proc.run function
-    with patch("devenv.lib.brew.proc.run") as mock_run, patch.multiple(
-        "devenv.lib.brew",
-        user=user,
-        homebrew_repo=homebrew_repo,
-        INTEL_MAC=INTEL_MAC,
+    with (
+        patch("devenv.lib.brew.proc.run") as mock_run,
+        patch.multiple(
+            "devenv.lib.brew",
+            user=user,
+            homebrew_repo=homebrew_repo,
+            INTEL_MAC=INTEL_MAC,
+        ),
     ):
         create_dirs()
 
@@ -162,11 +162,14 @@ def test_create_dirs_intel_mac() -> None:
     INTEL_MAC = True
 
     # Mock the proc.run function
-    with patch("devenv.lib.brew.proc.run") as mock_run, patch.multiple(
-        "devenv.lib.brew",
-        user=user,
-        homebrew_repo=homebrew_repo,
-        INTEL_MAC=INTEL_MAC,
+    with (
+        patch("devenv.lib.brew.proc.run") as mock_run,
+        patch.multiple(
+            "devenv.lib.brew",
+            user=user,
+            homebrew_repo=homebrew_repo,
+            INTEL_MAC=INTEL_MAC,
+        ),
     ):
         create_dirs()
 
