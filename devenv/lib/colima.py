@@ -287,21 +287,23 @@ Ask for help in #discuss-dev-infra.
 
 
 def start(restart: bool = False) -> ColimaStatus:
-    status = _start(restart)
+    status = _start(restart=False)
     if status != ColimaStatus.UP:
         return status
 
-    if not _upgrade_kernel_if_sve_misreported():
+    upgraded = _upgrade_kernel_if_sve_misreported()
+    if not upgraded and not restart:
         return status
 
-    # unlike when _start stops it, the VM is healthy here,
-    # so let its containers shut down cleanly
-    try:
-        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
-    except RuntimeError as e:
-        print(f"Failed to stop colima: {e}")
+    if upgraded and not restart:
+        try:
+            proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+        except RuntimeError as e:
+            print(f"Failed to stop colima: {e}")
 
     status = _start(restart=True)
+    if not upgraded:
+        return status
     if status != ColimaStatus.UP:
         print("""
 WARNING: colima isn't healthy after restarting to boot the VM's upgraded
@@ -412,6 +414,10 @@ def _start(restart: bool) -> ColimaStatus:
 def restart() -> ColimaStatus:
     status = start(restart=True)
     return status
+
+
+def relaunch() -> ColimaStatus:
+    return _start(restart=True)
 
 
 def stop() -> ColimaStatus:

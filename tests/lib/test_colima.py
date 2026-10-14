@@ -258,6 +258,17 @@ def test_start_doesnt_keep_restarting_into_an_old_kernel(
 
 
 @pytest.mark.usefixtures("m4_mac")
+def test_restart_installs_the_kernel_before_its_one_reboot() -> None:
+    vm = FakeVM()
+
+    assert _start(vm, restart=True) == colima.ColimaStatus.UP
+
+    assert vm.restarts == 1
+    assert vm.ran(APT_INSTALL)
+    assert vm.running == FIXED_KERNEL
+
+
+@pytest.mark.usefixtures("m4_mac")
 def test_start_boots_an_installed_kernel_on_restart() -> None:
     # e.g. an earlier upgrade was interrupted before colima restarted
     vm = FakeVM()
@@ -384,7 +395,11 @@ def test_restart_when_up() -> None:
     with (
         mock.patch(
             "devenv.lib.colima.check",
-            side_effect=[colima.ColimaStatus.UP, colima.ColimaStatus.UP],
+            side_effect=[
+                colima.ColimaStatus.UP,
+                colima.ColimaStatus.UP,
+                colima.ColimaStatus.UP,
+            ],
         ),
         mock.patch("devenv.lib.colima.rosetta.ensure"),
         mock.patch("devenv.lib.colima.proc.run") as mock_run,
@@ -398,3 +413,22 @@ def test_restart_when_up() -> None:
     cmds = [c.args[0][:2] for c in mock_run.call_args_list]
     assert ("colima", "stop") in cmds
     assert ("colima", "start") in cmds
+
+
+def test_start_command_relaunch_skips_the_kernel_upgrade() -> None:
+    from devenv import colima as colima_cmd
+
+    with (
+        mock.patch(
+            "devenv.colima.colima.start",
+            return_value=colima.ColimaStatus.UNHEALTHY,
+        ) as start,
+        mock.patch(
+            "devenv.colima.colima.relaunch",
+            return_value=colima.ColimaStatus.UP,
+        ) as relaunch,
+    ):
+        assert colima_cmd.main({}, ["start"]) == 0
+
+    start.assert_called_once_with()
+    relaunch.assert_called_once_with()
