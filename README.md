@@ -77,6 +77,8 @@ If your devenv is old enough that it has no `update` command, run:
 
 Starts colima with resources sized for your machine. The default `colima start` may underprovision resources. Run `devenv colima start` on a new machine, and again after `colima delete`. The other subcommands are `restart`, `check`, and `stop`.
 
+On Apple M4 and newer, this (and `devenv colima restart`) also checks whether the VM kernel reports SVE support that the CPU does not have. If it does, devenv upgrades the VM kernel and restarts Colima once; containers and volumes are kept. `devenv doctor` checks this too.
+
 `devenv pin_gha [file ...]`
 
 Pins each `uses:` reference in the given GitHub Actions workflow files to a commit SHA.

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import shutil
 import tempfile
+from collections.abc import Collection
 from enum import Enum
 
+from devenv import constants
 from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import home
 from devenv.constants import root
@@ -131,29 +134,209 @@ def check() -> ColimaStatus:
         return ColimaStatus.UNHEALTHY
 
     # https://github.com/abiosoft/colima/issues/949
-    healthy = docker.check_docker_to_host_connectivity(context="colima")
+    healthy = docker.check_docker_to_host_connectivity()
     if not healthy:
         return ColimaStatus.UNHEALTHY
 
     return ColimaStatus.UP
 
 
+# Linux kernels without 064737920bdb ("arm64: Filter out SVE hwcaps when
+# FEAT_SVE isn't implemented", v6.14, Ubuntu Noble 6.8.0-64.67) derive the SVE2
+# family of hwcaps from an ID register that SME also populates, without
+# checking that SVE exists. Apple M4 and newer have SME but no SVE, and macOS
+# 15.2+ exposes SME to VMs, so the kernel in VMs made by colima 0.8.1 (Ubuntu
+# 24.04.1, 6.8.0-50) tells programs they can use SVE2. Anything that believes
+# it, like OpenSSL 4 (bundled in Python's cryptography >= 47) or numba, dies
+# with SIGILL. The image is only used to create a VM, so upgrading colima
+# doesn't fix existing VMs; upgrading the kernel inside them does.
+# https://lore.kernel.org/all/20250103142635.1759674-1-maz@kernel.org/
+
+_APT_GET = (
+    "sudo",
+    "env",
+    "DEBIAN_FRONTEND=noninteractive",
+    "apt-get",
+    "-q",
+    # wait out apt-daily if it happens to be running
+    "-o",
+    "DPkg::Lock::Timeout=120",
+)
+
+
+def _vm_run(*cmd: str) -> str:
+    """Runs cmd in colima's VM and returns its output."""
+    return proc.run(
+        ("colima", "ssh", "--", *cmd), pathprepend=f"{root}/bin", stdout=True
+    )
+
+
+def _vm_exec(*cmd: str) -> None:
+    """Runs cmd in colima's VM, showing its output as it goes."""
+    proc.run(("colima", "ssh", "--", *cmd), pathprepend=f"{root}/bin")
+
+
+def _host_has_sme() -> bool:
+    """
+    Only Macs with SME can be affected, so checking this first spares
+    everyone else from probing the VM on every start.
+    """
+    if not (constants.DARWIN and constants.MACHINE == "arm64"):
+        return False
+    try:
+        out = proc.run(
+            ("/usr/sbin/sysctl", "-n", "hw.optional.arm.FEAT_SME"), stdout=True
+        )
+    except RuntimeError:
+        # chips without SME (M1-M3) don't have this sysctl at all
+        return False
+    return out == "1"
+
+
+def _misreports_sve(features: Collection[str]) -> bool:
+    # sve2, svei8mm, svebf16, ... all depend on sve
+    return "sve" not in features and any(f.startswith("sve") for f in features)
+
+
+def vm_misreports_sve() -> bool:
+    """
+    Whether colima's VM tells programs they can use SVE on a CPU without it.
+    Raises RuntimeError if the VM can't be reached.
+    """
+    if not _host_has_sme():
+        return False
+    # Features	: fp asimd evtstrm ... sve2 ...
+    out = _vm_run("grep", "-m1", "^Features", "/proc/cpuinfo")
+    return _misreports_sve(out.partition(":")[2].split())
+
+
+def _kernel_version_key(version: str) -> tuple[int, ...]:
+    # 6.8.0-147-generic sorts after 6.8.0-50-generic
+    return tuple(int(n) for n in re.findall(r"\d+", version))
+
+
+def _vm_newest_kernel() -> str:
+    """The kernel that grub boots by default."""
+    versions = _vm_run("linux-version", "list").split()
+    if not versions:
+        raise RuntimeError("found no kernels in colima's VM")
+    return max(versions, key=_kernel_version_key)
+
+
+def _upgrade_kernel_if_sve_misreported() -> bool:
+    """
+    Installs a fixed kernel if colima's VM misreports SVE, and returns
+    whether the VM has to be restarted to boot it.
+
+    Failures only warn: everything that doesn't use SVE still works,
+    so they shouldn't fail `devenv colima start`.
+    """
+    try:
+        if not vm_misreports_sve():
+            return False
+        running = _vm_run("uname", "-r")
+        newest = _vm_newest_kernel()
+    except RuntimeError as e:
+        print(f"WARNING: failed to check colima's VM kernel: {e}")
+        return False
+
+    if newest != running:
+        # Either a previous upgrade's restart was interrupted, or the VM
+        # didn't boot the new kernel. In the latter case restarting would
+        # happen again on every start, so leave it to the user.
+        print(f"""
+WARNING: colima's VM is running Linux {running}, which misreports SVE
+support on this CPU, but Linux {newest} is already installed.
+Run `devenv colima restart` to boot it. If that doesn't help,
+ask for help in #discuss-dev-infra.
+""")
+        return False
+
+    print(f"""
+colima's VM is running Linux {running}, which tells programs that this Mac's
+CPU supports SVE2. Apple M4 and newer don't have SVE, so anything that
+believes it (e.g. OpenSSL 4 in Python's cryptography >= 47, or numba) crashes
+with "Illegal instruction".
+
+Installing a newer kernel in the VM, then restarting colima once to boot it.
+Your containers and volumes are kept.
+""")
+    try:
+        _vm_exec(*_APT_GET, "update")
+        _vm_exec(*_APT_GET, "install", "-y", "linux-image-virtual")
+        # make sure the kernel, initrd and grub config are on disk
+        # in case the VM ends up being force stopped
+        _vm_exec("sync")
+        newest = _vm_newest_kernel()
+    except RuntimeError as e:
+        print(f"""
+WARNING: failed to upgrade colima's VM kernel: {e}
+`devenv colima start` will try again next time.
+""")
+        return False
+
+    if newest == running:
+        print(f"""
+WARNING: no kernel newer than Linux {running} is available to colima's VM.
+Ask for help in #discuss-dev-infra.
+""")
+        return False
+
+    print(f"Installed Linux {newest}, restarting colima to boot it.")
+    return True
+
+
 def start(restart: bool = False) -> ColimaStatus:
-    status = check()
+    status = _start(restart)
+    if status != ColimaStatus.UP:
+        return status
 
-    if status == ColimaStatus.UP:
-        if not restart:
-            # an interrupted start may have left docker on the default context
-            proc.run(("docker", "context", "use", "colima"))
-            return ColimaStatus.UP
+    if not _upgrade_kernel_if_sve_misreported():
+        return status
 
+    # unlike when _start stops it, the VM is healthy here,
+    # so let its containers shut down cleanly
+    try:
+        proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
+    except RuntimeError as e:
+        print(f"Failed to stop colima: {e}")
+
+    status = _start(restart=True)
+    if status != ColimaStatus.UP:
+        return status
+
+    # only ever upgrade and restart once: if that didn't work,
+    # doing it again won't either
+    try:
+        running = _vm_run("uname", "-r")
+        still_misreported = vm_misreports_sve()
+    except RuntimeError as e:
+        print(f"WARNING: failed to check colima's VM kernel: {e}")
+        return status
+
+    if still_misreported:
+        print(f"""
+WARNING: colima's VM still misreports SVE support after booting
+Linux {running}. Ask for help in #discuss-dev-infra.
+""")
+    else:
+        print(f"colima's VM is now running Linux {running}.")
+
+    return status
+
+
+def _start(restart: bool) -> ColimaStatus:
     # switch to default context to avoid broken contexts (e.g., desktop-linux)
-    # only once we're actually (re)starting, so that a healthy colima is left
-    # alone and docker isn't left pointing at the default context
     try:
         proc.run(("docker", "context", "use", "default"))
     except RuntimeError as e:
         print(f"Failed to switch docker context: {e}")
+
+    status = check()
+
+    if status == ColimaStatus.UP:
+        if not restart:
+            return ColimaStatus.UP
 
     # always stop first (colima's internal state can get out of sync)
     try:
