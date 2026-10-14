@@ -19,8 +19,7 @@ def test_install() -> None:
         patch("os.chmod"),
         patch("devenv.lib.direnv.shutil.which", return_value=None),
         patch(
-            "devenv.lib.direnv.proc.run",
-            side_effect=[_version],
+            "devenv.lib.direnv.proc.run", side_effect=[_version]
         ) as mock_proc_run,
     ):
         install()
@@ -42,10 +41,7 @@ def test_install() -> None:
 
 def test_install_skips_when_direnv_is_already_on_path() -> None:
     with (
-        patch(
-            "devenv.lib.direnv.shutil.which",
-            return_value="/usr/bin/direnv",
-        ),
+        patch("devenv.lib.direnv.shutil.which", return_value="/usr/bin/direnv"),
         patch("devenv.lib.archive.download") as download,
         patch("devenv.lib.fs.idempotent_add") as add,
     ):
