@@ -223,7 +223,7 @@ def _vm_newest_kernel() -> str:
     return max(versions, key=_kernel_version_key)
 
 
-def _upgrade_kernel_if_sve_misreported() -> bool:
+def _upgrade_kernel_if_sve_misreported(*, restarting: bool) -> bool:
     """
     Installs a fixed kernel if colima's VM misreports SVE, and returns
     whether the VM has to be restarted to boot it.
@@ -241,9 +241,8 @@ def _upgrade_kernel_if_sve_misreported() -> bool:
         return False
 
     if newest != running:
-        # Either a previous upgrade's restart was interrupted, or the VM
-        # didn't boot the new kernel. In the latter case restarting would
-        # happen again on every start, so leave it to the user.
+        if restarting:
+            return True
         print(f"""
 WARNING: colima's VM is running Linux {running}, which misreports SVE
 support on this CPU, but Linux {newest} is already installed.
@@ -291,19 +290,22 @@ def start(restart: bool = False) -> ColimaStatus:
     if status != ColimaStatus.UP:
         return status
 
-    upgraded = _upgrade_kernel_if_sve_misreported()
-    if not upgraded and not restart:
-        return status
-
-    if upgraded and not restart:
+    boot_for_kernel = _upgrade_kernel_if_sve_misreported(restarting=restart)
+    if boot_for_kernel:
         try:
             proc.run(("colima", "stop"), pathprepend=f"{root}/bin")
         except RuntimeError as e:
             print(f"Failed to stop colima: {e}")
 
-    status = _start(restart=True)
-    if not upgraded:
-        return status
+        status = _start(restart=True)
+        return _report_booted_kernel(status)
+
+    if restart:
+        return _start(restart=True)
+    return status
+
+
+def _report_booted_kernel(status: ColimaStatus) -> ColimaStatus:
     if status != ColimaStatus.UP:
         print("""
 WARNING: colima isn't healthy after restarting to boot the VM's upgraded
@@ -311,8 +313,6 @@ kernel. Ask for help in #discuss-dev-infra.
 """)
         return status
 
-    # only ever upgrade and restart once: if that didn't work,
-    # doing it again won't either
     try:
         running = _vm_run("uname", "-r")
         still_misreported = vm_misreports_sve()
