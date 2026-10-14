@@ -26,7 +26,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         if status == colima.ColimaStatus.UNHEALTHY:
             # https://github.com/abiosoft/colima/issues/949
             print("colima seems unhealthy, we'll try restarting once")
-            status = colima.restart()
+            status = colima.relaunch()
             if status != colima.ColimaStatus.UP:
                 return 1
         if status != colima.ColimaStatus.UP:
