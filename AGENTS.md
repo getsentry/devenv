@@ -9,10 +9,6 @@ tooling provides:
 Co-Authored-By: <agent and model> <email>
 ```
 
-Don't replace the placeholder above with a specific agent or model: it's
-copied verbatim, so any name written here misattributes commits made by
-others.
-
 ## Setup
 
 ```bash
