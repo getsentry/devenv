@@ -6,96 +6,94 @@ managing dev environments since '24
 a simple set of high level commands - bootstrap, fetch, sync, doctor - that
 manage a repository's dev environment.
 
-## prerequisites
+## Prerequisites
 
-Are you a Sentry employee? Make sure your GitHub account has been added to a [`getsentry/engineering` team](https://github.com/orgs/getsentry/teams/engineering). If not, open an IT Ticket before continuing.
+If you are a Sentry employee, make sure your GitHub account is in a [`getsentry/engineering` team](https://github.com/orgs/getsentry/teams/engineering). If it is not, open an IT ticket before you continue.
 
-Otherwise, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable. You'll need this set for both `devenv bootstrap` and `devenv fetch`.
+If you are not a Sentry employee, set the `SENTRY_EXTERNAL_CONTRIBUTOR` environment variable. `devenv bootstrap` and `devenv fetch` both read it.
 
-## install
+## Install
 
-Download [this](https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh) and run it:
+Download [`install-devenv.sh`](https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh) and run it:
 
 ```
 curl https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh > install-devenv.sh
 bash install-devenv.sh
 ```
 
-Make sure to call this file `install-devenv.sh` as the script calls itself when you run it.
+Keep the file name `install-devenv.sh`. The script only runs its installer when it has that name.
 
-This "global" devenv is installed to `~/.local/share/sentry-devenv/bin/devenv`.
+The script installs the global devenv to `~/.local/share/sentry-devenv/bin/devenv`.
 
-To update this installation, run `devenv update`.
+To update the global devenv, run `devenv update`.
 
+## Commands
 
-## user guide
+Run `devenv --help` for the full list.
 
 `devenv bootstrap`
 
-This is intended for initial setup of a new machine.
+Sets up a new machine. It writes the [global configuration](#global-configuration), configures GitHub SSH access, and installs the global tools.
 
 `devenv fetch [repository name]`
 
-Any repository on GitHub in the form of `[org]/[reponame]`. If the organization
-is omitted, it defaults to `getsentry`.
+Clones any GitHub repository in the form `[org]/[reponame]` over SSH into your coderoot, then runs `devenv sync` in it. If you omit the org, it defaults to `getsentry`.
 
-Repositories are cloned to a "coderoot" directory which is specified in the [global configuration](#configuration).
+`sentry` and `ops` are special names:
 
-Note: `sentry` and `ops` are currently special names which perform more complicated installations (e.g., `sentry` will set up both sentry and getsentry)
+- `devenv fetch sentry` sets up `getsentry/sentry`, and also `getsentry/getsentry` unless `SENTRY_EXTERNAL_CONTRIBUTOR` is set.
+- `devenv fetch ops` sets up `getsentry/ops` and clones `getsentry/terraform-modules`.
 
 `devenv sync`
 
-This runs a user-supplied `[reporoot]/devenv/sync.py` which should:
-- make sure any desired tools are installed
-- bring the dev environment up-to-date, or create it if it doesn't exist
+Runs the repo's `sync.py` from the [repo config directory](#repository-configuration). `sync.py` defines `main(context: dict[str, str]) -> int`. The `context` keys are `reporoot`, `repo`, and `coderoot`. `sync.py` should:
 
-This script runs within devenv's [runtime](#runtime), which has access to many useful high-level routines.
-There are currently no api docs, but referring to the [examples](#examples) should get you 90% of the way there.
+- install any tools the repo needs
+- create the dev environment, or bring it up to date
 
-If you have a feature request, please open an issue!
+`sync.py` runs in devenv's [runtime](#runtime), so it can import the `devenv.lib` modules. There are no API docs. Start from the [examples](#examples). If you have a feature request, open an issue.
 
-In general, our library is designed to isolate, as much as possible, a repo's dev environment within `[reporoot]/.devenv`.
-For example, [gcloud](#gcloud) is installed to `[reporoot]/.devenv/bin/gcloud` (with the gcloud sdk at `[reporoot]/.devenv/bin/google-cloud-sdk`).
-An exception to this would be python virtualenvs, which was implemented before the idea of `[reporoot]/.devenv`.
+The library keeps a repo's dev environment inside `[reporoot]/.devenv` where it can.
+For example, [gcloud](#gcloud) is installed to `[reporoot]/.devenv/bin/gcloud`, with the gcloud SDK at `[reporoot]/.devenv/bin/google-cloud-sdk`.
+Python virtualenvs are an exception because they predate `[reporoot]/.devenv`.
 
 `devenv doctor`
 
-Use this to diagnose and fix common issues.
+Diagnoses and fixes common issues. Use `--check-only` to skip fixes, and `--tag` or `--exclude-tag` to select checks.
 
-Repo-specific checks and fixes can be defined in `[reporoot]/devenv/checks`.
-Otherwise we have "builtin" checks and fixes in `devenv.checks`.
+Builtin checks live in `devenv.checks`. A repo can add its own checks in the `checks` directory of its [repo config directory](#repository-configuration).
 
-`devenv update`
+`devenv update [version]`
 
-This updates the global devenv installation, and global tools.
+Updates the global devenv installation and the global tools. Pass a version to install that version.
 
-If you're upgrading from a particularly old devenv, it won't have `update` so you need to:
+If your devenv is old enough that it has no `update` command, run:
 `~/.local/share/sentry-devenv/venv/bin/pip install -U sentry-devenv`
 
 `devenv colima start`
 
-If you are using colima instead of docker desktop, run this to set up colima on a new machine. The default `colima start` may underprovision resources. Run this command after `colima delete` to reset.
+Starts colima with resources sized for your machine. The default `colima start` may underprovision resources. Run `devenv colima start` on a new machine, and again after `colima delete`. The other subcommands are `restart`, `check`, and `stop`.
 
+`devenv pin_gha [file ...]`
 
-## technical overview
+Pins each `uses:` reference in the given GitHub Actions workflow files to a commit SHA.
+
+## Technical overview
 
 Everything devenv needs is in `~/.local/share/sentry-devenv`.
 
-- `~/.local/share/sentry-devenv/bin` contains:
-    - `devenv` itself
-    - `direnv`
-      - we currently rely on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH
-      - see [examples](#examples) for .envrc suggestions
-    - global tools (macos only; you are otherwise expected to install docker yourself): `docker` (cli), `colima`
+`~/.local/share/sentry-devenv/bin` contains:
 
+- `devenv` itself
+- `direnv`, if direnv was not already on your PATH. devenv relies on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH.
+- on macOS only, the global tools: the `docker` CLI, `colima`, and `lima`. On Linux, install docker engine yourself. `devenv bootstrap` exits if it is missing.
 
-### runtime
+### Runtime
 
-- `devenv` is installed exclusively in a virtualenv at `~/.local/share/sentry-devenv/venv`
-    - this venv exclusively uses a python at `~/.local/share/sentry-devenv/python`
+`devenv` is installed in a virtualenv at `~/.local/share/sentry-devenv/venv`.
+That virtualenv uses the Python at `~/.local/share/sentry-devenv/python`.
 
-
-### global configuration
+### Global configuration
 
 `~/.config/sentry-devenv/config.ini`
 ```ini
@@ -104,8 +102,13 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
 coderoot = ~/code
 ```
 
+### Repository configuration
 
-### repository configuration
+devenv reads `config.ini`, `sync.py`, and `checks` from the repo config directory.
+The repo config directory is `[reporoot]/.devenv` if `[reporoot]/.devenv/config.ini` exists.
+Otherwise, it is `[reporoot]/devenv` if `[reporoot]/devenv/config.ini` exists.
+If neither file exists, it is `[reporoot]/.devenv`.
+The examples below use `[reporoot]/devenv`.
 
 `[reporoot]/devenv/config.ini`
 ```ini
@@ -114,10 +117,9 @@ coderoot = ~/code
 minimum_version = 1.22.1
 ```
 
-There are plenty more sections, their use is best seen in the [examples](#examples).
+The [examples](#examples) show the other sections.
 
-
-## examples
+## Examples
 
 Skip to:
 - [direnv](#direnv)
@@ -130,7 +132,7 @@ Skip to:
 
 ### direnv
 
-A minimum viable `[reporoot]/.envrc` is currently needed:
+Every repo needs a minimal `[reporoot]/.envrc`:
 
 ```bash
 if [[ -f "${PWD}/.env" ]]; then
@@ -149,9 +151,7 @@ PATH_add "${PWD}/.devenv/bin"
 
 ### python
 
-devenv does not manage uv installations, simply run `brew install uv`.
-
-Guidelines on how to configure `uv` are [here](https://www.notion.so/sentry/Standard-Spec-python-uv-2248b10e4b5d8045b8fff30f8b8b67ca).
+devenv does not manage uv installations. Run `brew install uv`.
 
 To activate the virtualenv with direnv and run `uv sync` as part of `devenv sync`:
 
@@ -164,13 +164,9 @@ PATH_add "${PWD}/.venv/bin"
 
 `[reporoot]/devenv/sync.py`
 ```py
-from devenv import constants
-from devenv.lib import config, proc
+from devenv.lib import proc
 
 def main(context: dict[str, str]) -> int:
-    reporoot = context["reporoot"]
-    cfg = config.get_repo(reporoot)
-
     # reporoot/.venv is the default venv location
     print(f"syncing .venv ...")
     proc.run(("uv", "sync", "--frozen", "--quiet"))
@@ -183,8 +179,9 @@ Use `[reporoot]/.python-version` to pin a python version for uv:
 3.13.3
 ```
 
-
 ### node
+
+`node.install_pnpm` installs the pnpm version named in the `packageManager` field of `[reporoot]/package.json`.
 
 `[reporoot]/.envrc`
 ```bash
@@ -222,8 +219,7 @@ def main(context: dict[str, str]) -> int:
     return 0
 ```
 
-If you'd like a different node version, fill in the appropriate urls https://nodejs.org/dist/
-first in config.ini, then reach out to dev-infra and we can mirror it to GCS.
+If you want a different node version, first fill in the matching URLs from https://nodejs.org/dist/ in `config.ini`. Then ask dev-infra to mirror them to GCS.
 
 `[reporoot]/devenv/config.ini`
 ```ini
@@ -244,7 +240,7 @@ version = v20.13.1
 `[reporoot]/devenv/sync.py`
 ```py
 from devenv import constants
-from devenv.lib import brew
+from devenv.lib import brew, proc
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
@@ -266,13 +262,9 @@ def main(context: dict[str, str]) -> int:
 # version of something
 ```
 
-
 ### colima
 
-Since devenv 1.14.0, colima (and the docker CLI needed to interact with it)
-should have been installed globally for you during bootstrap.
-If you're on an older version, run `devenv update`.
-
+On macOS, `devenv bootstrap` installs colima and the docker CLI globally. If you installed devenv before 1.14.0, run `devenv update` to get them.
 
 ### gcloud
 
@@ -287,8 +279,8 @@ def main(context: dict[str, str]) -> int:
 
     gcloud.install(
         cfg["gcloud"]["version"],
-        cfg["gcloud"][SYSTEM_MACHINE],
-        cfg["gcloud"][f"{SYSTEM_MACHINE}_sha256"],
+        cfg["gcloud"][constants.SYSTEM_MACHINE],
+        cfg["gcloud"][f"{constants.SYSTEM_MACHINE}_sha256"],
         reporoot,
     )
 
@@ -310,13 +302,11 @@ linux_x86_64_sha256 = 40ce41958236f76d9cb08f377ccb9fd6502d2df4da14b36d9214bcb620
 version = 490.0.0
 ```
 
-
 ### terraform
 
-Our responsibility ends at installing `tenv` and containing `TENV_ROOT` at  `[reporoot]/.devenv/bin/tenv-root`. We install `terraform`, `tofu` and `terragrunt` shims which use that `TENV_ROOT`.
+devenv installs `tenv` and keeps `TENV_ROOT` at `[reporoot]/.devenv/bin/tenv-root`. It also writes `tenv`, `terraform`, `tofu`, and `terragrunt` shims to `[reporoot]/.devenv/bin` that use that `TENV_ROOT`. It does not write a `tf` shim, so a repo's own `tf` wrapper is not shadowed.
 
-Define `[reporoot]/.terraform-version` and `[reporoot]/.terragrunt-version` (if you want it) and after running sync, you should be able to just type `terraform` and `tenv` takes care of the rest.
-
+Define `[reporoot]/.terraform-version`, and optionally `[reporoot]/.terragrunt-version`. After `devenv sync`, run `terraform` and `tenv` installs the pinned version.
 
 `[reporoot]/devenv/sync.py`
 ```py
@@ -329,8 +319,8 @@ def main(context: dict[str, str]) -> int:
 
     tenv.install(
         cfg["tenv"]["version"],
-        cfg["tenv"][SYSTEM_MACHINE],
-        cfg["tenv"][f"{SYSTEM_MACHINE}_sha256"],
+        cfg["tenv"][constants.SYSTEM_MACHINE],
+        cfg["tenv"][f"{constants.SYSTEM_MACHINE}_sha256"],
         reporoot,
     )
 
@@ -348,12 +338,6 @@ darwin_arm64_sha256 = c31d2b8412147316a0cadb684408bc123e567852d7948091be7e4303fc
 version = v1.3.0
 ```
 
+## Get help
 
-## develop
-
-We use `uv`. The easiest way to run devenv locally:
-
-```
-~/code/devenv $ uv sync
-~/code/sentry $ uv run --project ~/code/devenv devenv sync
-```
+Run `devenv doctor` first. If that does not fix it, see the [devenv troubleshooting guide](https://develop.sentry.dev/development-infrastructure/environment/#troubleshooting).
