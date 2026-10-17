@@ -25,6 +25,9 @@ Keep the file name `install-devenv.sh`. The script only runs its installer when 
 
 The script installs the global devenv to `~/.local/share/sentry-devenv/bin/devenv`.
 
+devenv uses [uv](https://docs.astral.sh/uv/) to install itself and to manage virtualenvs; it does not use pip.
+Install the latest uv first with `brew install uv`. If the script can't find uv, it installs the latest uv to `~/.local/bin` with uv's official installer.
+
 To update the global devenv, run `devenv update`.
 
 ## Commands
@@ -68,7 +71,7 @@ Builtin checks live in `devenv.checks`. A repo can add its own checks in the `ch
 Updates the global devenv installation and the global tools. Pass a version to install that version.
 
 If your devenv is old enough that it has no `update` command, run:
-`~/.local/share/sentry-devenv/venv/bin/pip install -U sentry-devenv`
+`uv pip install --python ~/.local/share/sentry-devenv/venv/bin/python -U sentry-devenv`
 
 `devenv colima start`
 
@@ -90,8 +93,9 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
 
 ### Runtime
 
-`devenv` is installed in a virtualenv at `~/.local/share/sentry-devenv/venv`.
+`devenv` is installed with uv in a virtualenv at `~/.local/share/sentry-devenv/venv`.
 That virtualenv uses the Python at `~/.local/share/sentry-devenv/python`.
+It has no pip; `devenv update` uses `uv pip` to update it.
 
 ### Global configuration
 

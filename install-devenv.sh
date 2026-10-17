@@ -6,6 +6,8 @@
 #   ./install-devenv.sh
 
 # shellcheck disable=SC2016  # I know that single-quotes are hardquotes
+# remembered so we can find a uv the user already installed (e.g. via brew)
+ORIG_PATH="${PATH:-}"
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 ME="$(basename "$0")"
 
@@ -168,6 +170,21 @@ install_python() {
   ln -sfn "$SNTY_DEVENV_HOME/python${version}" "$SNTY_DEVENV_HOME/python"
 }
 
+find_uv() {
+  PATH="$ORIG_PATH:${XDG_BIN_HOME:-$HOME/.local/bin}:/opt/homebrew/bin:/usr/local/bin" \
+    command -v uv
+}
+
+ensure_uv() {
+  # devenv doesn't manage uv, but it needs one to install itself.
+  if ! uv="$(find_uv)"; then
+    info "uv not found, installing the latest uv (https://docs.astral.sh/uv/)..."
+    http-get https://astral.sh/uv/install.sh | sh
+    uv="$(find_uv)" || error "Failed to install uv; please install it yourself (brew install uv) and try again."
+  fi
+  show "$uv" --version
+}
+
 main() {
   constants
   parseopt "$@"
@@ -176,14 +193,17 @@ main() {
   devenv_python="$SNTY_DEVENV_HOME/python/bin/python3"
 
   info "Installing dependencies..."
+  ensure_uv
   install_python "$SNTY_DEVENV_PY_RELEASE" "$SNTY_DEVENV_PY_VERSION"
 
-  show "$devenv_python" -m venv --clear "$devenv_venv"
+  rm -rf "$devenv_venv"
+  show "$uv" venv --python "$devenv_python" "$devenv_venv"
 
   if [[ "${CI:-}" ]]; then
-    show "$devenv_venv"/bin/pip install "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
+    show "$uv" pip install --python "$devenv_venv/bin/python" \
+      "git+$SNTY_DEVENV_REPO@$SNTY_DEVENV_BRANCH"
   else
-    show "$devenv_venv"/bin/pip install \
+    show "$uv" pip install --python "$devenv_venv/bin/python" \
       --index-url https://pypi.devinfra.sentry.io/simple \
       sentry-devenv
   fi

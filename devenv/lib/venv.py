@@ -9,6 +9,7 @@ from devenv import pythons
 from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
+from devenv.lib import uv
 
 VenvStatus = Enum(
     "VenvStatus", ("OK", "VERSION_MISMATCH", "NOT_PRESENT", "NOT_CONFIGURED")
@@ -57,14 +58,12 @@ def sync(
     bins: Optional[tuple[str, ...]] = None,
 ) -> None:
     cmd: tuple[str, ...] = (
-        f"{venv_dir}/bin/python",
-        "-m",
+        uv.find(),
         "pip",
-        "--disable-pip-version-check",
-        "--no-color",
-        "--quiet",
-        "--require-virtualenv",
         "install",
+        "--quiet",
+        "--python",
+        f"{venv_dir}/bin/python",
         "-r",
         requirements,
     )
@@ -92,10 +91,14 @@ def check(venv: str, python_version: str) -> VenvStatus:
 
     with open(f"{venv}/pyvenv.cfg", "r") as f:
         for line in f:
-            if line.startswith("version"):
-                venv_version = line.split("=")[1].strip()
-                if venv_version != python_version:
-                    return VenvStatus.VERSION_MISMATCH
+            key, sep, value = line.partition("=")
+            # python -m venv writes `version = 3.11.6`, uv writes
+            # `version_info = 3.11.6` (or e.g. `3.11.6.final.0`)
+            if not sep or key.strip() not in ("version", "version_info"):
+                continue
+            venv_version = ".".join(value.strip().split(".")[:3])
+            if venv_version != python_version:
+                return VenvStatus.VERSION_MISMATCH
 
     return VenvStatus.OK
 
@@ -112,7 +115,13 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         shutil.rmtree(venv)
 
     proc.run(
-        (pythons.get(python_version, url, sha256), "-m", "venv", venv),
+        (
+            uv.find(),
+            "venv",
+            "--python",
+            pythons.get(python_version, url, sha256),
+            venv,
+        ),
         exit=True,
     )
 

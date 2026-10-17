@@ -4,9 +4,33 @@ import os
 import shutil
 import tempfile
 
+from devenv import constants
 from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
+
+install_help = """\
+uv is required but wasn't found on PATH.
+Install it with `brew install uv`, or see
+https://docs.astral.sh/uv/getting-started/installation/
+"""
+
+
+def find() -> str:
+    """Returns the path to the uv on PATH.
+
+    Falls back to ~/.local/bin/uv, which is where astral's installer
+    (and install-devenv.sh) puts uv, in case that isn't on PATH yet.
+    """
+    found = shutil.which("uv")
+    if found is not None:
+        return found
+
+    fallback = f"{constants.home}/.local/bin/uv"
+    if os.access(fallback, os.X_OK):
+        return fallback
+
+    raise SystemExit(install_help)
 
 
 def _install(url: str, sha256: str, into: str) -> None:
