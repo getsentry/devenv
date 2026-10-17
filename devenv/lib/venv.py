@@ -91,10 +91,14 @@ def check(venv: str, python_version: str) -> VenvStatus:
 
     with open(f"{venv}/pyvenv.cfg", "r") as f:
         for line in f:
-            if line.startswith("version"):
-                venv_version = line.split("=")[1].strip()
-                if venv_version != python_version:
-                    return VenvStatus.VERSION_MISMATCH
+            key, sep, value = line.partition("=")
+            # python -m venv writes `version = 3.11.6`, uv writes
+            # `version_info = 3.11.6` (or e.g. `3.11.6.final.0`)
+            if not sep or key.strip() not in ("version", "version_info"):
+                continue
+            venv_version = ".".join(value.strip().split(".")[:3])
+            if venv_version != python_version:
+                return VenvStatus.VERSION_MISMATCH
 
     return VenvStatus.OK
 

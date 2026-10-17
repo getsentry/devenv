@@ -5,6 +5,8 @@ import pathlib
 from unittest.mock import call
 from unittest.mock import patch
 
+import pytest
+
 from devenv.lib import config
 from devenv.lib import venv
 from devenv.lib.repository import Repository
@@ -118,3 +120,35 @@ def test_sync_uses_uv(tmp_path: pathlib.Path) -> None:
             )
         )
     ]
+
+
+@pytest.mark.parametrize(
+    "pyvenv_cfg",
+    (
+        "home = /x\nversion = 3.11.6\n",
+        "home = /x\nuv = 0.13.1\nversion_info = 3.11.6\n",
+        "home = /x\nversion_info = 3.11.6.final.0\n",
+        "version = 3.11.6\nversion_info = 3.11.6.final.0\n",
+    ),
+)
+def test_check_ok(tmp_path: pathlib.Path, pyvenv_cfg: str) -> None:
+    os.makedirs(f"{tmp_path}/bin")
+    open(f"{tmp_path}/bin/python", "w").close()
+    with open(f"{tmp_path}/pyvenv.cfg", "w") as f:
+        f.write(pyvenv_cfg)
+
+    assert venv.check(str(tmp_path), "3.11.6") == venv.VenvStatus.OK
+
+
+@pytest.mark.parametrize(
+    "pyvenv_cfg", ("version = 3.11.4\n", "version_info = 3.11.4.final.0\n")
+)
+def test_check_mismatch(tmp_path: pathlib.Path, pyvenv_cfg: str) -> None:
+    os.makedirs(f"{tmp_path}/bin")
+    open(f"{tmp_path}/bin/python", "w").close()
+    with open(f"{tmp_path}/pyvenv.cfg", "w") as f:
+        f.write(pyvenv_cfg)
+
+    assert (
+        venv.check(str(tmp_path), "3.11.6") == venv.VenvStatus.VERSION_MISMATCH
+    )
