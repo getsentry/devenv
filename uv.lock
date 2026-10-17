@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.11.4"
 
 [[package]]
@@ -331,7 +331,7 @@ wheels = [
 
 [[package]]
 name = "sentry-devenv"
-version = "1.28.0"
+version = "1.29.0"
 source = { editable = "." }
 dependencies = [
     { name = "sentry-sdk" },
