@@ -16,6 +16,9 @@ repos:
         entry: .venv/bin/mypy
         language: system
         types: [python]
+        # parallel mypy processes share .mypy_cache, and mypy 2 can crash
+        # with an INTERNAL ERROR when they race on it
+        require_serial: true
       - id: shellcheck
         name: shellcheck
         entry: .venv/bin/shellcheck
