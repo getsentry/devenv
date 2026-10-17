@@ -5,7 +5,7 @@ set -euxo pipefail
 
 # we don't have permissions to clone getsentry which is a good thing
 # eventually we should move this bootstrap testing over to getsentry repo
-# in the meantime, mock it so that pip install -e has something to chew on
+# in the meantime, mock it so that the editable install has something to chew on
 mkdir -p "$HOME/code/getsentry"
 cat <<EOF > "$HOME/code/getsentry/pyproject.toml"
 [project]

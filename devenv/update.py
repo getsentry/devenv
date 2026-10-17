@@ -12,6 +12,7 @@ from devenv.lib import direnv
 from devenv.lib import docker
 from devenv.lib import limactl
 from devenv.lib import proc
+from devenv.lib import uv
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 
@@ -61,11 +62,15 @@ Updating global tools (at {constants.root}/bin).
             version = f"sentry-devenv=={args.version}"
 
         proc.run(
-            (f"{constants.root}/venv/bin/pip", "install", "-U", version),
-            env={
-                # better than cli flag (who knows if it'll break in the future)
-                "PIP_DISABLE_PIP_VERSION_CHECK": "1"
-            },
+            (
+                uv.find(),
+                "pip",
+                "install",
+                "--python",
+                f"{constants.root}/venv/bin/python",
+                "--upgrade",
+                version,
+            )
         )
 
         print(f"""\

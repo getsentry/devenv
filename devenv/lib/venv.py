@@ -9,6 +9,7 @@ from devenv import pythons
 from devenv.lib import config
 from devenv.lib import fs
 from devenv.lib import proc
+from devenv.lib import uv
 
 VenvStatus = Enum(
     "VenvStatus", ("OK", "VERSION_MISMATCH", "NOT_PRESENT", "NOT_CONFIGURED")
@@ -57,14 +58,12 @@ def sync(
     bins: Optional[tuple[str, ...]] = None,
 ) -> None:
     cmd: tuple[str, ...] = (
-        f"{venv_dir}/bin/python",
-        "-m",
+        uv.find(),
         "pip",
-        "--disable-pip-version-check",
-        "--no-color",
-        "--quiet",
-        "--require-virtualenv",
         "install",
+        "--quiet",
+        "--python",
+        f"{venv_dir}/bin/python",
         "-r",
         requirements,
     )
@@ -112,7 +111,13 @@ def ensure(venv: str, python_version: str, url: str, sha256: str) -> None:
         shutil.rmtree(venv)
 
     proc.run(
-        (pythons.get(python_version, url, sha256), "-m", "venv", venv),
+        (
+            uv.find(),
+            "venv",
+            "--python",
+            pythons.get(python_version, url, sha256),
+            venv,
+        ),
         exit=True,
     )
 

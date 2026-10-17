@@ -12,4 +12,3 @@ ln -sfT "$src" "$dst"
 touch "$dst.complete"  # actions/setup-python keys on this file's existence
 
 ls -l "$dst/bin"
-"$dst"/bin/python -m pip install --upgrade pip
