@@ -1,42 +1,35 @@
 # Agent Instructions
 
-## Commit Attribution
+`devenv` (PyPI: `sentry-devenv`) is Sentry's CLI and library for setting up repo dev environments. User docs are in `README.md`, which is also the PyPI long description.
 
-AI-generated commits MUST include a `Co-Authored-By:` trailer crediting the agent and model that actually wrote them, e.g. the attribution your tooling provides:
+## Commit attribution
+
+AI-generated commits MUST include a `Co-Authored-By:` trailer crediting the agent and model that actually wrote them, such as the attribution your tooling provides:
 ```
 Co-Authored-By: <agent and model> <email>
 ```
 
-## Setup
+## Commands
 
-```bash
-uv sync
-```
+- Set up: `uv sync`
+- Test: `uv run pytest tests/`
+- Test with coverage, as CI runs it: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
+- Lint, format, and type-check (ruff, mypy, shellcheck): `uv run pre-commit run --all-files`
+- Run your checkout against another repo: `uv run --project ~/code/devenv devenv sync` from that repo's root
+- Run the `bootstrap` workflow locally with `gh act`: `make test`
 
-## Running Tests
+## Invariants
 
-```bash
-uv run pytest tests/
-```
+- Python is pinned to 3.11.4 (`requires-python` in `pyproject.toml`, `.python-version`).
+- Use `constants.DARWIN` and `constants.LINUX` for platform checks.
+- macOS gets the global tools (brew, docker CLI, colima, lima). Linux means apt-based (`dpkg` on PATH). On Linux, devenv installs no global tools, and `devenv bootstrap` exits if docker engine is missing.
 
-With coverage: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
+## Map
 
-## Code Style
-
-- Python 3.11+
-- Ruff formatter/linter, 80 char line length
-- Strict mypy/pyright typing
-- Run `ruff check --fix .`, `ruff format .`, and `mypy .` before committing
-
-## Project Structure
-
-- `devenv/` - Main package
-- `devenv/lib/` - Library modules (docker, colima, brew, etc.)
-- `devenv/checks/` - Health checks for `devenv doctor`
-- `tests/` - Test files mirror the main package structure
-
-## Platform Support
-
-- macOS (Darwin): Full support with Colima/Docker
-- Linux (Ubuntu 24.04+): Detection only, prints install commands for user
-- Use `constants.DARWIN` / `constants.LINUX` for platform checks
+- `devenv/`: one module per subcommand, registered in `devenv/main.py`
+- `devenv/lib/`: library modules that repo `sync.py` scripts import
+- `devenv/checks/`: builtin `devenv doctor` checks
+- `tests/`: mirrors the `devenv/` layout
+- `install-devenv.sh`: installer for the global devenv
+- `ci/`: scripts for the `bootstrap` and `integration` workflows
+- Releases: the `Release` workflow (`.github/workflows/release.yml`) runs craft, which calls `scripts/bump-version.sh`

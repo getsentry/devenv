@@ -1,5 +1,3 @@
-# For detail, see ./doc/gh-act.md
-
 # This image was built by running the command: make -C lib/gh-act
 -P macos-13=localhost/devenv-gh-act:python311
 --container-architecture linux/arm64
