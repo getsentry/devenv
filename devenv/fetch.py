@@ -11,6 +11,7 @@ from devenv.lib import proc
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 from devenv.lib.modules import ExitCode
+from devenv.lib.repository import Repository
 
 DEFAULT_ORG = "getsentry"
 
@@ -99,7 +100,7 @@ def fetch(
     }
 
     # optional post-fetch, meant for recommended but not required defaults
-    fp = f"{reporoot}/devenv/post_fetch.py"
+    fp = f"{Repository(reporoot).config_path}/post_fetch.py"
     if os.path.exists(fp):
         print(f"running {fp}")
         spec = importlib.util.spec_from_file_location("post_fetch", fp)
