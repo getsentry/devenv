@@ -100,7 +100,7 @@ When done, hit ENTER to continue.
                 "Still failing to authenticate to GitHub. ENTER to retry, otherwise ^C to quit."
             )
 
-    # Mirror this in bootstrap.py.
+    # Mirror this in update.py.
     print(f"""\
 Updating global tools (at {constants.root}/bin).
 """)
