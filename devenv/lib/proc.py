@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 from typing import Literal
 from typing import overload
@@ -79,6 +80,9 @@ def run(
 
     if constants.DEBUG:
         xtrace(cmd)
+    # keep what we've printed ahead of the command's output
+    # when stdout isn't a tty and so is block buffered
+    sys.stdout.flush()
     try:
         proc = subprocess.run(
             cmd, check=True, stdout=_stdout, stderr=_stderr, cwd=cwd, env=env
