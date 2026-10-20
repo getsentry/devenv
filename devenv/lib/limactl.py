@@ -74,11 +74,17 @@ def install_global() -> None:
         stdout = proc.run((f"{binroot}/limactl", "--version"), stdout=True)
         installed_version = stdout.strip().split()[-1]
         # an interrupted install can leave limactl without its guest agents
-        if version == installed_version and all(
-            os.path.isdir(f"{root}/{d}") for d in _DATA_DIRS
-        ):
+        missing = [
+            f"{root}/{d}"
+            for d in _DATA_DIRS
+            if not os.path.isdir(f"{root}/{d}")
+        ]
+        if version != installed_version:
+            print(f"installed limactl {installed_version} is unexpected!")
+        elif missing:
+            print(f"limactl {version} is missing {', '.join(missing)}...")
+        else:
             return
-        print(f"installed limactl {installed_version} is unexpected!")
 
     uninstall(binroot)
     _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)

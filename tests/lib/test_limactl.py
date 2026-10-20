@@ -6,6 +6,8 @@ import shutil
 import tarfile
 from unittest.mock import patch
 
+import pytest
+
 from devenv.lib import limactl
 
 # the layout of upstream's lima-2.x-Darwin-*.tar.gz, abridged
@@ -25,6 +27,9 @@ def _release(tmp_path: pathlib.Path) -> str:
     for name in RELEASE_FILES:
         (src / name).parent.mkdir(parents=True, exist_ok=True)
         (src / name).write_text(name)
+        if name.startswith("./bin/"):
+            # install_global() only trusts what shutil.which finds
+            (src / name).chmod(0o755)
     path = f"{tmp_path}/lima.tar.gz"
     with tarfile.open(path, "w:gz") as tarf:
         tarf.add(src, arcname=".")
@@ -91,14 +96,23 @@ def test_uninstall_removes_the_lima_1_layout(tmp_path: pathlib.Path) -> None:
     assert os.listdir(binroot) == ["colima"]
 
 
-def test_install_global_reinstalls_without_guest_agents(
-    tmp_path: pathlib.Path,
+@pytest.mark.parametrize(
+    ("missing", "reinstalls"),
+    (
+        (None, False),
+        # e.g. an interrupted install
+        ("share/lima", True),
+        ("libexec/lima", True),
+    ),
+)
+def test_install_global_reinstalls_an_incomplete_install(
+    tmp_path: pathlib.Path, missing: str | None, reinstalls: bool
 ) -> None:
     root = f"{tmp_path}/sentry-devenv"
     binroot = f"{root}/bin"
     _install(tmp_path, binroot)
-    # e.g. an interrupted install
-    shutil.rmtree(f"{root}/share/lima")
+    if missing:
+        shutil.rmtree(f"{root}/{missing}")
 
     with (
         patch.object(limactl, "root", root),
@@ -110,4 +124,4 @@ def test_install_global_reinstalls_without_guest_agents(
     ):
         limactl.install_global()
 
-    install.assert_called_once()
+    assert install.called == reinstalls
