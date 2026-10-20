@@ -9,17 +9,27 @@ from devenv.lib import colima
 
 
 @pytest.mark.parametrize(
-    ("dnsmasq_active", "service"),
-    ((True, "dnsmasq.service"), (False, "systemd-resolved.service")),
+    ("dnsmasq_installed", "dnsmasq_active", "service"),
+    (
+        (True, True, "dnsmasq.service"),
+        # e.g. dnsmasq crashed, which is why DNS is broken
+        (True, False, "dnsmasq.service"),
+        # VMs created before colima 0.9
+        (False, False, "systemd-resolved.service"),
+    ),
 )
 def test_fix_restarts_the_vms_resolver(
-    dnsmasq_active: bool, service: str
+    dnsmasq_installed: bool, dnsmasq_active: bool, service: str
 ) -> None:
     cmds: list[tuple[str, ...]] = []
 
     def run(cmd: tuple[str, ...], stdout: bool = False) -> str:
         cmds.append(cmd)
-        if "is-active" in cmd and not dnsmasq_active:
+        vm_cmd = cmd[3:]
+        if vm_cmd == ("systemctl", "cat", "dnsmasq.service"):
+            if not dnsmasq_installed:
+                raise RuntimeError("Command failed! (code 1)")
+        elif vm_cmd[:2] == ("systemctl", "is-active") and not dnsmasq_active:
             raise RuntimeError("Command failed! (code 3)")
         return ""
 

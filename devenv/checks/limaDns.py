@@ -48,18 +48,12 @@ except socket.gaierror as e:
 
 
 def _resolver_service() -> str:
-    # VMs created since colima 0.9 use dnsmasq instead of systemd-resolved
+    # VMs created since colima 0.9 come with dnsmasq, and colima makes it
+    # their resolver instead of systemd-resolved. Check that it's installed
+    # rather than running: if dnsmasq died, it's the one to restart.
     try:
         proc.run(
-            (
-                "colima",
-                "exec",
-                "--",
-                "systemctl",
-                "is-active",
-                "--quiet",
-                "dnsmasq.service",
-            ),
+            ("colima", "exec", "--", "systemctl", "cat", "dnsmasq.service"),
             stdout=True,
         )
     except RuntimeError:
