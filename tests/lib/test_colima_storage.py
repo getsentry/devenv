@@ -314,7 +314,7 @@ def test_stopped_legacy_vm_ignores_standalone_lima_disk(tmp_path: Path) -> None:
     limactl = root / "bin/limactl"
     limactl.parent.mkdir(parents=True)
     limactl.touch()
-    probe_environments: list[dict[str, str] | None] = []
+    probe_environments: list[object | None] = []
 
     def run(command: tuple[str, ...], **kwargs: object) -> str:
         if command[0].endswith("limactl"):
@@ -352,7 +352,7 @@ def test_stopped_modern_vm_disk_prevents_overlay2_override(
     limactl = root / "bin/limactl"
     limactl.parent.mkdir(parents=True)
     limactl.touch()
-    probe_environments: list[dict[str, str] | None] = []
+    probe_environments: list[object | None] = []
 
     def run(command: tuple[str, ...], **kwargs: object) -> str:
         if command[0].endswith("limactl"):
@@ -394,7 +394,7 @@ def test_explicit_lima_home_is_used_for_colima_instance_and_disk_probe(
     limactl = root / "bin/limactl"
     limactl.parent.mkdir(parents=True)
     limactl.touch()
-    probe_environments: list[dict[str, str] | None] = []
+    probe_environments: list[object | None] = []
 
     def run(command: tuple[str, ...], **kwargs: object) -> str:
         if command[0].endswith("limactl"):

@@ -35,6 +35,8 @@ line-length = 80
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+extend-select = ["ANN", "PYI"]
+preview = true
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
@@ -48,53 +50,29 @@ skip-magic-trailing-comma = true
 [project.scripts]
 devenv = "devenv.main:main"
 
-[tool.mypy]
-python_version = "3.13"
-strict = true
+[tool.ty.analysis]
+strict-equality-semantics = true
+strict-generic-narrowing = true
 
-# disallow Any typing:
-disallow_any_unimported = true
-# there's too many Any's in typeshed:
-disallow_any_expr = false
-disallow_any_decorated = true
-disallow_any_explicit = true
-
-implicit_reexport = false
-
-warn_no_return = true
-warn_unreachable = true
-
-allow_redefinition = true
-
-[tool.pyright]
-include = ["."]
-pythonVersion = "3.13"
-
-typeCheckingMode = "strict"
-
-# turn on all the checks not already enabled by "strict":
-reportCallInDefaultInitializer = "error"
-reportImplicitStringConcatenation = "error"
-reportMissingSuperCall = "error"
-reportPropertyTypeMismatch = "error"
-reportUninitializedInstanceVariable = "error"
-reportUnnecessaryTypeIgnoreComment = "error"
-reportUnusedCallResult = "none"  # too noisy
-
-# don't flag arguments as long as their type is known
-reportMissingParameterType = "none"
-reportUnknownParameterType = "error"
-#### don't flag missing typestubs, as long as everything is typed
-###reportMissingTypeStubs = false
+[tool.ty.rules]
+dynamic-function-decorator-return = "error"
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"
+unsound-assignment = "error"
+unsound-return-statement = "error"
+unsound-yield = "error"
+unsupported-dynamic-base = "warn"
+possibly-missing-attribute = "warn"
+possibly-missing-import = "warn"
 
 [dependency-groups]
 dev = [
   "coverage",
   "covdefaults",
-  "mypy",
   "prek",
   "pytest",
   "re-assert",
   "ruff",
   "shellcheck-py",
+  "ty",
 ]

@@ -10,6 +10,7 @@ import tempfile
 from collections.abc import Collection
 from dataclasses import dataclass
 from enum import Enum
+from typing import cast
 
 from devenv import constants
 from devenv.constants import SYSTEM_MACHINE
@@ -310,7 +311,7 @@ def _legacy_root_disk(config: colima_config.ColimaConfig) -> bool:
                 f"Colima store metadata {store_path} has an unsupported "
                 "format; inspect the existing VM before starting it."
             )
-        store = parsed
+        store = cast(dict[str, object], parsed)
 
     if store is not None:
         formatted = store.get("disk_formatted")

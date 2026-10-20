@@ -6,7 +6,9 @@ import pathlib
 import tarfile
 import time
 import typing
+import urllib.error
 import urllib.request
+from http.client import HTTPMessage
 from unittest import mock
 
 import pytest
@@ -150,12 +152,16 @@ def tar5(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
-def mock_sleep() -> typing.Generator[mock.MagicMock, None, None]:
+def mock_sleep() -> typing.Generator[
+    mock.MagicMock | mock.AsyncMock, None, None
+]:
     with mock.patch.object(time, "sleep", autospec=True) as mock_sleep:
         yield mock_sleep
 
 
-def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
+def test_download(
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock | mock.AsyncMock
+) -> None:
     data = b"foo\n"
     data_sha256 = (
         "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
@@ -165,7 +171,7 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
         "https://example.com/foo",
         503,
         "Service Unavailable",
-        "",  # type: ignore
+        HTTPMessage(),
         io.BytesIO(b""),
     )
 
@@ -195,7 +201,7 @@ def test_download(tmp_path: pathlib.Path, mock_sleep: mock.MagicMock) -> None:
 
 
 def test_download_exceeded_retries(
-    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock | mock.AsyncMock
 ) -> None:
     data_sha256 = (
         "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
@@ -205,7 +211,7 @@ def test_download_exceeded_retries(
         "https://example.com/foo",
         503,
         "Service Unavailable",
-        "",  # type: ignore
+        HTTPMessage(),
         io.BytesIO(b""),
     )
     dest = f"{tmp_path}/a"
@@ -226,7 +232,7 @@ def test_download_exceeded_retries(
 
 
 def test_download_dest_is_broken_symlink(
-    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock | mock.AsyncMock
 ) -> None:
     data = b"foo\n"
     data_sha256 = (
@@ -251,7 +257,7 @@ def test_download_dest_is_broken_symlink(
 
 
 def test_download_wrong_sha(
-    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock
+    tmp_path: pathlib.Path, mock_sleep: mock.MagicMock | mock.AsyncMock
 ) -> None:
     data = b"foo\n"
     data_sha256 = (
