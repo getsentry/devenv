@@ -15,10 +15,7 @@ _GUEST_AGENT = {
     "darwin_arm64": "lima-guestagent.Linux-aarch64.gz",
     "darwin_x86_64": "lima-guestagent.Linux-x86_64.gz",
 }
-_DRIVER = {
-    "darwin_arm64": "lima-driver-krunkit",
-    "darwin_x86_64": "limactl-mcp",
-}
+_DRIVER = {"darwin_arm64": "lima-driver-krunkit"}
 
 
 def _remove_managed_path(path: str) -> None:
@@ -33,46 +30,121 @@ def _remove_managed_path(path: str) -> None:
         os.remove(path)
 
 
-def uninstall(binroot: str) -> None:
+def _managed_paths(binroot: str) -> tuple[str, ...]:
     prefix = os.path.dirname(binroot)
-    for path in (
-        *(f"{prefix}/{directory}" for directory in _DATA_DIRS),
+    return (
+        f"{prefix}/share/lima",
+        f"{prefix}/libexec/lima",
         f"{binroot}/templates",
-    ):
-        _remove_managed_path(path)
-
-    for path in (
         f"{binroot}/lima",
         f"{binroot}/limactl",
         f"{binroot}/lima-guestagent.Linux-aarch64",
         f"{binroot}/lima-guestagent.Linux-x86_64",
-    ):
-        try:
-            os.remove(path)
-        except FileNotFoundError:
-            pass
+    )
 
 
-def _install(url: str, sha256: str, into: str) -> None:
+def uninstall(binroot: str) -> None:
+    for path in _managed_paths(binroot):
+        _remove_managed_path(path)
+
+
+def _install(
+    url: str, sha256: str, into: str, *, expected_version: str | None = None
+) -> None:
     prefix = os.path.dirname(into)
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
         archive.unpack(archive_file, tmpd)
-        uninstall(into)
+        missing = _missing_required_payload(tmpd)
+        if missing:
+            raise RuntimeError(
+                f"Lima release is incomplete: {', '.join(missing)}"
+            )
 
-        for directory in _DATA_DIRS:
-            destination = f"{prefix}/{directory}"
-            os.makedirs(os.path.dirname(destination), exist_ok=True)
-            os.replace(f"{tmpd}/{directory}", destination)
+        if expected_version is not None:
+            staged_version = _staged_version(tmpd)
+            if staged_version != expected_version:
+                raise RuntimeError(
+                    f"Lima release reported {staged_version}, expected "
+                    f"{expected_version}"
+                )
 
-        for name in ("lima", "limactl"):
-            destination = f"{into}/{name}"
-            try:
-                os.remove(destination)
-            except FileNotFoundError:
-                pass
-            os.replace(f"{tmpd}/bin/{name}", destination)
+        backup = tempfile.mkdtemp(prefix=".lima-install-", dir=prefix)
+        backed_up: list[tuple[str, str]] = []
+        installed: list[str] = []
+        try:
+            for target in _managed_paths(into):
+                if not os.path.lexists(target):
+                    continue
+                backup_target = os.path.join(
+                    backup, os.path.relpath(target, prefix)
+                )
+                os.makedirs(os.path.dirname(backup_target), exist_ok=True)
+                os.replace(target, backup_target)
+                backed_up.append((backup_target, target))
+
+            for directory in _DATA_DIRS:
+                destination = f"{prefix}/{directory}"
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                os.replace(f"{tmpd}/{directory}", destination)
+                installed.append(destination)
+
+            for name in ("lima", "limactl"):
+                destination = f"{into}/{name}"
+                os.replace(f"{tmpd}/bin/{name}", destination)
+                installed.append(destination)
+
+            missing = _missing_required_payload(prefix)
+            if missing:
+                raise RuntimeError(
+                    f"Installed Lima release is incomplete: {', '.join(missing)}"
+                )
+            if expected_version is not None:
+                installed_version = _installed_version(into)
+                if installed_version != expected_version:
+                    raise RuntimeError(
+                        f"Installed Lima reported {installed_version}, expected "
+                        f"{expected_version}"
+                    )
+        except BaseException as error:
+            rollback_errors = []
+            for target in reversed(installed):
+                try:
+                    _remove_managed_path(target)
+                except OSError as rollback_error:
+                    rollback_errors.append(str(rollback_error))
+            for backup_target, target in reversed(backed_up):
+                try:
+                    os.makedirs(os.path.dirname(target), exist_ok=True)
+                    os.replace(backup_target, target)
+                except OSError as rollback_error:
+                    rollback_errors.append(str(rollback_error))
+            if rollback_errors:
+                raise RuntimeError(
+                    f"Lima installation failed: {error}. Could not restore "
+                    f"the previous installation: {'; '.join(rollback_errors)}. "
+                    f"Previous files remain in {backup}."
+                ) from error
+            shutil.rmtree(backup)
+            raise
+        shutil.rmtree(backup)
+
+
+def _staged_version(prefix: str) -> str | None:
+    versions = []
+    for name in ("lima", "limactl"):
+        try:
+            stdout = proc.run(
+                (f"{prefix}/bin/{name}", "--version"), stdout=True
+            )
+        except RuntimeError:
+            return None
+        words = stdout.strip().split()
+        if not words:
+            return None
+        versions.append(words[-1])
+    return versions[0] if versions[0] == versions[1] else "/".join(versions)
 
 
 def _installed_version(binroot: str) -> str | None:
@@ -141,7 +213,12 @@ def install_global() -> None:
             f"limactl {version} is missing {', '.join(missing)}; reinstalling"
         )
 
-    _install(cfg[SYSTEM_MACHINE], cfg[f"{SYSTEM_MACHINE}_sha256"], binroot)
+    _install(
+        cfg[SYSTEM_MACHINE],
+        cfg[f"{SYSTEM_MACHINE}_sha256"],
+        binroot,
+        expected_version=version,
+    )
 
     installed_version = _installed_version(binroot)
     if installed_version != version:

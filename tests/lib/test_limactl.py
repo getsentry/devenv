@@ -21,9 +21,14 @@ _RELEASE_FILES = (
 )
 
 
-def _release(tmp_path: pathlib.Path) -> pathlib.Path:
+def _release(
+    tmp_path: pathlib.Path, *, omit: str | None = None
+) -> pathlib.Path:
     source = tmp_path / "release"
+    shutil.rmtree(source, ignore_errors=True)
     for name in _RELEASE_FILES:
+        if name == omit:
+            continue
         path = source / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -133,6 +138,24 @@ def test_install_global_installs_native_payload(
     assert os.path.isfile(f"{binroot}/limactl")
     if driver:
         assert os.path.isfile(f"{root}/libexec/lima/{driver}")
+
+
+def test_install_global_does_not_require_optional_intel_mcp_plugin(
+    tmp_path: pathlib.Path,
+) -> None:
+    root = tmp_path / "sentry-devenv"
+    _install_from_release(tmp_path, str(root / "bin"), machine="darwin_x86_64")
+    (root / "libexec/lima/limactl-mcp").unlink()
+
+    with (
+        patch.object(limactl, "root", str(root)),
+        patch.object(limactl, "SYSTEM_MACHINE", "darwin_x86_64"),
+        patch("devenv.lib.limactl.proc.run", side_effect=_installed_version),
+        patch.object(limactl, "_install") as install,
+    ):
+        limactl.install_global()
+
+    install.assert_not_called()
 
 
 def test_uninstall_removes_lima_one_files_and_preserves_user_data(
@@ -406,3 +429,85 @@ def test_interrupted_download_preserves_lima_install_and_user_data(
 
     assert sentinel.read_bytes() == original
     assert (binroot / "limactl").read_bytes() == lima_binary
+
+
+def test_incomplete_release_preserves_previous_lima_install(
+    tmp_path: pathlib.Path,
+) -> None:
+    root = tmp_path / "sentry-devenv"
+    binroot = root / "bin"
+    _install_from_release(tmp_path, str(binroot))
+    previous = {
+        path: path.read_bytes()
+        for path in (
+            binroot / "lima",
+            binroot / "limactl",
+            root / "share/lima/lima-guestagent.Linux-aarch64.gz",
+            root / "share/lima/templates/default.yaml",
+            root / "libexec/lima/lima-driver-krunkit",
+        )
+    }
+    release = _release(tmp_path, omit="bin/limactl")
+
+    def download(url: str, sha256: str, dest: str) -> str:
+        shutil.copy(release, dest)
+        return dest
+
+    with (
+        patch.object(limactl, "SYSTEM_MACHINE", "darwin_arm64"),
+        patch("devenv.lib.archive.download", side_effect=download),
+        pytest.raises(RuntimeError, match="release is incomplete"),
+    ):
+        limactl._install("url", "sha256", str(binroot))
+
+    assert {path: path.read_bytes() for path in previous} == previous
+
+
+def test_failed_payload_replace_restores_previous_lima_install(
+    tmp_path: pathlib.Path,
+) -> None:
+    root = tmp_path / "sentry-devenv"
+    binroot = root / "bin"
+    _install_from_release(tmp_path, str(binroot))
+    previous = {
+        path: path.read_bytes()
+        for path in (
+            binroot / "lima",
+            binroot / "limactl",
+            root / "share/lima/lima-guestagent.Linux-aarch64.gz",
+            root / "share/lima/templates/default.yaml",
+            root / "libexec/lima/lima-driver-krunkit",
+        )
+    }
+    release = _release(tmp_path)
+
+    def download(url: str, sha256: str, dest: str) -> str:
+        shutil.copy(release, dest)
+        return dest
+
+    real_replace = os.replace
+    failed = False
+
+    def fail_payload_replace(source: str, destination: str) -> None:
+        nonlocal failed
+        if (
+            not failed
+            and str(source).startswith(f"{binroot}/")
+            and str(source).endswith("/libexec/lima")
+        ):
+            failed = True
+            raise OSError("payload move failed")
+        real_replace(source, destination)
+
+    with (
+        patch.object(limactl, "SYSTEM_MACHINE", "darwin_arm64"),
+        patch("devenv.lib.archive.download", side_effect=download),
+        patch(
+            "devenv.lib.limactl.os.replace", side_effect=fail_payload_replace
+        ),
+        pytest.raises(OSError, match="payload move failed"),
+    ):
+        limactl._install("url", "sha256", str(binroot))
+
+    assert failed
+    assert {path: path.read_bytes() for path in previous} == previous
