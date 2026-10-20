@@ -18,6 +18,17 @@ Co-Authored-By: <agent and model> <email>
 - Run your checkout against another repo: `uv run --project ~/code/devenv devenv sync` from that repo's root
 - Run the `bootstrap` workflow locally with `gh act`: `make test`
 
+## Cross-repo upgrade checks
+
+When you change devenv's internal Python pin or its Colima or Lima versions, smoke-test the installed devenv against `~/dev/sentry`. Do this before calling the upgrade complete.
+
+- From `~/dev/sentry`, run `devenv sync` and check `devenv --version`, `.venv/bin/python --version`, `colima version`, and `limactl --version`.
+- Read Sentry's `.python-version`. Devenv's internal Python pin does not set Sentry's virtualenv version.
+- Run `devservices up` and confirm `devservices status` reports the needed services as healthy.
+- Run a few targeted pytest tests that use those services. Confirm they use a test database, then report the commands and results.
+- Do not stop, delete, or prune the developer's default Colima VM.
+- Use a disposable profile only after verifying that every VM and data path is isolated.
+
 ## Invariants
 
 - Python is pinned to 3.13.16 (`requires-python` in `pyproject.toml`, `.python-version`).
