@@ -126,7 +126,7 @@ def test_sync_uses_uv(tmp_path: pathlib.Path) -> None:
     "pyvenv_cfg",
     (
         "home = /x\nversion = 3.13.16\n",
-        "home = /x\nuv = 0.13.1\nversion_info = 3.13.16\n",
+        "home = /x\nuv = 0.13.4\nversion_info = 3.13.16\n",
         "home = /x\nversion_info = 3.13.16.final.0\n",
         "version = 3.13.16\nversion_info = 3.13.16.final.0\n",
     ),
