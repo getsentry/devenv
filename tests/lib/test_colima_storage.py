@@ -554,9 +554,7 @@ def test_saved_overlay2_choice_is_verified_after_restart(
     ) as run:
         assert (
             colima._verify_storage_after_start(
-                colima.ColimaStatus.UP,
-                result.policy,
-                vm_was_started=True,
+                colima.ColimaStatus.UP, result.policy, vm_was_started=True
             )
             == colima.ColimaStatus.UP
         )
