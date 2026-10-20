@@ -14,13 +14,13 @@ Co-Authored-By: <agent and model> <email>
 - Set up: `uv sync`
 - Test: `uv run pytest tests/`
 - Test with coverage, as CI runs it: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
-- Lint, format, and type-check (ruff, mypy, shellcheck): `uv run pre-commit run --all-files`
+- Lint, format, and type-check (ruff, mypy, shellcheck): `uv run prek run --all-files`
 - Run your checkout against another repo: `uv run --project ~/code/devenv devenv sync` from that repo's root
 - Run the `bootstrap` workflow locally with `gh act`: `make test`
 
 ## Invariants
 
-- Python is pinned to 3.11.4 (`requires-python` in `pyproject.toml`, `.python-version`).
+- Python is pinned to 3.13.16 (`requires-python` in `pyproject.toml`, `.python-version`).
 - Use `constants.DARWIN` and `constants.LINUX` for platform checks.
 - macOS gets the global tools (brew, docker CLI, colima, lima). Linux means apt-based (`dpkg` on PATH). On Linux, devenv installs no global tools, and `devenv bootstrap` exits if docker engine is missing.
 

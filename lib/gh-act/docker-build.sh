@@ -4,7 +4,7 @@ set -euo pipefail
 github_arch="$(./github-arch.sh)"
 python_version="$(
   ./github-python-versions.sh "$github_arch" |
-    grep -m1 -E '^3.11\b'
+    grep -m1 -E '^3.13\b'
 )"
 tag="localhost/devenv-gh-act:python$(
   sed '

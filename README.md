@@ -170,6 +170,7 @@ PATH_add "${PWD}/.venv/bin"
 ```py
 from devenv.lib import proc
 
+
 def main(context: dict[str, str]) -> int:
     # reporoot/.venv is the default venv location
     print(f"syncing .venv ...")
@@ -180,7 +181,7 @@ def main(context: dict[str, str]) -> int:
 
 Use `[reporoot]/.python-version` to pin a python version for uv:
 ```
-3.13.3
+3.13.16
 ```
 
 ### node
@@ -196,6 +197,7 @@ PATH_add "${PWD}/node_modules/.bin"
 ```py
 from devenv import constants
 from devenv.lib import config, node, proc
+
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
@@ -217,7 +219,7 @@ def main(context: dict[str, str]) -> int:
             "install",
             "--frozen-lockfile",
             "--reporter=append-only",
-        ),
+        )
     )
 
     return 0
@@ -246,15 +248,13 @@ version = v20.13.1
 from devenv import constants
 from devenv.lib import brew, proc
 
+
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
 
     brew.install()
 
-    proc.run(
-        (f"{constants.homebrew_bin}/brew", "bundle"),
-        cwd=reporoot,
-    )
+    proc.run((f"{constants.homebrew_bin}/brew", "bundle"), cwd=reporoot)
 
     return 0
 ```
@@ -277,6 +277,7 @@ On macOS, `devenv bootstrap` installs colima and the docker CLI globally. If you
 from devenv import constants
 from devenv.lib import config, gcloud
 
+
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]
     cfg = config.get_repo(reporoot)
@@ -292,10 +293,11 @@ def main(context: dict[str, str]) -> int:
 ```
 
 `[reporoot]/devenv/config.ini`
+The SDK uses devenv's internal Python 3.13 because custom Python versions
+aren't supported yet.
+
 ```ini
 [gcloud]
-# custom python version not supported yet, it just uses
-# devenv's internal python 3.11
 darwin_x86_64 = https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-490.0.0-darwin-x86_64.tar.gz
 darwin_x86_64_sha256 = fa396909acc763cf831dd5d89e778999debf37ceadccb3c1bdec606e59ba2694
 darwin_arm64 = https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-490.0.0-darwin-arm.tar.gz
@@ -316,6 +318,7 @@ Define `[reporoot]/.terraform-version`, and optionally `[reporoot]/.terragrunt-v
 ```py
 from devenv import constants
 from devenv.lib import config, tenv
+
 
 def main(context: dict[str, str]) -> int:
     reporoot = context["reporoot"]

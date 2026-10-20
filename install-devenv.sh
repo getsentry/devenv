@@ -95,8 +95,8 @@ parseopt() {  # argument (and environment-var) processing
 
   SNTY_DEVENV_HOME="${SNTY_DEVENV_HOME:-$XDG_DATA_HOME/$appname}"
   SNTY_DEVENV_CACHE="${SNTY_DEVENV_CACHE:-$XDG_CACHE_HOME/$appname}"
-  SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_RELEASE:-20230726}"
-  SNTY_DEVENV_PY_VERSION="${SNTY_DEVENV_PY_VERSION:-3.11.4}"
+  SNTY_DEVENV_PY_RELEASE="${SNTY_DEVENV_PY_RELEASE:-20261013}"
+  SNTY_DEVENV_PY_VERSION="${SNTY_DEVENV_PY_VERSION:-3.13.16}"
 }
 
 # translate from uname output to astral release tags:
@@ -144,10 +144,10 @@ install_python() {
   astral_platform="$(astral_cpu)-$(astral_os)"
 
   case "$astral_platform" in
-    aarch64-apple-darwin)      sha256=cb6d2948384a857321f2aa40fa67744cd9676a330f08b6dad7070bda0b6120a4;;
-    x86_64-apple-darwin)       sha256=47e1557d93a42585972772e82661047ca5f608293158acb2778dccf120eabb00;;
-    x86_64-unknown-linux-gnu)  sha256=e26247302bc8e9083a43ce9e8dd94905b40d464745b1603041f7bc9a93c65d05;;
-    aarch64-unknown-linux-gnu) sha256=2e84fc53f4e90e11963281c5c871f593abcb24fc796a50337fa516be99af02fb;;
+    aarch64-apple-darwin)      sha256=ca0e6a70fb75a0984751bd75493e3de77680aef7fbd0fea9b903c299537b3423;;
+    x86_64-apple-darwin)       sha256=d1f2e7b5f0cfa25fc856fea819890bbe722f47a692e5ce2552636b5240930b38;;
+    x86_64-unknown-linux-gnu)  sha256=e588e50db882fa6a89f926d9a9ad64e445183af0eda5bda226a2c151b17db8a6;;
+    aarch64-unknown-linux-gnu) sha256=0fce0605da7b6532d5bdaec185336ffaaddd02ec04e27382014952ca4857ed6d;;
     *)
       error "Unexpected platform; please ask in #discuss-dev-infra or contact <team-devenv@sentry.io>: ($platform -> $astral_platform)"
       ;;
