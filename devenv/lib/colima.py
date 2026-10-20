@@ -723,9 +723,7 @@ def _start_with_health_recovery(
         return status
 
     print("colima seems unhealthy, attempting one recovery restart")
-    return _start(
-        _StartMode.HEALTH_RECOVERY, existing_instance=True
-    )
+    return _start(_StartMode.HEALTH_RECOVERY, existing_instance=True)
 
 
 def _report_booted_kernel(status: ColimaStatus) -> ColimaStatus:
