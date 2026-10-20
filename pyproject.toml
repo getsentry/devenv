@@ -12,7 +12,10 @@ authors = [
 ]
 description = "Utilities for setting up a Sentry development environment"
 readme = "README.md"
-requires-python = "==3.13.16"
+# a range, not the exact pin, so repos like sentry can install devenv into
+# their own 3.13 venvs and internal pypi can build it.
+# .python-version pins devenv's own interpreter.
+requires-python = ">=3.13"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
