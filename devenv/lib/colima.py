@@ -707,7 +707,7 @@ def start(restart: bool = False) -> ColimaStatus:
         return status
 
     status = _start_with_health_recovery(
-        _StartMode.REQUESTED_RESTART, status, storage_policy.existing_instance
+        _StartMode.REQUESTED_RESTART, status, existing_instance=True
     )
     status = _verify_storage_after_start(
         status, storage_policy, vm_was_started=True
@@ -724,7 +724,7 @@ def _start_with_health_recovery(
 
     print("colima seems unhealthy, attempting one recovery restart")
     return _start(
-        _StartMode.HEALTH_RECOVERY, existing_instance=existing_instance
+        _StartMode.HEALTH_RECOVERY, existing_instance=True
     )
 
 

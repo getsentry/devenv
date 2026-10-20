@@ -66,6 +66,7 @@ class FakeVM:
         self.restarts = 0
         self.recoveries = 0
         self.start_modes: list[colima._StartMode] = []
+        self.start_existing_instances: list[bool] = []
         self.start_results = list(start_results)
 
     def run(
@@ -112,6 +113,7 @@ class FakeVM:
         existing_instance: bool = False,
     ) -> colima.ColimaStatus:
         self.start_modes.append(mode)
+        self.start_existing_instances.append(existing_instance)
         self.events.append(("start", mode))
         if mode == colima._StartMode.REQUESTED_RESTART:
             self.restarts += 1
@@ -519,6 +521,7 @@ def test_post_start_health_recovery_still_repairs_the_kernel() -> None:
         colima._StartMode.HEALTH_RECOVERY,
         colima._StartMode.REQUESTED_RESTART,
     ]
+    assert vm.start_existing_instances == [False, True, True]
     assert vm.recoveries == 1
     assert vm.restarts == 1
     assert vm.running == FIXED_KERNEL
@@ -543,6 +546,7 @@ def test_kernel_restart_recovery_validates_the_booted_kernel(
         colima._StartMode.REQUESTED_RESTART,
         colima._StartMode.HEALTH_RECOVERY,
     ]
+    assert vm.start_existing_instances == [False, True, True]
     assert vm.restarts == 1
     assert vm.recoveries == 1
     assert vm.running == FIXED_KERNEL
