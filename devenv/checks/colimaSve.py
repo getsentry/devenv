@@ -29,7 +29,7 @@ def check() -> tuple[bool, str]:
 @fixer
 def fix() -> tuple[bool, str]:
     # upgrades the VM's kernel and restarts colima to boot it
-    status = colima.start()
+    status = colima.start(restart=True)
     if status != colima.ColimaStatus.UP:
         return False, "colima is unhealthy"
 

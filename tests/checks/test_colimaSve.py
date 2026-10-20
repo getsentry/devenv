@@ -39,7 +39,7 @@ def test_fix() -> None:
         mock.patch.object(colima, "vm_misreports_sve", return_value=False),
     ):
         assert colimaSve.fix() == (True, "")
-    start.assert_called_once_with()
+    start.assert_called_once_with(restart=True)
 
 
 def test_fix_didnt_take() -> None:
