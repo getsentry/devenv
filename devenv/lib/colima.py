@@ -173,6 +173,23 @@ def _config_path() -> str:
     return f"{home}/.colima/default/colima.yaml"
 
 
+def _template_path() -> str:
+    return f"{home}/.colima/_templates/default.yaml"
+
+
+def _read_optional_config(path: str) -> colima_config.ColimaConfig | None:
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        raise colima_config.StorageMigrationBlocked(
+            f"Unable to inspect Colima config {path}: {error}. Inspect the "
+            "config before starting a new VM."
+        ) from error
+    return colima_config.read(path)
+
+
 def _instance_exists() -> bool:
     path = _instance_path()
     try:
@@ -357,14 +374,55 @@ def _legacy_root_disk(config: colima_config.ColimaConfig) -> bool:
 
 def _prepare_docker_store(status: ColimaStatus) -> _StoragePolicy:
     if not _instance_exists():
-        return _StoragePolicy(existing_instance=False)
+        config_path = _config_path()
+        profile_config = _read_optional_config(config_path)
+        config = profile_config
+        template = None
+        if config is None or config.runtime is None:
+            template = _read_optional_config(_template_path())
+            if template is not None:
+                config = template
+        if config is None:
+            return _StoragePolicy(
+                existing_instance=False, expected_snapshotter=True
+            )
+        if (
+            config is profile_config
+            and profile_config is not None
+            and profile_config.runtime is None
+            and template is None
+            and profile_config.snapshotter is not None
+        ):
+            raise colima_config.StorageMigrationBlocked(
+                f"Colima profile {config_path} has an explicit Docker storage "
+                "choice but no runtime. Colima treats this profile as empty "
+                "and will ignore that choice. Set `runtime: docker` before "
+                "starting the VM."
+            )
+        if config.runtime not in {None, "docker"}:
+            return _StoragePolicy(existing_instance=False)
+        if (
+            config.snapshotter is None
+            and config is profile_config
+            and config.runtime
+        ):
+            _persist_docker_store(config_path, True)
+        if config.snapshotter is None:
+            return _StoragePolicy(
+                existing_instance=False, expected_snapshotter=True
+            )
+        return _StoragePolicy(
+            existing_instance=False, expected_snapshotter=config.snapshotter
+        )
 
     config_path = _config_path()
     config = colima_config.read(config_path)
     if config.runtime not in {None, "docker"}:
         return _StoragePolicy(existing_instance=True)
     if config.snapshotter is not None:
-        return _StoragePolicy(existing_instance=True)
+        return _StoragePolicy(
+            existing_instance=True, expected_snapshotter=config.snapshotter
+        )
 
     if status == ColimaStatus.DOWN:
         overlay2 = _legacy_root_disk(config)
@@ -400,20 +458,62 @@ def _prepare_docker_store(status: ColimaStatus) -> _StoragePolicy:
                 ) from error
             selected_store = False
 
-    changed = colima_config.set_snapshotter(config_path, selected_store)
+    _persist_docker_store(config_path, selected_store)
+    return _StoragePolicy(
+        existing_instance=True, expected_snapshotter=selected_store
+    )
+
+
+def _persist_docker_store(config_path: str, snapshotter: bool) -> None:
+    changed = colima_config.set_snapshotter(config_path, snapshotter)
     updated_config = colima_config.read(config_path)
-    if updated_config.snapshotter != selected_store:
+    if updated_config.snapshotter != snapshotter:
         raise colima_config.StorageMigrationBlocked(
             f"Colima config {config_path} changed while its Docker store was "
             "being preserved. Inspect the config and Docker backend before "
             "starting Colima."
         )
     if changed:
-        store = "containerd" if selected_store else "overlay2"
-        print(f"Preserving Colima's existing Docker {store} image store.")
-    return _StoragePolicy(
-        existing_instance=True, expected_snapshotter=selected_store
-    )
+        store = "containerd" if snapshotter else "overlay2"
+        print(f"Configured Colima's Docker {store} image store.")
+
+
+def _persist_new_docker_store(
+    status: ColimaStatus, storage_policy: _StoragePolicy
+) -> ColimaStatus:
+    snapshotter = storage_policy.expected_snapshotter
+    if (
+        status != ColimaStatus.UP
+        or storage_policy.existing_instance
+        or snapshotter is None
+    ):
+        return status
+
+    try:
+        config_path = _config_path()
+        config = colima_config.read(config_path)
+        if config.runtime not in {None, "docker"}:
+            raise colima_config.StorageMigrationBlocked(
+                f"Colima saved runtime `{config.runtime}` for a new VM, but "
+                "devenv requires Docker storage. Inspect the runtime config "
+                "before restarting Colima."
+            )
+        if config.snapshotter is not None and config.snapshotter != snapshotter:
+            raise colima_config.StorageMigrationBlocked(
+                f"Colima config {config_path} selected a Docker image store "
+                "that differs from the choice made before startup. Inspect "
+                "the live Docker backend before restarting Colima."
+            )
+        if config.snapshotter is None:
+            _persist_docker_store(config_path, snapshotter)
+    except colima_config.StorageMigrationBlocked as error:
+        print(
+            "ERROR: Colima started, but devenv could not persist its Docker "
+            f"image-store choice: {error}"
+        )
+        return ColimaStatus.UNHEALTHY
+
+    return status
 
 
 def _verify_storage_after_start(
@@ -595,6 +695,7 @@ def start(restart: bool = False) -> ColimaStatus:
         )
 
     vm_was_started = vm_was_started or status != ColimaStatus.UP
+    status = _persist_new_docker_store(status, storage_policy)
     status = _verify_storage_after_start(
         status, storage_policy, vm_was_started=vm_was_started
     )
@@ -701,6 +802,7 @@ def _start(
     if not existing_instance:
         args.extend(
             (
+                "--save-config",
                 "--cpus",
                 f"{cpus // 2}",
                 "--memory",

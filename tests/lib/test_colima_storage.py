@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
 
@@ -86,7 +85,160 @@ def test_missing_vm_does_not_add_legacy_override(tmp_path: Path) -> None:
         policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
     run.assert_not_called()
     assert policy.existing_instance is False
-    assert policy.expected_snapshotter is None
+    assert policy.expected_snapshotter is True
+
+
+def test_new_vm_persists_containerd_choice_in_existing_config(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    config_path = home / ".colima/default/colima.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        "disk: 512\nruntime: docker\ndocker:\n  log-driver: local\n"
+    )
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch("devenv.lib.colima.proc.run") as run,
+    ):
+        policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    run.assert_not_called()
+    assert policy == colima._StoragePolicy(
+        existing_instance=False, expected_snapshotter=True
+    )
+    assert "log-driver: local" in config_path.read_text()
+    assert "containerd-snapshotter: true" in config_path.read_text()
+
+
+@pytest.mark.parametrize("snapshotter", (True, False))
+def test_new_vm_preserves_explicit_store_choice(
+    tmp_path: Path, snapshotter: bool
+) -> None:
+    home = tmp_path / "home"
+    config_path = home / ".colima/default/colima.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        "disk: 512\nruntime: docker\ndocker:\n  features:\n"
+        f"    containerd-snapshotter: {str(snapshotter).lower()}\n"
+    )
+    original = config_path.read_bytes()
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch("devenv.lib.colima.proc.run") as run,
+    ):
+        policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    run.assert_not_called()
+    assert policy == colima._StoragePolicy(
+        existing_instance=False, expected_snapshotter=snapshotter
+    )
+    assert config_path.read_bytes() == original
+
+
+@pytest.mark.parametrize("snapshotter", (True, False))
+def test_new_vm_preserves_explicit_template_store_choice(
+    tmp_path: Path, snapshotter: bool
+) -> None:
+    home = tmp_path / "home"
+    template_path = home / ".colima/_templates/default.yaml"
+    template_path.parent.mkdir(parents=True)
+    template_path.write_text(
+        "runtime: docker\ndocker:\n  features:\n"
+        f"    containerd-snapshotter: {str(snapshotter).lower()}\n"
+    )
+    original = template_path.read_bytes()
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch("devenv.lib.colima.proc.run") as run,
+    ):
+        policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    run.assert_not_called()
+    assert policy == colima._StoragePolicy(
+        existing_instance=False, expected_snapshotter=snapshotter
+    )
+    assert template_path.read_bytes() == original
+
+
+def test_new_vm_rejects_storage_choice_colima_would_ignore(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    config_path = home / ".colima/default/colima.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        "docker:\n  features:\n    containerd-snapshotter: false\n"
+    )
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch("devenv.lib.colima.proc.run") as run,
+        pytest.raises(colima_config.StorageMigrationBlocked, match="runtime"),
+    ):
+        colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    run.assert_not_called()
+
+
+def test_fresh_vm_containerd_store_survives_stop_and_start(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    root = tmp_path / "sentry-devenv"
+    instance = home / ".colima/_lima/colima"
+    config_path = home / ".colima/default/colima.yaml"
+    statuses = iter(
+        (
+            colima.ColimaStatus.DOWN,
+            colima.ColimaStatus.DOWN,
+            colima.ColimaStatus.DOWN,
+        )
+    )
+    starts: list[tuple[colima._StartMode, bool]] = []
+    commands: list[tuple[str, ...]] = []
+
+    def start_vm(
+        mode: colima._StartMode,
+        status: colima.ColimaStatus | None = None,
+        *,
+        existing_instance: bool = False,
+    ) -> colima.ColimaStatus:
+        starts.append((mode, existing_instance))
+        if not instance.exists():
+            instance.mkdir(parents=True)
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text("disk: 512\nruntime: docker\ndocker: {}\n")
+        return colima.ColimaStatus.UP
+
+    def run(command: tuple[str, ...], **kwargs: object) -> str:
+        commands.append(command)
+        return 'overlayfs|[["driver-type","io.containerd.snapshotter.v1"]]'
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch.object(colima, "root", str(root)),
+        mock.patch.object(colima, "check", side_effect=lambda: next(statuses)),
+        mock.patch.object(colima, "_start", side_effect=start_vm),
+        mock.patch("devenv.lib.colima.proc.run", side_effect=run),
+    ):
+        assert colima.start() == colima.ColimaStatus.UP
+        first_config = config_path.read_bytes()
+        assert "containerd-snapshotter: true" in first_config.decode()
+
+        assert colima.stop() == colima.ColimaStatus.DOWN
+        assert colima.start() == colima.ColimaStatus.UP
+
+    assert starts == [
+        (colima._StartMode.ENSURE_RUNNING, False),
+        (colima._StartMode.ENSURE_RUNNING, True),
+    ]
+    assert sum(command[0] == "docker" for command in commands) == 2
+    assert ("colima", "stop") in commands
+    assert config_path.read_bytes() == first_config
 
 
 @pytest.mark.parametrize("instance_kind", ("symlink", "file"))
@@ -130,7 +282,7 @@ def test_explicit_user_store_choice_is_not_overwritten(
         policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
     run.assert_not_called()
     assert policy.existing_instance is True
-    assert policy.expected_snapshotter is None
+    assert policy.expected_snapshotter is snapshotter
     assert path.read_bytes() == original
 
 
@@ -266,36 +418,6 @@ def test_explicit_lima_home_is_used_for_colima_instance_and_disk_probe(
     assert probe_environments == [{"LIMA_HOME": str(explicit_lima_home)}]
 
 
-def test_legacy_upgrade_keeps_docker_objects_visible(tmp_path: Path) -> None:
-    config_path, _, _ = _prepare(tmp_path, colima.ColimaStatus.DOWN)
-    config = colima_config.read(str(config_path))
-    snapshotter = config.snapshotter
-    if snapshotter is None:
-        snapshotter = True
-
-    @dataclass
-    class DockerStore:
-        images: dict[str, tuple[str, ...]]
-        containers: dict[str, tuple[str, str]]
-        volumes: dict[str, bytes]
-
-    stores = {
-        "overlay2": DockerStore(
-            images={"sha256:image-1": ("service:latest",)},
-            containers={"container-1": ("service", "running")},
-            volumes={"database": b"sentinel database contents"},
-        ),
-        "containerd": DockerStore(images={}, containers={}, volumes={}),
-    }
-    selected_store = "containerd" if snapshotter else "overlay2"
-    visible = stores[selected_store]
-
-    assert selected_store == "overlay2"
-    assert visible.images == {"sha256:image-1": ("service:latest",)}
-    assert visible.containers == {"container-1": ("service", "running")}
-    assert visible.volumes == {"database": b"sentinel database contents"}
-
-
 def test_running_overlay2_vm_is_probed_through_colima_context(
     tmp_path: Path,
 ) -> None:
@@ -412,6 +534,34 @@ def test_started_migration_verifies_the_colima_docker_backend() -> None:
             == colima.ColimaStatus.UP
         )
 
+    assert run.call_args.args[0][:3] == ("docker", "--context=colima", "info")
+
+
+def test_saved_overlay2_choice_is_verified_after_restart(
+    tmp_path: Path,
+) -> None:
+    config = (
+        "disk: 512\nruntime: docker\ndocker:\n  features:\n"
+        "    containerd-snapshotter: false\n"
+    )
+    config_path, _, result = _prepare(
+        tmp_path, colima.ColimaStatus.DOWN, config
+    )
+
+    assert result.policy.expected_snapshotter is False
+    with mock.patch(
+        "devenv.lib.colima.proc.run", return_value="overlay2|[]"
+    ) as run:
+        assert (
+            colima._verify_storage_after_start(
+                colima.ColimaStatus.UP,
+                result.policy,
+                vm_was_started=True,
+            )
+            == colima.ColimaStatus.UP
+        )
+
+    assert "containerd-snapshotter: false" in config_path.read_text()
     assert run.call_args.args[0][:3] == ("docker", "--context=colima", "info")
 
 

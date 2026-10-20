@@ -584,6 +584,7 @@ def test_start_from_down_does_not_force_stop() -> None:
     assert "--cpus" in start
     assert "--cpu" not in start
     assert "--disk" in start and "512" in start
+    assert "--save-config" in start
     assert "--mount-inotify" not in start
     assert "--vm-type=vz" in start
     assert "--vz-rosetta" in start
