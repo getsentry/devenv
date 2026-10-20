@@ -161,8 +161,12 @@ def check() -> ColimaStatus:
     return ColimaStatus.UP
 
 
+def _colima_lima_home() -> str:
+    return constants.user_environ.get("LIMA_HOME") or f"{home}/.colima/_lima"
+
+
 def _instance_path() -> str:
-    return f"{home}/.colima/_lima/colima"
+    return f"{_colima_lima_home()}/colima"
 
 
 def _config_path() -> str:
@@ -310,7 +314,9 @@ def _legacy_root_disk(config: colima_config.ColimaConfig) -> bool:
         )
     try:
         disk_info = proc.run(
-            (limactl_path, "disk", "list", "--json", "colima"), stdout=True
+            (limactl_path, "disk", "list", "--json", "colima"),
+            stdout=True,
+            env={"LIMA_HOME": _colima_lima_home()},
         )
     except RuntimeError as error:
         raise colima_config.StorageMigrationBlocked(

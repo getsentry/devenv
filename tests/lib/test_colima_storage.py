@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
+from devenv import constants
 from devenv.lib import colima
 from devenv.lib import colima_config
+
+
+@pytest.fixture(autouse=True)
+def _default_lima_home() -> Iterator[None]:
+    with mock.patch.dict(constants.user_environ, {"LIMA_HOME": ""}):
+        yield
 
 
 def _profile(
@@ -144,6 +152,118 @@ def test_stopped_legacy_vm_sets_overlay2_before_start(tmp_path: Path) -> None:
             "colima",
         )
     ]
+
+
+def test_stopped_legacy_vm_ignores_standalone_lima_disk(tmp_path: Path) -> None:
+    home, config_path = _profile(tmp_path)
+    standalone_disk = home / ".lima/_disks/colima"
+    standalone_disk.mkdir(parents=True)
+    root = tmp_path / "sentry-devenv"
+    limactl = root / "bin/limactl"
+    limactl.parent.mkdir(parents=True)
+    limactl.touch()
+    probe_environments: list[dict[str, str] | None] = []
+
+    def run(command: tuple[str, ...], **kwargs: object) -> str:
+        if command[0].endswith("limactl"):
+            env = kwargs.get("env")
+            probe_environments.append(env if isinstance(env, dict) else None)
+            lima_home = (
+                env.get("LIMA_HOME", f"{home}/.lima")
+                if isinstance(env, dict)
+                else f"{home}/.lima"
+            )
+            return '{"name":"colima"}' if lima_home == f"{home}/.lima" else ""
+        raise AssertionError(command)
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch.object(colima, "root", str(root)),
+        mock.patch("devenv.lib.colima.proc.run", side_effect=run),
+    ):
+        policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    assert policy.expected_snapshotter is False
+    assert "containerd-snapshotter: false" in config_path.read_text()
+    assert probe_environments == [{"LIMA_HOME": f"{home}/.colima/_lima"}]
+
+
+def test_stopped_modern_vm_disk_prevents_overlay2_override(
+    tmp_path: Path,
+) -> None:
+    home, config_path = _profile(tmp_path)
+    original = config_path.read_bytes()
+    modern_disk = home / ".colima/_lima/_disks/colima"
+    modern_disk.parent.mkdir(parents=True)
+    modern_disk.touch()
+    root = tmp_path / "sentry-devenv"
+    limactl = root / "bin/limactl"
+    limactl.parent.mkdir(parents=True)
+    limactl.touch()
+    probe_environments: list[dict[str, str] | None] = []
+
+    def run(command: tuple[str, ...], **kwargs: object) -> str:
+        if command[0].endswith("limactl"):
+            env = kwargs.get("env")
+            probe_environments.append(env if isinstance(env, dict) else None)
+            lima_home = (
+                env.get("LIMA_HOME", f"{home}/.lima")
+                if isinstance(env, dict)
+                else f"{home}/.lima"
+            )
+            return (
+                '{"name":"colima"}'
+                if lima_home == f"{home}/.colima/_lima"
+                else ""
+            )
+        raise AssertionError(command)
+
+    with (
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch.object(colima, "root", str(root)),
+        mock.patch("devenv.lib.colima.proc.run", side_effect=run),
+        pytest.raises(colima_config.StorageMigrationBlocked),
+    ):
+        colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    assert config_path.read_bytes() == original
+    assert probe_environments == [{"LIMA_HOME": f"{home}/.colima/_lima"}]
+
+
+def test_explicit_lima_home_is_used_for_colima_instance_and_disk_probe(
+    tmp_path: Path,
+) -> None:
+    home, config_path = _profile(tmp_path)
+    default_instance = home / ".colima/_lima/colima"
+    default_instance.rmdir()
+    explicit_lima_home = tmp_path / "custom-lima-home"
+    (explicit_lima_home / "colima").mkdir(parents=True)
+    root = tmp_path / "sentry-devenv"
+    limactl = root / "bin/limactl"
+    limactl.parent.mkdir(parents=True)
+    limactl.touch()
+    probe_environments: list[dict[str, str] | None] = []
+
+    def run(command: tuple[str, ...], **kwargs: object) -> str:
+        if command[0].endswith("limactl"):
+            env = kwargs.get("env")
+            probe_environments.append(env if isinstance(env, dict) else None)
+            return ""
+        raise AssertionError(command)
+
+    with (
+        mock.patch.dict(
+            constants.user_environ, {"LIMA_HOME": str(explicit_lima_home)}
+        ),
+        mock.patch.object(colima, "home", str(home)),
+        mock.patch.object(colima, "root", str(root)),
+        mock.patch("devenv.lib.colima.proc.run", side_effect=run),
+    ):
+        policy = colima._prepare_docker_store(colima.ColimaStatus.DOWN)
+
+    assert policy.expected_snapshotter is False
+    assert "containerd-snapshotter: false" in config_path.read_text()
+    assert probe_environments == [{"LIMA_HOME": str(explicit_lima_home)}]
 
 
 def test_legacy_upgrade_keeps_docker_objects_visible(tmp_path: Path) -> None:
