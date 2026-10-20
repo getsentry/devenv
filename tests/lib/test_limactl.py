@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
+from devenv import constants
 from devenv.lib import limactl
 
 _RELEASE_FILES = (
@@ -60,6 +61,27 @@ def _install_from_release(
 
 def _installed_version(command: tuple[str, ...], **kwargs: object) -> str:
     return f"{pathlib.Path(command[0]).name} version 2.2.1"
+
+
+def test_version_detection_uses_bundled_limactl(tmp_path: pathlib.Path) -> None:
+    prefix = tmp_path / "sentry-devenv"
+    binroot = prefix / "bin"
+    binroot.mkdir(parents=True)
+    lima = binroot / "lima"
+    lima.write_text(
+        '#!/bin/sh\n: "${LIMACTL:=limactl}"\nexec "$LIMACTL" "$@"\n'
+    )
+    lima.chmod(0o755)
+    limactl_binary = binroot / "limactl"
+    limactl_binary.write_text('#!/bin/sh\nprintf "limactl version 2.2.1\\n"\n')
+    limactl_binary.chmod(0o755)
+    host_limactl = tmp_path / "host-limactl"
+    host_limactl.write_text('#!/bin/sh\nprintf "limactl version 2.1.0\\n"\n')
+    host_limactl.chmod(0o755)
+
+    with patch.dict(constants.user_environ, {"LIMACTL": str(host_limactl)}):
+        assert limactl._staged_version(str(prefix)) == "2.2.1"
+        assert limactl._installed_version(str(binroot)) == "2.2.1"
 
 
 def test_install_keeps_native_lima_layout(tmp_path: pathlib.Path) -> None:

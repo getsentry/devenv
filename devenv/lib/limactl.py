@@ -135,8 +135,11 @@ def _staged_version(prefix: str) -> str | None:
     versions = []
     for name in ("lima", "limactl"):
         try:
+            env = (
+                {"LIMACTL": f"{prefix}/bin/limactl"} if name == "lima" else None
+            )
             stdout = proc.run(
-                (f"{prefix}/bin/{name}", "--version"), stdout=True
+                (f"{prefix}/bin/{name}", "--version"), stdout=True, env=env
             )
         except RuntimeError:
             return None
@@ -156,7 +159,10 @@ def _installed_version(binroot: str) -> str | None:
     versions = []
     for name in ("lima", "limactl"):
         try:
-            stdout = proc.run((f"{binroot}/{name}", "--version"), stdout=True)
+            env = {"LIMACTL": f"{binroot}/limactl"} if name == "lima" else None
+            stdout = proc.run(
+                (f"{binroot}/{name}", "--version"), stdout=True, env=env
+            )
         except RuntimeError:
             return None
         words = stdout.strip().split()
