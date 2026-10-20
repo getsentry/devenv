@@ -14,7 +14,7 @@ Co-Authored-By: <agent and model> <email>
 - Set up: `uv sync`
 - Test: `uv run pytest tests/`
 - Test with coverage, as CI runs it: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
-- Lint, format, and type-check (ruff, mypy, shellcheck): `uv run prek run --all-files`
+- Lint, format, and type-check (ruff, ty, shellcheck): `uv run prek run --all-files`
 - Run your checkout against another repo: `uv run --project ~/code/devenv devenv sync` from that repo's root
 - Run the `bootstrap` workflow locally with `gh act`: `make test`
 

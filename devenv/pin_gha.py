@@ -5,6 +5,7 @@ import re
 import subprocess
 from collections.abc import Sequence
 from functools import lru_cache
+from typing import cast
 
 from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
@@ -44,7 +45,7 @@ def main(context: Context, argv: Sequence[str] | None = None) -> int:
         "files", nargs="+", type=str, help="path to github actions file"
     )
     args = parser.parse_args(argv)
-    files: list[str] = args.files
+    files = cast(list[str], args.files)
 
     ACTION_VERSION_RE = re.compile(
         r"(?<=uses: )(?P<action>.*)@(?P<ref>[^#\s]+)"

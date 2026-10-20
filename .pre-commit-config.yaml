@@ -11,14 +11,11 @@ repos:
         entry: .venv/bin/ruff format
         language: system
         types: [python]
-      - id: mypy
-        name: mypy
-        entry: .venv/bin/mypy
+      - id: ty
+        name: ty check
+        entry: .venv/bin/ty check
         language: system
         types: [python]
-        # parallel mypy processes share .mypy_cache, and mypy 2 can crash
-        # with an INTERNAL ERROR when they race on it
-        require_serial: true
       - id: shellcheck
         name: shellcheck
         entry: .venv/bin/shellcheck

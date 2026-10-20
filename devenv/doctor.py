@@ -41,7 +41,7 @@ class Check:
     check: Callable[[], tuple[bool, str]]
     fix: Callable[[], tuple[bool, str]]
 
-    def __init__(self, module: ModuleType):
+    def __init__(self, module: ModuleType) -> None:
         # Check that the module has the required attributes.
         if not hasattr(module, "name"):
             raise ValueError("missing the `name` attribute")

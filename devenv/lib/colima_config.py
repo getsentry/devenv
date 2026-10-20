@@ -43,7 +43,11 @@ def _mapping(line: str, indent: int) -> tuple[str, str] | None:
     match = _MAPPING.match(_line_text(line))
     if match is None or len(match.group("indent")) != indent:
         return None
-    return match.group("key"), _commentless(match.group("rest"))
+    key = match.group("key")
+    value = match.group("rest")
+    if not isinstance(key, str) or not isinstance(value, str):
+        return None
+    return key, _commentless(value)
 
 
 def _quoted_key(line: str, indent: int) -> bool:
@@ -392,7 +396,7 @@ def set_snapshotter(path: str, snapshotter: bool) -> bool:
             "starting Colima."
         ) from error
 
-    temporary_path = ""
+    temporary_path: str | None = None
     try:
         descriptor, temporary_path = tempfile.mkstemp(
             prefix=".colima.yaml.", dir=os.path.dirname(path)
@@ -402,8 +406,9 @@ def set_snapshotter(path: str, snapshotter: bool) -> bool:
             file.write(replacement)
             file.flush()
             os.fsync(file.fileno())
+        assert temporary_path is not None
         os.replace(temporary_path, path)
-        temporary_path = ""
+        temporary_path = None
     except OSError as error:
         raise StorageMigrationBlocked(
             f"Unable to update Colima config {path}: {error}. The original "
@@ -412,7 +417,7 @@ def set_snapshotter(path: str, snapshotter: bool) -> bool:
             "starting Colima."
         ) from error
     finally:
-        if temporary_path:
+        if temporary_path is not None:
             try:
                 os.unlink(temporary_path)
             except FileNotFoundError:

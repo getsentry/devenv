@@ -10,6 +10,8 @@ import time
 import urllib.request
 from collections.abc import Generator
 from collections.abc import Sequence
+from typing import BinaryIO
+from typing import cast
 from urllib.error import HTTPError
 
 from devenv.constants import home
@@ -59,9 +61,10 @@ def download(
     req = urllib.request.Request(url, headers=headers)
 
     retry_sleep = 1.0
+    resp: BinaryIO | None = None
     while retries >= 0:
         try:
-            resp = urllib.request.urlopen(req)
+            resp = cast(BinaryIO, urllib.request.urlopen(req))
             break
         except HTTPError as e:
             if retries == 0:
@@ -72,6 +75,7 @@ def download(
         retries -= 1
         retry_sleep *= retry_exp
 
+    assert resp is not None
     dest_dir = os.path.dirname(dest)
     os.makedirs(dest_dir, exist_ok=True)
 
