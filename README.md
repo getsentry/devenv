@@ -75,9 +75,9 @@ If your devenv is old enough that it has no `update` command, run:
 
 `devenv colima start`
 
-Starts colima with resources sized for your machine. The default `colima start` may underprovision resources. Run `devenv colima start` on a new machine, and again after `colima delete`. The other subcommands are `restart`, `check`, and `stop`.
+Starts or creates devenv's Colima VM with resources sized for your machine. Existing VM settings are kept. The other subcommands are `restart`, `check`, and `stop`.
 
-On Apple M4 and newer, this (and `devenv colima restart`) also checks whether the VM kernel reports SVE support that the CPU does not have. If it does, devenv upgrades the VM kernel and restarts Colima once; containers and volumes are kept. `devenv doctor` checks this too.
+On affected Apple M4/M5 systems, this and `devenv colima restart` check whether the VM kernel reports SVE support the CPU does not have. Devenv upgrades the VM kernel when needed, restarts once, and verifies the result. `devenv doctor` checks this too.
 
 `devenv pin_gha [file ...]`
 
@@ -270,7 +270,40 @@ def main(context: dict[str, str]) -> int:
 
 ### colima
 
-On macOS, `devenv bootstrap` installs colima and the docker CLI globally. If you installed devenv before 1.14.0, run `devenv update` to get them.
+`devenv bootstrap` and `devenv update` install Colima `v0.10.3` and Lima `v2.2.1` on macOS.
+
+#### New macOS installations
+
+Colima 0.10.3 creates new VMs from its Ubuntu 24.04.4 image, whose kernel is expected to report SVE correctly. M4 Pro validation confirmed this on that host. New VMs use a separate persistent 512 GiB container data disk and Docker's containerd image store. Inotify is off by default.
+
+#### Existing macOS installations
+
+Updating devenv keeps the existing VM, Docker images, containers, and named volumes. It does not recreate the VM or convert its disk layout. Colima 0.8.1 VMs keep Docker data on their root disk; newer VMs use a separate persistent data disk. Do not delete a legacy VM as routine cleanup: its containers and named volumes can be lost with its root disk.
+
+`devenv update` does not stop a running VM. Before the next upgraded start, devenv checks a running daemon through the `colima` Docker context and records its store choice in `~/.colima/default/colima.yaml`. For a stopped VM, it uses Colima's persisted store and Lima disk metadata to identify the layout. If the evidence is ambiguous, startup stops with instructions to set `docker.features.containerd-snapshotter` explicitly. Existing explicit values are preserved, and devenv does not remove Docker data.
+
+Affected M4/M5 Macs may need an in-VM kernel update because existing VMs keep their original kernel. Devenv installs and boots the update when needed. If a previous repair installed the kernel but did not boot it, run `devenv colima restart`. This does not convert the VM to the new data disk layout.
+
+Lima 2.1 changed the instance disk layout. After starting a VM with Lima 2.x, Lima 1.x cannot start that instance. Downgrading devenv or its binaries does not restore the old layout. See [Lima's compatibility discussion](https://github.com/lima-vm/lima/discussions/4747).
+
+#### Check or change the Docker image store
+
+Run `docker --context=colima info` to see the active storage driver. The classic store reports `overlay2`. The containerd store reports `io.containerd.snapshotter.v1` in the driver status. Use the explicit `colima` context so Docker Desktop's current context does not affect the result.
+
+If images or containers appear missing after an upgrade, inspect `docker --context=colima info`, `docker --context=colima images`, `docker --context=colima ps -a`, and `docker --context=colima volume ls`. Check `docker.features.containerd-snapshotter` in `~/.colima/default/colima.yaml` against the store containing your data. For a legacy `overlay2` VM, use:
+
+```yaml
+docker:
+  features:
+    buildkit: true
+    containerd-snapshotter: false
+```
+
+Set it to `true` only after confirming the VM's data is in the containerd store. Start Colima after correcting the value. Switching stores hides images and containers in the other store. Do not delete the VM or its disks to diagnose the problem.
+
+#### Enable inotify propagation
+
+To propagate host file events into the VM, set `mountInotify: true` in `~/.colima/default/colima.yaml` or start Colima with `--mount-inotify`. Devenv preserves an existing `true` setting. Inotify is off for new VMs because Colima watches configured mounts, including devenv's writable home mount. Watching a large home directory can increase host CPU and memory use; see [Colima issue 1569](https://github.com/abiosoft/colima/issues/1569).
 
 ### gcloud
 
