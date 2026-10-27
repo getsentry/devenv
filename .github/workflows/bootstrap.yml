@@ -76,5 +76,12 @@ jobs:
           mv install-devenv.sh /tmp
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
+      - name: pin uv for sentry sync
+        run: |
+          # sentry's sync uses whatever uv is first on PATH, and its
+          # post_fetch brew-installs a stale uv later in this job, so
+          # pin the workflow's uv where devenv's bin dir wins on PATH
+          ln -sfn "$(command -v uv)" "${HOME}/.local/share/sentry-devenv/bin/uv"
+          uv --version
       - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh || cat /Users/runner/.colima/_lima/colima/ha.stderr.log
