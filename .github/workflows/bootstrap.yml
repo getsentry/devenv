@@ -31,7 +31,7 @@ jobs:
       # devenv no longer manages uv; linux users need to install it themselves
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          version: 0.13.4
+          version: 0.13.5
 
       - name: install
         run: |
@@ -53,6 +53,14 @@ jobs:
         "${{ github.event.pull_request && github.head_ref || github.ref_name }}"
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # devenv no longer manages uv; explicitly pin it, as sentry's sync
+      # uses whatever uv is on PATH and brew's is too old to provision
+      # the Python that sentry requires
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: 0.13.5
+
       - name: remove homebrew
         run: |
           sudo rm -rf \
@@ -68,5 +76,12 @@ jobs:
           mv install-devenv.sh /tmp
           cd /tmp
           ./install-devenv.sh  < $repo/ci/install-devenv-checks.sh
+      - name: pin uv for sentry sync
+        run: |
+          # sentry's sync uses whatever uv is first on PATH, and its
+          # post_fetch brew-installs a stale uv later in this job, so
+          # pin the workflow's uv where devenv's bin dir wins on PATH
+          ln -sfn "$(command -v uv)" "${HOME}/.local/share/sentry-devenv/bin/uv"
+          uv --version
       - name: bootstrap sentry
         run: ./ci/devenv-bootstrap.sh || cat /Users/runner/.colima/_lima/colima/ha.stderr.log
