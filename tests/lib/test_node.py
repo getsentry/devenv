@@ -5,6 +5,7 @@ import os
 import pathlib
 import shutil
 import tarfile
+import time
 from collections.abc import Generator
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -208,6 +209,31 @@ def test_install_concurrent(
     with open(f"{shared}/bin/node") as f:
         assert f.read() == "winner"
     assert os.listdir(f"{root}/node") == [sha256]
+
+
+@pytest.mark.usefixtures("download")
+def test_install_removes_unused(tmp_path: pathlib.Path, root: str) -> None:
+    reporoot = _checkout(tmp_path, "repo")
+    node.install(version, "url", sha256, reporoot)
+
+    day = 24 * 60 * 60
+    long_ago = time.time() - 31 * day
+    shared = f"{root}/node/{sha256}"
+    unused = f"{root}/node/unused"
+    recent = f"{root}/node/recent"
+    _write_executable(f"{unused}/bin/node", "")
+    _write_executable(f"{recent}/bin/node", "")
+    os.utime(unused, (long_ago, long_ago))
+    os.utime(recent, (time.time() - day, time.time() - day))
+    # unpacked dirs keep the release's mtime, so an install that's in use
+    # can look old too
+    os.utime(shared, (long_ago, long_ago))
+
+    # an already-installed checkout still marks its install as used
+    node.install(version, "url", sha256, reporoot)
+
+    assert sorted(os.listdir(f"{root}/node")) == sorted([sha256, "recent"])
+    assert os.stat(shared).st_mtime > time.time() - day
 
 
 @pytest.mark.usefixtures("download")

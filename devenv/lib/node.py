@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 
 from devenv.constants import root
 from devenv.lib import archive
@@ -11,6 +12,10 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 _shims = ("node", "npm", "npx")
+
+# Shared installs that no checkout has synced for this long are removed.
+# A checkout still pointing at one gets it back on its next sync.
+_unused_after_seconds = 30 * 24 * 60 * 60
 
 
 def _install(url: str, sha256: str, into: str) -> str:
@@ -41,6 +46,38 @@ def _install(url: str, sha256: str, into: str) -> str:
                 raise
 
     return dest
+
+
+def _remove_unused(into: str, in_use: str) -> None:
+    """
+    Marks in_use as just used and removes the other installs in into that
+    weren't used recently. Nothing records which checkouts use which
+    install, so last use (the dir's mtime) is the best signal there is.
+    """
+    os.utime(in_use)
+    cutoff = time.time() - _unused_after_seconds
+
+    for name in os.listdir(into):
+        path = f"{into}/{name}"
+        if path == in_use:
+            continue
+        try:
+            if os.stat(path).st_mtime >= cutoff:
+                continue
+        except FileNotFoundError:
+            # a concurrent sync removed it first
+            continue
+
+        print(f"removing unused node install {path}")
+        # move it out of the way first so that a sync running at the same
+        # time never sees a partially removed install as a complete one
+        trash = tempfile.mkdtemp(dir=into)
+        try:
+            os.rename(path, f"{trash}/{name}")
+        except FileNotFoundError:
+            # a concurrent sync removed it first
+            pass
+        shutil.rmtree(trash)
 
 
 def uninstall(binroot: str) -> None:
@@ -137,9 +174,19 @@ exec {binroot}/node-env/bin/pnpm "$@"
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
-    if installed(version, binroot):
-        return
+    if not installed(version, binroot):
+        _install_checkout(version, url, sha256, binroot)
 
+    # {binroot}/node-env/bin/node -> {shared}/bin/node
+    shared = os.path.dirname(
+        os.path.dirname(os.readlink(f"{binroot}/node-env/bin/node"))
+    )
+    _remove_unused(os.path.dirname(shared), in_use=shared)
+
+
+def _install_checkout(
+    version: str, url: str, sha256: str, binroot: str
+) -> None:
     print(f"installing node {version}...")
     uninstall(binroot)
     shared = _install(url, sha256, f"{root}/node")
