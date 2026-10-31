@@ -9,6 +9,10 @@ on:
       force:
         description: Force a release even when there are release-blockers (optional)
         required: false
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -25,7 +29,7 @@ jobs:
           token: ${{ steps.token.outputs.token }}
           fetch-depth: 0
       - name: Prepare release
-        uses: getsentry/action-prepare-release@c8e1c2009ab08259029170132c384f03c1064c0e # v1
+        uses: getsentry/craft@0ff75896d43285ca376c7254e8143bac23acd429 # v2
         env:
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
         with:
