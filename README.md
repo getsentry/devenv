@@ -188,6 +188,8 @@ Use `[reporoot]/.python-version` to pin a python version for uv:
 
 ### node
 
+`node.install` unpacks each node release once into `~/.local/share/sentry-devenv/node/[sha256]`, shared by every checkout that uses it. `[reporoot]/.devenv/bin/node-env` links to it and is the npm global prefix, so `npm install -g` stays per-checkout.
+
 `node.install_pnpm` installs the pnpm version named in the `packageManager` field of `[reporoot]/package.json`.
 
 `[reporoot]/.envrc`

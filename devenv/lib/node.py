@@ -4,29 +4,80 @@ import json
 import os
 import shutil
 import tempfile
+import time
 
+from devenv.constants import root
 from devenv.lib import archive
 from devenv.lib import fs
 from devenv.lib import proc
 
 _shims = ("node", "npm", "npx")
 
+# Shared installs that no checkout has synced for this long are removed.
+# A checkout still pointing at one gets it back on its next sync.
+_unused_after_seconds = 30 * 24 * 60 * 60
 
-def _install(url: str, sha256: str, into: str) -> None:
+
+def _install(url: str, sha256: str, into: str) -> str:
+    """
+    Unpacks node into {into}/{sha256} unless it's already there, and returns
+    that path. It's shared by every checkout using the same node, so it must
+    never be written to after this; see install for how npm is kept out of it.
+    """
+    dest = f"{into}/{sha256}"
+    if os.path.exists(dest):
+        return dest
+
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
         archive_file = archive.download(url, sha256, dest=f"{tmpd}/download")
-        top_level_dir = "node-env"
         archive.unpack(
-            archive_file,
-            tmpd,
-            perform_strip1=True,
-            strip1_new_prefix=top_level_dir,
+            archive_file, tmpd, perform_strip1=True, strip1_new_prefix="node"
         )
 
-        # the archive was atomically placed into tmpd so
-        # these are on the same fs and can be atomically moved too
-        os.replace(f"{tmpd}/{top_level_dir}", f"{into}/{top_level_dir}")
+        # tmpd is in the same dir as dest so this is atomic: other
+        # checkouts never see a partially unpacked node
+        try:
+            os.replace(f"{tmpd}/node", dest)
+        except OSError:
+            # a concurrent sync of another checkout got there first,
+            # and replacing a non-empty dir isn't allowed
+            if not os.path.exists(f"{dest}/bin/node"):
+                raise
+
+    return dest
+
+
+def _remove_unused(into: str, in_use: str) -> None:
+    """
+    Marks in_use as just used and removes the other installs in into that
+    weren't used recently. Nothing records which checkouts use which
+    install, so last use (the dir's mtime) is the best signal there is.
+    """
+    os.utime(in_use)
+    cutoff = time.time() - _unused_after_seconds
+
+    for name in os.listdir(into):
+        path = f"{into}/{name}"
+        if path == in_use:
+            continue
+        try:
+            if os.stat(path).st_mtime >= cutoff:
+                continue
+        except FileNotFoundError:
+            # a concurrent sync removed it first
+            continue
+
+        print(f"removing unused node install {path}")
+        # move it out of the way first so that a sync running at the same
+        # time never sees a partially removed install as a complete one
+        trash = tempfile.mkdtemp(dir=into)
+        try:
+            os.rename(path, f"{trash}/{name}")
+        except FileNotFoundError:
+            # a concurrent sync removed it first
+            pass
+        shutil.rmtree(trash)
 
 
 def uninstall(binroot: str) -> None:
@@ -56,6 +107,10 @@ def installed(version: str, binroot: str) -> bool:
         if "VOLTA_HOME" in sample:
             print("volta-based node detected")
             return False
+
+    if not os.path.islink(f"{binroot}/node-env/bin/node"):
+        print("per-checkout node detected, replacing with a shared one")
+        return False
 
     try:
         stdout = proc.run((f"{binroot}/node", "--version"), stdout=True)
@@ -119,12 +174,29 @@ exec {binroot}/node-env/bin/pnpm "$@"
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
-    if installed(version, binroot):
-        return
+    if not installed(version, binroot):
+        _install_checkout(version, url, sha256, binroot)
 
+    # {binroot}/node-env/bin/node -> {shared}/bin/node
+    shared = os.path.dirname(
+        os.path.dirname(os.readlink(f"{binroot}/node-env/bin/node"))
+    )
+    _remove_unused(os.path.dirname(shared), in_use=shared)
+
+
+def _install_checkout(
+    version: str, url: str, sha256: str, binroot: str
+) -> None:
     print(f"installing node {version}...")
     uninstall(binroot)
-    _install(url, sha256, binroot)
+    shared = _install(url, sha256, f"{root}/node")
+
+    # node-env stays per-checkout because it's the npm global prefix that
+    # npm install -g (e.g. install_pnpm) writes into. Only node's own
+    # executables (node, npm, npx, corepack) are linked from the shared install.
+    os.makedirs(f"{binroot}/node-env/bin")
+    for name in os.listdir(f"{shared}/bin"):
+        os.symlink(f"{shared}/bin/{name}", f"{binroot}/node-env/bin/{name}")
 
     # NPM_CONFIG_PREFIX is needed to ensure npm install -g pnpm
     # puts pnpm into our node-env.
