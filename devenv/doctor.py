@@ -122,7 +122,7 @@ def load_builtin_checks(
     If a check doesn't have the required attributes, skip it.
     """
     checks: list[Check] = []
-    match_tags.add("builtin")
+    match_tags = match_tags | {"builtin"}
 
     for _, module_name, _ in walk_packages(devenv.checks.__path__):
         module = __import__(f"devenv.checks.{module_name}", fromlist=["_trash"])

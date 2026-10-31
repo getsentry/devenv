@@ -100,3 +100,15 @@ def test_load_checks_exclude_failing_tag() -> None:
     assert "passing check" in loaded_check_names
     assert "failing check" not in loaded_check_names
     assert "failing check with msg" not in loaded_check_names
+
+
+def test_load_checks_after_builtin_checks() -> None:
+    # doctor.main passes the same tag set to both loaders.
+    match_tags: set[str] = set()
+    doctor.load_builtin_checks(match_tags, set())
+    assert match_tags == set()
+
+    loaded_checks = doctor.load_checks(
+        Repository(os.path.join(os.path.dirname(__file__))), match_tags, set()
+    )
+    assert len(loaded_checks) == 5
