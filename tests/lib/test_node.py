@@ -63,9 +63,8 @@ def download(node_tarball: str) -> Generator[MagicMock, None, None]:
         shutil.copy(node_tarball, dest)
         return dest
 
-    with patch(
-        "devenv.lib.node.archive.download", side_effect=fake_download
-    ) as mock:
+    mock = MagicMock(side_effect=fake_download)
+    with patch("devenv.lib.node.archive.download", mock):
         yield mock
 
 
@@ -195,8 +194,10 @@ def test_install_concurrent(
 ) -> None:
     unpack = archive.unpack
 
-    def unpack_then_lose_race(*args: object, **kwargs: object) -> None:
-        unpack(*args, **kwargs)  # type: ignore[arg-type]
+    def unpack_then_lose_race(
+        path: str, into: str, perform_strip1: bool, strip1_new_prefix: str
+    ) -> None:
+        unpack(path, into, perform_strip1, strip1_new_prefix)
         # another checkout's sync finishes installing first
         _write_executable(f"{root}/node/{sha256}/bin/node", "winner")
 
