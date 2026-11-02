@@ -57,7 +57,7 @@ def sync(
     editable_paths: Optional[tuple[str, ...]] = None,
     bins: Optional[tuple[str, ...]] = None,
 ) -> None:
-    cmd: tuple[str, ...] = (
+    cmd = [
         uv.find(),
         "pip",
         "install",
@@ -66,11 +66,11 @@ def sync(
         f"{venv_dir}/bin/python",
         "-r",
         requirements,
-    )
+    ]
     if editable_paths is not None:
         for path in editable_paths:
-            cmd = (*cmd, "-e", path)
-    proc.run(cmd)
+            cmd.extend(("-e", path))
+    proc.run(tuple(cmd))
 
     if bins is not None:
         binroot = fs.ensure_binroot(reporoot)

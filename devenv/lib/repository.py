@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import importlib
 import os.path
 from configparser import ConfigParser
+from importlib import metadata
 
 from devenv import constants
 from devenv.lib.config import get_config
@@ -34,7 +34,7 @@ class Repository:
         return get_config(f"{self.config_path}/config.ini")
 
     def check_minimum_version(self) -> None:
-        version = importlib.metadata.version("sentry-devenv")
+        version = metadata.version("sentry-devenv")
 
         cfg = self.config()
         try:

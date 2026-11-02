@@ -14,13 +14,25 @@ Co-Authored-By: <agent and model> <email>
 - Set up: `uv sync`
 - Test: `uv run pytest tests/`
 - Test with coverage, as CI runs it: `uv run coverage erase && uv run coverage run -m pytest && uv run coverage report`
-- Lint, format, and type-check (ruff, mypy, shellcheck): `uv run pre-commit run --all-files`
+- Lint, format, and type-check (ruff, ty, shellcheck): `uv run prek run --all-files`
 - Run your checkout against another repo: `uv run --project ~/code/devenv devenv sync` from that repo's root
 - Run the `bootstrap` workflow locally with `gh act`: `make test`
 
+## Cross-repo upgrade checks
+
+When you change devenv's internal Python pin or its Colima or Lima versions, smoke-test the installed devenv against `~/dev/sentry`. Do this before calling the upgrade complete.
+
+- From `~/dev/sentry`, run `devenv sync` and check `devenv --version`, `.venv/bin/python --version`, `colima version`, and `limactl --version`.
+- Read Sentry's `.python-version`. Devenv's internal Python pin does not set Sentry's virtualenv version.
+- Run `devservices up` and confirm `devservices status` reports the needed services as healthy.
+- Run a few targeted pytest tests that use those services. Confirm they use a test database, then report the commands and results.
+- Do not stop, delete, or prune the developer's default Colima VM.
+- Use a disposable profile only after verifying that every VM and data path is isolated.
+
 ## Invariants
 
-- Python is pinned to 3.11.4 (`requires-python` in `pyproject.toml`, `.python-version`).
+- devenv's own Python is pinned to 3.13.16 in `.python-version` and `install-devenv.sh`.
+- `requires-python` in `pyproject.toml` stays a range (`>=3.13`). Repos such as sentry install devenv into their own venvs, and internal pypi must build it for every supported 3.13+. An exact pin makes the release uninstallable there.
 - Use `constants.DARWIN` and `constants.LINUX` for platform checks.
 - macOS gets the global tools (brew, docker CLI, colima, lima). Linux means apt-based (`dpkg` on PATH). On Linux, devenv installs no global tools, and `devenv bootstrap` exits if docker engine is missing.
 

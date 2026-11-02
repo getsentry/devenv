@@ -41,7 +41,7 @@ class Check:
     check: Callable[[], tuple[bool, str]]
     fix: Callable[[], tuple[bool, str]]
 
-    def __init__(self, module: ModuleType):
+    def __init__(self, module: ModuleType) -> None:
         # Check that the module has the required attributes.
         if not hasattr(module, "name"):
             raise ValueError("missing the `name` attribute")
@@ -122,7 +122,7 @@ def load_builtin_checks(
     If a check doesn't have the required attributes, skip it.
     """
     checks: list[Check] = []
-    match_tags.add("builtin")
+    match_tags = match_tags | {"builtin"}
 
     for _, module_name, _ in walk_packages(devenv.checks.__path__):
         module = __import__(f"devenv.checks.{module_name}", fromlist=["_trash"])
