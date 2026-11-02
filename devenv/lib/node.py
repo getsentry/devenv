@@ -4,7 +4,6 @@ import json
 import os
 import shutil
 import tempfile
-import time
 
 from devenv.constants import root
 from devenv.lib import archive
@@ -12,10 +11,6 @@ from devenv.lib import fs
 from devenv.lib import proc
 
 _shims = ("node", "npm", "npx")
-
-# Shared installs that no checkout has synced for this long are removed.
-# A checkout still pointing at one gets it back on its next sync.
-_unused_after_seconds = 30 * 24 * 60 * 60
 
 
 def _install(url: str, sha256: str, into: str) -> str:
@@ -25,13 +20,8 @@ def _install(url: str, sha256: str, into: str) -> str:
     never be written to after this; see install for how npm is kept out of it.
     """
     dest = f"{into}/{sha256}"
-    try:
-        # mark it used before relying on it, so a concurrent sync's
-        # _remove_unused doesn't take it away
-        os.utime(dest)
+    if os.path.exists(dest):
         return dest
-    except FileNotFoundError:
-        pass
 
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
@@ -39,10 +29,6 @@ def _install(url: str, sha256: str, into: str) -> str:
         archive.unpack(
             archive_file, tmpd, perform_strip1=True, strip1_new_prefix="node"
         )
-
-        # it keeps the release's mtime, often years old, which would make
-        # a concurrent sync's _remove_unused think it's unused
-        os.utime(f"{tmpd}/node")
 
         # tmpd is in the same dir as dest so this is atomic: other
         # checkouts never see a partially unpacked node
@@ -55,38 +41,6 @@ def _install(url: str, sha256: str, into: str) -> str:
                 raise
 
     return dest
-
-
-def _remove_unused(into: str, in_use: str) -> None:
-    """
-    Marks in_use as just used and removes the other installs in into that
-    weren't used recently. Nothing records which checkouts use which
-    install, so last use (the dir's mtime) is the best signal there is.
-    """
-    os.utime(in_use)
-    cutoff = time.time() - _unused_after_seconds
-
-    for name in os.listdir(into):
-        path = f"{into}/{name}"
-        if path == in_use:
-            continue
-        try:
-            if os.stat(path).st_mtime >= cutoff:
-                continue
-        except FileNotFoundError:
-            # a concurrent sync removed it first
-            continue
-
-        print(f"removing unused node install {path}")
-        # move it out of the way first so that a sync running at the same
-        # time never sees a partially removed install as a complete one
-        trash = tempfile.mkdtemp(dir=into)
-        try:
-            os.rename(path, f"{trash}/{name}")
-        except FileNotFoundError:
-            # a concurrent sync removed it first
-            pass
-        shutil.rmtree(trash)
 
 
 def uninstall(binroot: str) -> None:
@@ -183,19 +137,9 @@ exec {binroot}/node-env/bin/pnpm "$@"
 def install(version: str, url: str, sha256: str, reporoot: str) -> None:
     binroot = fs.ensure_binroot(reporoot)
 
-    if not installed(version, binroot):
-        _install_checkout(version, url, sha256, binroot)
+    if installed(version, binroot):
+        return
 
-    # {binroot}/node-env/bin/node -> {shared}/bin/node
-    shared = os.path.dirname(
-        os.path.dirname(os.readlink(f"{binroot}/node-env/bin/node"))
-    )
-    _remove_unused(os.path.dirname(shared), in_use=shared)
-
-
-def _install_checkout(
-    version: str, url: str, sha256: str, binroot: str
-) -> None:
     print(f"installing node {version}...")
     uninstall(binroot)
     shared = _install(url, sha256, f"{root}/node")
