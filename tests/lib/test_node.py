@@ -18,6 +18,7 @@ from devenv.lib.repository import Repository
 
 version = "v0.0.0"
 sha256 = "fakesha256"
+release_mtime = time.time() - 365 * 24 * 60 * 60
 
 # A stand-in for npm: the real one would `npm install -g pnpm@X` into
 # $NPM_CONFIG_PREFIX, so this fake one does the same.
@@ -43,6 +44,9 @@ def node_tarball(tmp_path: pathlib.Path) -> str:
     _write_executable(f"{src}/bin/npm", fake_npm)
     _write_executable(f"{src}/bin/npx", "#!/bin/sh\n")
     _write_executable(f"{src}/bin/corepack", "#!/bin/sh\n")
+    # like a real release, whose files are dated when node was built
+    for dirpath in (src, f"{src}/bin"):
+        os.utime(dirpath, (release_mtime, release_mtime))
 
     path = f"{tmp_path}/node.tar.xz"
     with tarfile.open(path, "w:xz") as tarf:
@@ -226,8 +230,7 @@ def test_install_removes_unused(tmp_path: pathlib.Path, root: str) -> None:
     _write_executable(f"{recent}/bin/node", "")
     os.utime(unused, (long_ago, long_ago))
     os.utime(recent, (time.time() - day, time.time() - day))
-    # unpacked dirs keep the release's mtime, so an install that's in use
-    # can look old too
+    # this checkout last synced long ago, but it's syncing now
     os.utime(shared, (long_ago, long_ago))
 
     # an already-installed checkout still marks its install as used
@@ -235,6 +238,20 @@ def test_install_removes_unused(tmp_path: pathlib.Path, root: str) -> None:
 
     assert sorted(os.listdir(f"{root}/node")) == sorted([sha256, "recent"])
     assert os.stat(shared).st_mtime > time.time() - day
+
+
+@pytest.mark.usefixtures("download")
+def test_install_marks_shared_used(root: str) -> None:
+    # unpacked dirs keep the release's old mtime, so without marking them
+    # another checkout's cleanup could remove an install before it's used
+    recently = time.time() - 60
+
+    shared = node._install("url", sha256, f"{root}/node")
+    assert os.stat(shared).st_mtime > recently
+
+    os.utime(shared, (release_mtime, release_mtime))
+    assert node._install("url", sha256, f"{root}/node") == shared
+    assert os.stat(shared).st_mtime > recently
 
 
 @pytest.mark.usefixtures("download")

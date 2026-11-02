@@ -25,8 +25,13 @@ def _install(url: str, sha256: str, into: str) -> str:
     never be written to after this; see install for how npm is kept out of it.
     """
     dest = f"{into}/{sha256}"
-    if os.path.exists(dest):
+    try:
+        # mark it used before relying on it, so a concurrent sync's
+        # _remove_unused doesn't take it away
+        os.utime(dest)
         return dest
+    except FileNotFoundError:
+        pass
 
     os.makedirs(into, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=into) as tmpd:
@@ -34,6 +39,10 @@ def _install(url: str, sha256: str, into: str) -> str:
         archive.unpack(
             archive_file, tmpd, perform_strip1=True, strip1_new_prefix="node"
         )
+
+        # it keeps the release's mtime, often years old, which would make
+        # a concurrent sync's _remove_unused think it's unused
+        os.utime(f"{tmpd}/node")
 
         # tmpd is in the same dir as dest so this is atomic: other
         # checkouts never see a partially unpacked node
