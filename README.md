@@ -183,7 +183,7 @@ def main(context: dict[str, str]) -> int:
 
 Use `[reporoot]/.python-version` to pin a python version for uv:
 ```
-3.13.16
+3.13.18
 ```
 
 ### node

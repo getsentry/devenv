@@ -13,7 +13,7 @@ from devenv.lib.repository import Repository
 
 mock_config = """
 [venv.sentry-kube]
-python = 3.13.16
+python = 3.13.18
 requirements = k8s/cli/requirements.txt
 editable =
   k8s/cli
@@ -24,15 +24,15 @@ bins =
   sentry-kube
   sentry-kube-pop
 
-[python3.13.16]
-darwin_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.13.16+20261013-x86_64-apple-darwin-install_only.tar.gz
-darwin_x86_64_sha256 = d1f2e7b5f0cfa25fc856fea819890bbe722f47a692e5ce2552636b5240930b38
-darwin_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.13.16+20261013-aarch64-apple-darwin-install_only.tar.gz
-darwin_arm64_sha256 = ca0e6a70fb75a0984751bd75493e3de77680aef7fbd0fea9b903c299537b3423
-linux_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.13.16+20261013-x86_64-unknown-linux-gnu-install_only.tar.gz
-linux_x86_64_sha256 = e588e50db882fa6a89f926d9a9ad64e445183af0eda5bda226a2c151b17db8a6
-linux_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261013/cpython-3.13.16+20261013-aarch64-unknown-linux-gnu-install_only.tar.gz
-linux_arm64_sha256 = 0fce0605da7b6532d5bdaec185336ffaaddd02ec04e27382014952ca4857ed6d
+[python3.13.18]
+darwin_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.13.18+20261026-x86_64-apple-darwin-install_only.tar.gz
+darwin_x86_64_sha256 = 708be9e7df297f68bdae589ea9e62a621db5abe7708f79e851c41410347452d1
+darwin_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.13.18+20261026-aarch64-apple-darwin-install_only.tar.gz
+darwin_arm64_sha256 = e5af2fde6a937a0e0c795a0c595c4efb70578d57463a2657c819992b9b9acbac
+linux_x86_64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.13.18+20261026-x86_64-unknown-linux-gnu-install_only.tar.gz
+linux_x86_64_sha256 = 126343c54daff4068efc1ac269518d0cc202d57857794948103dd1454e8881be
+linux_arm64 = https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.13.18+20261026-aarch64-unknown-linux-gnu-install_only.tar.gz
+linux_arm64_sha256 = b48451865bde9a39e2f3e71d7fdcbf1f32615f50f24d78dc50d04ede6501cf81
 """
 
 
@@ -50,7 +50,7 @@ def test_get_ensure(tmp_path: pathlib.Path) -> None:
 
     assert (venv_dir, python_version, requirements, editable_paths, bins) == (
         f"{repo.path}/.venv-sentry-kube",
-        "3.13.16",
+        "3.13.18",
         f"{repo.path}/k8s/cli/requirements.txt",
         (f"{repo.path}/k8s/cli", f"{repo.path}/k8s/cli/libsentrykube"),
         ("prek", "pyupgrade", "sentry-kube", "sentry-kube-pop"),
@@ -125,10 +125,10 @@ def test_sync_uses_uv(tmp_path: pathlib.Path) -> None:
 @pytest.mark.parametrize(
     "pyvenv_cfg",
     (
-        "home = /x\nversion = 3.13.16\n",
-        "home = /x\nuv = 0.13.4\nversion_info = 3.13.16\n",
-        "home = /x\nversion_info = 3.13.16.final.0\n",
-        "version = 3.13.16\nversion_info = 3.13.16.final.0\n",
+        "home = /x\nversion = 3.13.18\n",
+        "home = /x\nuv = 0.13.4\nversion_info = 3.13.18\n",
+        "home = /x\nversion_info = 3.13.18.final.0\n",
+        "version = 3.13.18\nversion_info = 3.13.18.final.0\n",
     ),
 )
 def test_check_ok(tmp_path: pathlib.Path, pyvenv_cfg: str) -> None:
@@ -137,7 +137,7 @@ def test_check_ok(tmp_path: pathlib.Path, pyvenv_cfg: str) -> None:
     with open(f"{tmp_path}/pyvenv.cfg", "w") as f:
         f.write(pyvenv_cfg)
 
-    assert venv.check(str(tmp_path), "3.13.16") == venv.VenvStatus.OK
+    assert venv.check(str(tmp_path), "3.13.18") == venv.VenvStatus.OK
 
 
 @pytest.mark.parametrize(
@@ -150,5 +150,5 @@ def test_check_mismatch(tmp_path: pathlib.Path, pyvenv_cfg: str) -> None:
         f.write(pyvenv_cfg)
 
     assert (
-        venv.check(str(tmp_path), "3.13.16") == venv.VenvStatus.VERSION_MISMATCH
+        venv.check(str(tmp_path), "3.13.18") == venv.VenvStatus.VERSION_MISMATCH
     )
