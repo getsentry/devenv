@@ -14,6 +14,7 @@ from devenv.lib import github
 from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import rosetta
+from devenv.lib import sentry_cli
 from devenv.lib.config import Config
 from devenv.lib.config import initialize_config
 from devenv.lib.context import Context
@@ -112,6 +113,7 @@ Updating global tools (at {constants.root}/bin).
         docker.install_global()
         colima.install_global()
         limactl.install_global()
+        sentry_cli.install()
 
     direnv.install()
 

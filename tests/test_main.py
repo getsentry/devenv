@@ -16,6 +16,7 @@ def test(tmp_path: str) -> None:
         patch("devenv.bootstrap.docker.install_global"),
         patch("devenv.bootstrap.colima.install_global"),
         patch("devenv.bootstrap.limactl.install_global"),
+        patch("devenv.bootstrap.sentry_cli.install"),
         patch("devenv.bootstrap.direnv.install"),
     ):
         config_path = f"{tmp_path}/.config/sentry-devenv/config.ini"
