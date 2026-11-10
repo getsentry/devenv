@@ -14,6 +14,7 @@ from devenv.lib import github
 from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import rosetta
+from devenv.lib import sentry_cli
 from devenv.lib.config import Config
 from devenv.lib.config import initialize_config
 from devenv.lib.context import Context
@@ -114,6 +115,7 @@ Updating global tools (at {constants.root}/bin).
         limactl.install_global()
 
     direnv.install()
+    sentry_cli.install()
 
     os.makedirs(context["code_root"], exist_ok=True)
 
