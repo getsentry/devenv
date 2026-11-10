@@ -43,9 +43,9 @@ Updating global tools (at {constants.root}/bin).
             docker.install_global()
             colima.install_global()
             limactl.install_global()
-            sentry_cli.install()
 
         direnv.install()
+        sentry_cli.install()
 
         return 0
 

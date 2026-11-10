@@ -34,7 +34,8 @@ When you change devenv's internal Python pin or its Colima or Lima versions, smo
 - devenv's own Python is pinned to 3.13.18 in `.python-version` and `install-devenv.sh`.
 - `requires-python` in `pyproject.toml` stays a range (`>=3.13`). Repos such as sentry install devenv into their own venvs, and internal pypi must build it for every supported 3.13+. An exact pin makes the release uninstallable there.
 - Use `constants.DARWIN` and `constants.LINUX` for platform checks.
-- macOS gets the global tools (brew, docker CLI, colima, lima, Sentry CLI). Linux means apt-based (`dpkg` on PATH). On Linux, devenv installs no global tools, and `devenv bootstrap` exits if docker engine is missing.
+- macOS gets the global tools (brew, docker CLI, colima, lima). Linux means apt-based (`dpkg` on PATH). On Linux, devenv installs no global tools, and `devenv bootstrap` exits if docker engine is missing.
+- direnv and the Sentry CLI install on both macOS and Linux. The Sentry CLI lives in its own install dir (`SENTRY_INSTALL_DIR`), and devenv links it into its global bin.
 
 ## Map
 
