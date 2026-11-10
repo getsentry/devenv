@@ -37,20 +37,16 @@ def _fake_run(version: str) -> Callable[..., str | None]:
 
 
 @pytest.fixture
-def dirs(tmp_path: str) -> Generator[tuple[str, str], None, None]:
+def home(tmp_path: str) -> Generator[str, None, None]:
     home = f"{tmp_path}/home"
-    root = f"{tmp_path}/root"
-    os.makedirs(f"{root}/bin")
     with (
         patch("devenv.lib.sentry_cli.home", home),
-        patch("devenv.lib.sentry_cli.root", root),
         patch("devenv.lib.sentry_cli.user_environ", {"PATH": "/usr/bin"}),
     ):
-        yield home, root
+        yield home
 
 
-def test_install(dirs: tuple[str, str]) -> None:
-    home, root = dirs
+def test_install(home: str) -> None:
     into = f"{home}/.local/bin"
     name, sha256 = sentry_cli._assets["darwin_arm64"]
 
@@ -78,17 +74,15 @@ def test_install(dirs: tuple[str, str]) -> None:
         "curl",
         "--channel",
         "stable",
-        "--no-modify-path",
         "--quiet",
     )
     assert setup.kwargs == {"env": {"SENTRY_INSTALL_DIR": into}}
     # the temp binary is cleaned up once setup has copied it
     assert not os.path.exists(setup.args[0][0])
     assert version == call((f"{into}/sentry", "--version"), stdout=True)
-    assert os.readlink(f"{root}/bin/sentry") == f"{into}/sentry"
 
 
-def test_install_fails_on_unexpected_version(dirs: tuple[str, str]) -> None:
+def test_install_fails_on_unexpected_version(home: str) -> None:
     with (
         patch("devenv.lib.sentry_cli.SYSTEM_MACHINE", "linux_x86_64"),
         patch(
@@ -100,13 +94,10 @@ def test_install_fails_on_unexpected_version(dirs: tuple[str, str]) -> None:
         sentry_cli.install()
 
 
-def test_existing_install_is_only_linked(dirs: tuple[str, str]) -> None:
-    home, root = dirs
+def test_existing_install_is_left_alone(home: str) -> None:
     into = f"{home}/custom"
     os.makedirs(into)
     open(f"{into}/sentry", "w").close()
-    # a stale link from an earlier install dir
-    os.symlink(f"{home}/.local/bin/sentry", f"{root}/bin/sentry")
 
     with (
         patch(
@@ -119,7 +110,6 @@ def test_existing_install_is_only_linked(dirs: tuple[str, str]) -> None:
 
     download.assert_not_called()
     run.assert_not_called()
-    assert os.readlink(f"{root}/bin/sentry") == f"{into}/sentry"
 
 
 @pytest.mark.parametrize(
@@ -132,10 +122,7 @@ def test_existing_install_is_only_linked(dirs: tuple[str, str]) -> None:
         ({"PATH": "/usr/bin"}, "{home}/.local/bin"),
     ),
 )
-def test_install_dir(
-    dirs: tuple[str, str], environ: dict[str, str], expected: str
-) -> None:
-    home, _ = dirs
+def test_install_dir(home: str, environ: dict[str, str], expected: str) -> None:
     os.makedirs(f"{home}/bin")
     environ = {k: v.format(home=home) for k, v in environ.items()}
     with patch("devenv.lib.sentry_cli.user_environ", environ):

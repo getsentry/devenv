@@ -91,8 +91,9 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
 
 - `devenv` itself
 - `direnv`, if direnv was not already on your PATH. devenv relies on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH.
-- a `sentry` link to the [Sentry CLI](https://cli.sentry.dev). devenv installs the CLI where its own installer would (`$SENTRY_INSTALL_DIR`, else usually `~/.local/bin`), unless it's already there. After that, the CLI updates itself (`sentry cli upgrade`).
 - on macOS only, the global tools: the `docker` CLI, `colima`, and `lima`. On Linux, install docker engine yourself. `devenv bootstrap` exits if it is missing.
+
+devenv also installs the [Sentry CLI](https://cli.sentry.dev) where its own installer would (`$SENTRY_INSTALL_DIR`, else usually `~/.local/bin`), unless it's already there, and adds that dir to PATH in your shell rc. It isn't linked into `~/.local/share/sentry-devenv/bin`: in a sentry checkout, the virtualenv's server `sentry` has to win, and it hands commands it doesn't have to the Sentry CLI. After that, the CLI updates itself (`sentry cli upgrade`).
 
 ### Runtime
 

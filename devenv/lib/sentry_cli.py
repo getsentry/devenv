@@ -7,7 +7,6 @@ import tempfile
 
 from devenv.constants import SYSTEM_MACHINE
 from devenv.constants import home
-from devenv.constants import root
 from devenv.constants import user_environ
 from devenv.lib import archive
 from devenv.lib import proc
@@ -65,9 +64,11 @@ def _install(into: str) -> None:
             shutil.copyfileobj(src, dst)
         os.chmod(binary, 0o775)
 
-        # setup copies the binary into SENTRY_INSTALL_DIR and records it
-        # as a curl install, so `sentry cli upgrade` updates it in place.
-        # devenv links it into its own bin, which is already on PATH.
+        # setup copies the binary into SENTRY_INSTALL_DIR, adds that dir to
+        # PATH in the shell rc, and records a curl install, so
+        # `sentry cli upgrade` updates it in place. devenv doesn't link it into
+        # its own bin: in a sentry checkout that would shadow the virtualenv's
+        # server `sentry`, which hands unknown commands to this one.
         proc.run(
             (
                 binary,
@@ -78,7 +79,6 @@ def _install(into: str) -> None:
                 "curl",
                 "--channel",
                 "stable",
-                "--no-modify-path",
                 "--quiet",
             ),
             env={"SENTRY_INSTALL_DIR": into},
@@ -93,16 +93,6 @@ def _install(into: str) -> None:
 
 def install() -> None:
     into = _install_dir()
-    binary = f"{into}/sentry"
     # An existing install updates itself, so leave it be.
-    if not os.path.exists(binary):
+    if not os.path.exists(f"{into}/sentry"):
         _install(into)
-
-    link = f"{root}/bin/sentry"
-    if os.path.realpath(into) == os.path.realpath(f"{root}/bin"):
-        return
-    if os.path.islink(link) and os.readlink(link) == binary:
-        return
-    if os.path.lexists(link):
-        os.remove(link)
-    os.symlink(binary, link)
