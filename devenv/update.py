@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
+import tempfile
+import urllib.request
 from collections.abc import Sequence
 
 from devenv import constants
@@ -18,6 +21,41 @@ from devenv.lib.context import Context
 from devenv.lib.modules import DevModuleInfo
 
 module_help = "Updates global devenv and tools."
+
+installer_url = (
+    "https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh"
+)
+
+
+def reinstall_if_python_changed() -> bool:
+    # pip can't change the python of the global devenv venv, and when a new release needs a newer python it quietly installs the newest release that fits the old one instead, so rerun install-devenv.sh to rebuild the venv when its python pin changes
+    with urllib.request.urlopen(installer_url) as resp:
+        script = resp.read().decode()
+
+    m = re.search(r"SNTY_DEVENV_PY_VERSION:-([0-9.]+)", script)
+    if m is None:
+        return False
+    want = m.group(1)
+
+    have = proc.run(
+        (
+            f"{constants.root}/venv/bin/python",
+            "-c",
+            "import platform; print(platform.python_version())",
+        ),
+        stdout=True,
+    ).strip()
+    if have == want:
+        return False
+
+    print(f"Global devenv uses python {have} but needs {want}, reinstalling.")
+    with tempfile.TemporaryDirectory() as tmpd:
+        # the installer only runs when it's named install-devenv.sh
+        path = f"{tmpd}/install-devenv.sh"
+        with open(path, "w") as f:
+            f.write(script)
+        proc.run(("bash", path))
+    return True
 
 
 def main(context: Context, argv: Sequence[str] | None = None) -> int:
@@ -57,7 +95,9 @@ Updating global tools (at {constants.root}/bin).
 
     # even if we aren't the global devenv, we want to update
     # the global devenv (but only if it exists) out of convenience
-    if is_global_devenv or global_devenv_exists:
+    if (is_global_devenv or global_devenv_exists) and not (
+        args.version is None and reinstall_if_python_changed()
+    ):
         if args.version is None:
             version = "sentry-devenv"
         else:
