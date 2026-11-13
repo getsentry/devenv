@@ -14,6 +14,7 @@ from devenv.lib import colima
 from devenv.lib import direnv
 from devenv.lib import docker
 from devenv.lib import limactl
+from devenv.lib import mise
 from devenv.lib import proc
 from devenv.lib import sentry_cli
 from devenv.lib import uv
@@ -83,6 +84,7 @@ Updating global tools (at {constants.root}/bin).
             limactl.install_global()
 
         direnv.install()
+        mise.install()
         sentry_cli.install()
 
         return 0

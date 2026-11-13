@@ -54,6 +54,8 @@ Runs the repo's `sync.py` from the [repo config directory](#repository-configura
 - install any tools the repo needs
 - create the dev environment, or bring it up to date
 
+If the repo has no `sync.py` but has a [mise](https://mise.jdx.dev) config, `devenv sync` uses mise instead. See [mise](#mise).
+
 `sync.py` runs in devenv's [runtime](#runtime), so it can import the `devenv.lib` modules. There are no API docs. Start from the [examples](#examples). If you have a feature request, open an issue.
 
 The library keeps a repo's dev environment inside `[reporoot]/.devenv` where it can.
@@ -90,6 +92,7 @@ Everything devenv needs is in `~/.local/share/sentry-devenv`.
 `~/.local/share/sentry-devenv/bin` contains:
 
 - `devenv` itself
+- `mise`, pinned by devenv. See [mise](#mise).
 - `direnv`, if direnv was not already on your PATH. devenv relies on direnv and a minimal [`[reporoot]/.envrc`](#direnv) to add `[reporoot]/.devenv/bin` to PATH.
 - on macOS only, the global tools: the `docker` CLI, `colima`, and `lima`. On Linux, install docker engine yourself. `devenv bootstrap` exits if it is missing.
 
@@ -130,6 +133,7 @@ The [examples](#examples) show the other sections.
 ## Examples
 
 Skip to:
+- [mise](#mise)
 - [direnv](#direnv)
 - [python](#python)
 - [node](#node)
@@ -137,6 +141,28 @@ Skip to:
 - [colima](#colima)
 - [gcloud](#gcloud)
 - [terraform](#terraform)
+
+### mise
+
+devenv installs a pinned [mise](https://mise.jdx.dev) to `~/.local/share/sentry-devenv/bin/mise` in `devenv bootstrap`, `devenv update`, and `devenv sync`.
+
+If a repo has a mise config (such as `[reporoot]/mise.toml`) and no `sync.py`, `devenv sync` runs `mise install` in the repo, then `mise run sync` if the config defines a `sync` task. A `sync.py` still takes precedence when both exist. `minimum_version` in `config.ini` still applies.
+
+`[reporoot]/mise.toml`
+```toml
+[tools]
+node = "22.12.0"
+uv = "0.13.8"
+"npm:pnpm" = "10.4.1"
+
+[tasks.sync]
+run = [
+    "uv sync --frozen --quiet",
+    "pnpm install --frozen-lockfile",
+]
+```
+
+`mise install` and `mise run` trust the repo's config without a prompt, unless you turned on mise's [paranoid mode](https://mise.jdx.dev/paranoid.html).
 
 ### direnv
 
