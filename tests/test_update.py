@@ -7,11 +7,12 @@ import pytest
 
 from devenv import update
 
-PIP_PYTHON_MISMATCH = """\
+UV_PYTHON_MISMATCH = """\
 Command `uv pip install` failed! (code 1)
 combined out:
-ERROR: Ignored the following versions that require a different python version: 1.40.0 Requires-Python >=3.13
-ERROR: No matching distribution found for sentry-devenv==1.40.0
+error: No solution found when resolving dependencies
+  cause: Because the current Python version (3.11.4) does not satisfy Python>=3.13 and sentry-devenv==1.40.0 depends on Python>=3.13, we can conclude that sentry-devenv==1.40.0 cannot be used.
+         And because only sentry-devenv==1.40.0 is available and you require sentry-devenv==1.40.0, we can conclude that your requirements are unsatisfiable.
 """
 
 
@@ -51,13 +52,13 @@ def test_install_reports_python_mismatch() -> None:
         patch("devenv.update.uv.find", return_value="uv"),
         patch(
             "devenv.update.proc.run",
-            side_effect=[RuntimeError(PIP_PYTHON_MISMATCH), "3.11.4"],
+            side_effect=[RuntimeError(UV_PYTHON_MISMATCH), "3.11.4"],
         ),
         pytest.raises(SystemExit, match="install-devenv.sh") as raised,
     ):
         update.install_sentry_devenv("1.40.0")
     message = str(raised.value)
-    assert "Requires-Python >=3.13" in message
+    assert "does not satisfy Python>=3.13" in message
     assert "newer Python than Python 3.11.4" in message
 
 

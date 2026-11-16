@@ -33,6 +33,8 @@ def python_requirement_mismatch(detail: str) -> bool:
         or "require a different python version" in text
         or "requires python" in text
         or "python requirement" in text
+        or "depends on python" in text
+        or "does not satisfy python" in text
     )
 
 
