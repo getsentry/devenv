@@ -25,14 +25,17 @@ module_help = "Updates global devenv and tools."
 
 
 def python_requirement_mismatch(detail: str) -> bool:
-    # pip and uv describe this differently, and both read like the package
-    # is missing unless you notice the python constraint.
+    # pip says "Requires-Python" / "different python version".
+    # uv 0.13 says "does not satisfy Python" and "depends on Python",
+    # with no "requires" in the sentence, so a requires-only check misses it.
     text = detail.lower()
     return (
         "requires-python" in text
         or "require a different python version" in text
         or "requires python" in text
         or "python requirement" in text
+        or "depends on python" in text
+        or "does not satisfy python" in text
     )
 
 
@@ -65,7 +68,9 @@ def reinstall_if_python_changed() -> bool:
         path = f"{tmpd}/install-devenv.sh"
         with open(path, "w") as f:
             f.write(script)
-        proc.run(("bash", path))
+        # the installer asks about PATH and then starts a login shell.
+        # either one stops this update before the requested version is installed.
+        proc.run(("bash", path), env={"SNTY_DEVENV_NONINTERACTIVE": "1"})
     return True
 
 

@@ -185,6 +185,33 @@ ensure_uv() {
   show "$uv" --version
 }
 
+configure_shell() {
+  devenv_bin="$1"
+  # devenv update sets SNTY_DEVENV_NONINTERACTIVE. A prompt or a login
+  # shell there blocks the update; the caller already has devenv on PATH.
+  # CI does not set it: the login shell below runs the script on stdin.
+  path_export="export PATH=\"$devenv_bin:\$PATH\""
+  if [[ -e "$HOME/.zshrc" ]] && grep -qFx "$path_export" "$HOME/.zshrc"; then
+    : 'already done!'
+  elif [[ -n "${SNTY_DEVENV_NONINTERACTIVE:-}" ]]; then
+    warn "Skipped shell startup edits. Add this to your PATH if it is missing: $devenv_bin"
+  elif yesno "Modify your shell startup files to include ${HOME}/.local/share/sentry-devenv/bin/ on your PATH?\nIf you prefer to modify PATH in your own way, say n"; then
+    echo "$path_export" >> "$HOME/.profile"
+    echo "$path_export" >> "$HOME/.bash_profile"
+    echo "$path_export" >> "$HOME/.bashrc"
+    echo "$path_export" >> "$HOME/.zshrc"
+    mkdir -p "$XDG_CONFIG_HOME/fish/conf.d"
+    echo 'set -x PATH '"$devenv_bin"' $PATH' > "$XDG_CONFIG_HOME/fish/conf.d/devenv.fish"
+  else
+    warn 'Skipped. You may want to add this to your $PATH yourself: '"$devenv_bin"
+  fi
+
+  info "All done!\nIf you're on a new laptop, run 'devenv bootstrap' to create your sentry development environment."
+  if [[ -z "${SNTY_DEVENV_NONINTERACTIVE:-}" ]]; then
+    show "$SHELL" -l
+  fi
+}
+
 main() {
   constants
   parseopt "$@"
@@ -213,24 +240,7 @@ main() {
   ln -sfn "$devenv_venv/bin/devenv" "$devenv_bin/"
   info "devenv installed, at: $devenv_bin/devenv\n"
 
-  export="export PATH=\"$devenv_bin:\$PATH\""
-  if [[ -e ~/.zshrc ]] && grep -qFx "$export" ~/.zshrc; then
-    : 'already done!'
-  elif yesno "Modify your shell startup files to include ${HOME}/.local/share/sentry-devenv/bin/ on your PATH?\nIf you prefer to modify PATH in your own way, say n"; then
-    echo "$export" >> ~/.profile
-    echo "$export" >> ~/.bash_profile
-    echo "$export" >> ~/.bashrc
-    echo "$export" >> ~/.zshrc
-    mkdir -p "$XDG_CONFIG_HOME/fish/conf.d"
-    echo 'set -x PATH '"$devenv_bin"' $PATH' > "$XDG_CONFIG_HOME/fish/conf.d/devenv.fish"
-  else
-    warn 'Skipped. You may want to add this to your $PATH yourself: '"$devenv_bin"
-  fi
-
-  ## fin
-  info "All done!\nIf you're on a new laptop, run 'devenv bootstrap' to create your sentry development environment."
-  : start a new login shell, to get fresh env:
-  show "$SHELL" -l
+  configure_shell "$devenv_bin"
 }
 
 if [[ "$ME" = "install-devenv.sh" ]]; then
