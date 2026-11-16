@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import os.path
+import platform
 from configparser import ConfigParser
 from importlib import metadata
 
 from devenv import constants
+from devenv.lib import reinstall
 from devenv.lib.config import get_config
 from devenv.lib.fs import ensure_binroot
 
@@ -46,13 +48,20 @@ class Repository:
         parsed_minimum_version = tuple(map(int, minimum_version.split(".")))
 
         if parsed_version < parsed_minimum_version:
+            py = platform.python_version()
             raise SystemExit(f"""
 Your devenv version ({version}) doesn't meet the
 minimum version ({minimum_version}) defined in the repo config.
+This devenv is running Python {py}.
 
-Run the following to update your global devenv to the minimum,
-and use it to run this repo's sync.
+Update the global devenv, then sync again:
 
 {constants.root}/bin/devenv update {minimum_version}
 {constants.root}/bin/devenv sync
+
+That update installs into the current virtualenv. If it reports that
+{minimum_version} requires a newer Python than {py}, reinstall devenv
+and then sync:
+
+{reinstall.instructions()}
 """)

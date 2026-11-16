@@ -15,6 +15,7 @@ from devenv.lib import direnv
 from devenv.lib import docker
 from devenv.lib import limactl
 from devenv.lib import proc
+from devenv.lib import reinstall
 from devenv.lib import sentry_cli
 from devenv.lib import uv
 from devenv.lib.context import Context
@@ -22,14 +23,24 @@ from devenv.lib.modules import DevModuleInfo
 
 module_help = "Updates global devenv and tools."
 
-installer_url = (
-    "https://raw.githubusercontent.com/getsentry/devenv/main/install-devenv.sh"
-)
+
+def python_requirement_mismatch(detail: str) -> bool:
+    # pip and uv describe this differently, and both read like the package
+    # is missing unless you notice the python constraint.
+    text = detail.lower()
+    return (
+        "requires-python" in text
+        or "require a different python version" in text
+        or "requires python" in text
+        or "python requirement" in text
+    )
 
 
 def reinstall_if_python_changed() -> bool:
-    # pip can't change the python of the global devenv venv, and when a new release needs a newer python it quietly installs the newest release that fits the old one instead, so rerun install-devenv.sh to rebuild the venv when its python pin changes
-    with urllib.request.urlopen(installer_url) as resp:
+    # uv pip installs into the existing venv and cannot change its python.
+    # when a release needs a newer python, the resolver error looks like the
+    # package does not exist. rebuild the venv when the installer's pin differs.
+    with urllib.request.urlopen(reinstall.installer_url) as resp:
         script = resp.read().decode()
 
     m = re.search(r"SNTY_DEVENV_PY_VERSION:-([0-9.]+)", script)
@@ -55,6 +66,63 @@ def reinstall_if_python_changed() -> bool:
         with open(path, "w") as f:
             f.write(script)
         proc.run(("bash", path))
+    return True
+
+
+def install_sentry_devenv(version: str | None) -> None:
+    if version is None:
+        requirement = "sentry-devenv"
+    else:
+        requirement = f"sentry-devenv=={version}"
+
+    # capture the resolver output so a python mismatch can be told apart
+    # from a missing package. the raw error stays in the message.
+    try:
+        output = proc.run(
+            (
+                uv.find(),
+                "pip",
+                "install",
+                "--python",
+                f"{constants.root}/venv/bin/python",
+                "--upgrade",
+                requirement,
+            ),
+            stdout=True,
+        )
+    except RuntimeError as exc:
+        if python_requirement_mismatch(str(exc)):
+            py = proc.run(
+                (
+                    f"{constants.root}/venv/bin/python",
+                    "-c",
+                    "import platform; print(platform.python_version())",
+                ),
+                stdout=True,
+            )
+            raise SystemExit(f"""\
+{exc}
+
+{requirement} needs a newer Python than Python {py}, which this devenv is using.
+devenv update installs into {constants.root}/venv and cannot replace it.
+Reinstall devenv, then sync again:
+
+{reinstall.instructions()}
+""") from None
+        raise
+    if output:
+        print(output)
+
+
+def upgrade_global_devenv(version: str | None) -> bool:
+    # a versioned update has to rebuild too. repo minimum_version errors
+    # tell people to run `devenv update <version>`, and skipping the pin
+    # check there is how a python bump shows up as "no matching distribution".
+    reinstalled = reinstall_if_python_changed()
+    # the installer already installed the latest sentry-devenv.
+    if reinstalled and version is None:
+        return False
+    install_sentry_devenv(version)
     return True
 
 
@@ -95,26 +163,9 @@ Updating global tools (at {constants.root}/bin).
 
     # even if we aren't the global devenv, we want to update
     # the global devenv (but only if it exists) out of convenience
-    if (is_global_devenv or global_devenv_exists) and not (
-        args.version is None and reinstall_if_python_changed()
+    if (is_global_devenv or global_devenv_exists) and upgrade_global_devenv(
+        args.version
     ):
-        if args.version is None:
-            version = "sentry-devenv"
-        else:
-            version = f"sentry-devenv=={args.version}"
-
-        proc.run(
-            (
-                uv.find(),
-                "pip",
-                "install",
-                "--python",
-                f"{constants.root}/venv/bin/python",
-                "--upgrade",
-                version,
-            )
-        )
-
         print(f"""\
 
 Global devenv at {constants.root}/bin/devenv updated.
