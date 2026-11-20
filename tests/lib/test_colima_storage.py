@@ -221,6 +221,10 @@ def test_fresh_vm_containerd_store_survives_stop_and_start(
     with (
         mock.patch.object(colima, "home", str(home)),
         mock.patch.object(colima, "root", str(root)),
+        # start() installs missing global tools before this scenario runs.
+        # The temp root only covers colima.install_global; Lima and Docker
+        # installers still use the real devenv prefix.
+        mock.patch.object(colima, "_ensure_global_tools"),
         mock.patch.object(colima, "check", side_effect=lambda: next(statuses)),
         mock.patch.object(colima, "_start", side_effect=start_vm),
         mock.patch("devenv.lib.colima.proc.run", side_effect=run),
