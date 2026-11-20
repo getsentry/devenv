@@ -135,6 +135,12 @@ class FakeVM:
         return cmd in self.cmds
 
 
+@pytest.fixture(autouse=True)
+def _installed_global_tools() -> Generator[None]:
+    with mock.patch.object(colima, "_ensure_global_tools"):
+        yield
+
+
 @pytest.fixture
 def m4_mac() -> Generator[None]:
     with (
