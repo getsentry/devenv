@@ -20,9 +20,15 @@ minimum_version = 1.11.0
     with open(f"{repo.config_path}/config.ini", "w") as f:
         f.write(mock_config)
 
-    with patch("importlib.metadata.version", return_value="1.10.2"):
-        with pytest.raises(SystemExit):
-            repo.check_minimum_version()
+    with (
+        patch("importlib.metadata.version", return_value="1.10.2"),
+        patch("platform.python_version", return_value="3.11.4"),
+        pytest.raises(SystemExit, match="install-devenv.sh") as raised,
+    ):
+        repo.check_minimum_version()
+    message = str(raised.value)
+    assert "running Python 3.11.4" in message
+    assert "devenv update 1.11.0" in message
 
     with patch("importlib.metadata.version", return_value="1.11.0"):
         repo.check_minimum_version()

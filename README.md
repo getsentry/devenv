@@ -30,6 +30,8 @@ Install the latest uv first with `brew install uv`. If the script can't find uv,
 
 To update the global devenv, run `devenv update`.
 
+That upgrades `sentry-devenv` inside the existing virtualenv at `~/.local/share/sentry-devenv/venv`. It cannot replace that virtualenv's Python. When the Python pin in `install-devenv.sh` has changed, `devenv update` reruns the installer, including `devenv update <version>`. If the installed devenv is older than that check, or the update still says the release requires a different Python, rerun the installer above.
+
 ## Commands
 
 Run `devenv --help` for the full list.
@@ -70,8 +72,9 @@ Builtin checks live in `devenv.checks`. A repo can add its own checks in the `ch
 
 Updates the global devenv installation and the global tools. Pass a version to install that version.
 
-If your devenv is old enough that it has no `update` command, run:
-`uv pip install --python ~/.local/share/sentry-devenv/venv/bin/python -U sentry-devenv`
+The update installs into the current virtualenv. If the Python pin in the installer has changed, this command reruns `install-devenv.sh` before installing. A repo's minimum-version error tells you to run `devenv update <version>`, and that form does the same Python check.
+
+If your devenv is old enough that it has no `update` command, or the update fails because the release requires a newer Python, rerun the installer in [Install](#install). `uv pip install` into the existing virtualenv hits the same Python constraint.
 
 `devenv colima start`
 
@@ -99,7 +102,7 @@ devenv also installs the [Sentry CLI](https://cli.sentry.dev) where its own inst
 
 `devenv` is installed with uv in a virtualenv at `~/.local/share/sentry-devenv/venv`.
 That virtualenv uses the Python at `~/.local/share/sentry-devenv/python`.
-It has no pip; `devenv update` uses `uv pip` to update it.
+It has no pip; `devenv update` uses `uv pip` to update it. `uv pip` keeps the virtualenv's current Python, so a Python upgrade reruns `install-devenv.sh`.
 
 ### Global configuration
 
