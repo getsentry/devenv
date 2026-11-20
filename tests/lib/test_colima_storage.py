@@ -306,6 +306,53 @@ def test_stopped_legacy_vm_sets_overlay2_before_start(tmp_path: Path) -> None:
     ]
 
 
+_NO_DISK_WARNING = (
+    'time="2026-11-20T09:38:33-05:00" level=warning '
+    'msg="No disk matching colima found."'
+)
+
+
+def test_stopped_legacy_vm_ignores_lima_no_disk_warning(tmp_path: Path) -> None:
+    config_path, store_path, result = _prepare(
+        tmp_path, colima.ColimaStatus.DOWN, disk=_NO_DISK_WARNING + "\n"
+    )
+
+    assert result.policy.existing_instance is True
+    assert result.policy.expected_snapshotter is False
+    assert "containerd-snapshotter: false" in config_path.read_text()
+    assert not store_path.exists()
+    assert result.commands == [
+        (
+            str(tmp_path / "sentry-devenv/bin/limactl"),
+            "disk",
+            "list",
+            "--json",
+            "colima",
+        )
+    ]
+
+
+def test_lima_warning_before_modern_disk_prevents_overlay2_override(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "home/.colima/default/colima.yaml"
+    with pytest.raises(colima_config.StorageMigrationBlocked):
+        _prepare(
+            tmp_path,
+            colima.ColimaStatus.DOWN,
+            disk=f'{_NO_DISK_WARNING}\n{{"name":"colima"}}\n',
+        )
+    assert "containerd-snapshotter" not in config_path.read_text()
+
+
+def test_invalid_disk_json_message_includes_the_output(tmp_path: Path) -> None:
+    with pytest.raises(colima_config.StorageMigrationBlocked) as excinfo:
+        _prepare(tmp_path, colima.ColimaStatus.DOWN, disk="{garbage")
+    message = str(excinfo.value)
+    assert "{garbage" in message
+    assert "docker.features.containerd-snapshotter" in message
+
+
 def test_stopped_legacy_vm_ignores_standalone_lima_disk(tmp_path: Path) -> None:
     home, config_path = _profile(tmp_path)
     standalone_disk = home / ".lima/_disks/colima"
@@ -698,8 +745,66 @@ def test_invalid_disk_json_blocks_without_rewriting(tmp_path: Path) -> None:
     with (
         mock.patch.object(colima, "home", str(home)),
         mock.patch.object(colima, "root", str(root)),
-        mock.patch("devenv.lib.colima.proc.run", return_value="invalid"),
+        mock.patch("devenv.lib.colima.proc.run", return_value="{invalid"),
         pytest.raises(colima_config.StorageMigrationBlocked),
     ):
         colima._prepare_docker_store(colima.ColimaStatus.DOWN)
     assert config_path.read_bytes() == original
+
+
+def test_start_installs_missing_global_tools(tmp_path: Path) -> None:
+    status = colima.ColimaStatus.UP
+    with (
+        mock.patch.object(constants, "DARWIN", True),
+        mock.patch.object(colima, "root", str(tmp_path)),
+        mock.patch.object(colima, "install_global") as install_colima,
+        mock.patch.object(colima.limactl, "install_global") as install_lima,
+        mock.patch.object(colima.docker, "install_global") as install_docker,
+        mock.patch.object(colima, "check", return_value=status),
+        mock.patch.object(
+            colima,
+            "_prepare_docker_store",
+            return_value=colima._StoragePolicy(existing_instance=True),
+        ),
+        mock.patch.object(colima, "_start", return_value=status),
+        mock.patch.object(
+            colima, "_upgrade_kernel_if_sve_misreported", return_value=False
+        ),
+        mock.patch("devenv.lib.colima.proc.run"),
+    ):
+        assert colima.start() == status
+
+    install_colima.assert_called_once_with()
+    install_lima.assert_called_once_with()
+    install_docker.assert_called_once_with()
+
+
+def test_start_skips_install_when_global_tools_exist(tmp_path: Path) -> None:
+    status = colima.ColimaStatus.UP
+    for name in ("colima", "limactl", "docker"):
+        tool = tmp_path / "bin" / name
+        tool.parent.mkdir(exist_ok=True)
+        tool.touch()
+    with (
+        mock.patch.object(constants, "DARWIN", True),
+        mock.patch.object(colima, "root", str(tmp_path)),
+        mock.patch.object(colima, "install_global") as install_colima,
+        mock.patch.object(colima.limactl, "install_global") as install_lima,
+        mock.patch.object(colima.docker, "install_global") as install_docker,
+        mock.patch.object(colima, "check", return_value=status),
+        mock.patch.object(
+            colima,
+            "_prepare_docker_store",
+            return_value=colima._StoragePolicy(existing_instance=True),
+        ),
+        mock.patch.object(colima, "_start", return_value=status),
+        mock.patch.object(
+            colima, "_upgrade_kernel_if_sve_misreported", return_value=False
+        ),
+        mock.patch("devenv.lib.colima.proc.run"),
+    ):
+        assert colima.start() == status
+
+    install_colima.assert_not_called()
+    install_lima.assert_not_called()
+    install_docker.assert_not_called()

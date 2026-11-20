@@ -20,6 +20,7 @@ from devenv.lib import archive
 from devenv.lib import colima_config
 from devenv.lib import docker
 from devenv.lib import fs
+from devenv.lib import limactl
 from devenv.lib import proc
 from devenv.lib import rosetta
 
@@ -142,7 +143,10 @@ def check() -> ColimaStatus:
     colima_executable = shutil.which("colima")
     if not colima_executable:
         raise SystemExit(
-            "colima executable not found, try running devenv update (twice if this is your first time doing this) to install"
+            "colima executable not found. devenv uses the Colima in "
+            "~/.local/share/sentry-devenv/bin and not a Homebrew Colima; try "
+            "running devenv update (twice if this is your first time doing "
+            "this) to install it"
         )
 
     if not os.path.exists(f"{home}/.colima/default/docker.sock"):
@@ -341,13 +345,24 @@ def _legacy_root_disk(config: colima_config.ColimaConfig) -> bool:
             "Cannot verify whether the existing Colima VM has a persistent "
             f"data disk: {error}. No backend setting was changed."
         ) from error
-    if disk_info.strip():
+    # Lima writes warnings such as "No disk matching colima found." to stderr,
+    # which proc.run merges into the output.
+    json_lines = [
+        line
+        for line in disk_info.splitlines()
+        if line.lstrip().startswith(("{", "["))
+    ]
+    if json_lines:
         try:
-            disk = json.loads(disk_info)
+            disk = json.loads("\n".join(json_lines))
         except json.JSONDecodeError as error:
             raise colima_config.StorageMigrationBlocked(
-                "Lima returned invalid disk metadata for Colima. No backend "
-                "setting was changed; repair the Lima installation and retry."
+                "Lima returned invalid disk metadata for Colima: "
+                f"{disk_info.strip()!r}. No backend setting was changed. "
+                "Leave the Lima installation and VM disks in place, and set "
+                "`docker.features.containerd-snapshotter` in "
+                f"`{_config_path()}` to `false` for overlay2 or `true` for "
+                "containerd."
             ) from error
     else:
         disk = None
@@ -660,7 +675,21 @@ Ask for help in #discuss-dev-infra.
     return True
 
 
+def _ensure_global_tools() -> None:
+    if not constants.DARWIN:
+        return
+    if not os.path.exists(f"{root}/bin/colima") or not os.path.exists(
+        f"{root}/bin/limactl"
+    ):
+        print("colima or limactl is missing from devenv's bin, installing...")
+        install_global()
+        limactl.install_global()
+    if not os.path.exists(f"{root}/bin/docker"):
+        docker.install_global()
+
+
 def start(restart: bool = False) -> ColimaStatus:
+    _ensure_global_tools()
     status = check()
     try:
         storage_policy = _prepare_docker_store(status)
