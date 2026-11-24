@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 from collections.abc import Sequence
 
@@ -99,12 +100,41 @@ def main() -> ExitCode:
     import sys
 
     import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
     sentry_sdk.init(
         # https://sentry.sentry.io/settings/projects/sentry-dev-env/keys/
         dsn="https://9bdb053cb8274ea69231834d1edeec4c@o1.ingest.sentry.io/5723503",
         # enable performance monitoring
         traces_sample_rate=1.0,
+        attach_stacktrace=False,
+        integrations=[
+            LoggingIntegration(level=None, event_level=logging.ERROR)
+        ],
+        data_collection={
+            "user_info": False,
+            "http_bodies": [],
+            "graphql": {"document": False, "variables": False},
+            "gen_ai": {"inputs": False, "outputs": False},
+            "mcp": {"inputs": False, "outputs": False},
+            "database_query_data": False,
+            "queues": False,
+            "http_headers": {
+                "request": {
+                    "mode": "denylist",
+                    "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+                }
+            },
+            "cookies": {
+                "mode": "denylist",
+                "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+            },
+            "url_query_params": {
+                "mode": "denylist",
+                "terms": ["forwarded", "-ip", "remote-", "via", "-user"],
+            },
+            "stack_frame_variables": {"mode": "denylist"},
+        },
     )
 
     return devenv(sys.argv, f"{home}/.config/sentry-devenv/config.ini")
